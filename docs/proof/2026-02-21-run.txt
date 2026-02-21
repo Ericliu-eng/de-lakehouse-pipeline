@@ -1,0 +1,13 @@
+Commands:
+make lint
+make test
+python -m src.de_lakehouse_pipeline.main
+
+Output:
+(All tests passed)
+Starting pipeline...
+Loaded 4 rows from data/raw/sample.csv
+Dropped 1 rows with missing name
+Filtered out 1 rows where amount <= 0
+Saved 2 rows to data/processed/output.csv
+Pipeline finished successfully
