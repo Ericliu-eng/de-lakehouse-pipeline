@@ -2,6 +2,8 @@
 
 A lakehouse-style data engineering pipeline repo (skeleton) with reproducible commands and CI.
 
+
+
 ## Quickstart
 
 ```bash
@@ -9,3 +11,4 @@ cp .env.example .env
 make setup
 make lint
 make test
+python -m src.de_lakehouse_pipeline.main
