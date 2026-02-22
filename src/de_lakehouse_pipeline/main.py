@@ -4,18 +4,15 @@ from pathlib import Path
 
 import pandas as pd
 
+
 def transform(df: pd.DataFrame) -> pd.DataFrame:
     df = df.dropna(subset=["name"])
     df = df[df["amount"] > 0]
     return df
 
 
-def main() -> None:
+def run_pipeline(input_path: Path, output_path: Path) -> pd.DataFrame:
     print("Starting pipeline...")
-
-    # Paths (relative to repo root)
-    input_path = Path("data/raw/sample.csv")
-    output_path = Path("data/processed/output.csv")
 
     # --- Extract ---
     if not input_path.exists():
@@ -26,25 +23,25 @@ def main() -> None:
     df = pd.read_csv(input_path)
     print(f"Loaded {len(df)} rows from {input_path}")
 
-    # --- Transform (minimal + visible) ---
-    # 1) Drop rows where name is missing
+    # --- Transform ---
     before = len(df)
-    df = df.dropna(subset=["name"])
-    after = len(df)
-    print(f"Dropped {before - after} rows with missing name")
-
-    # 2) Keep only positive amount
-    before = len(df)
-    df = df[df["amount"] > 0]
-    after = len(df)
-    print(f"Filtered out {before - after} rows where amount <= 0")
+    df2 = transform(df)
+    after = len(df2)
+    print(f"Transformed: {before} -> {after} rows")
 
     # --- Load ---
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    df.to_csv(output_path, index=False)
-    print(f"Saved {len(df)} rows to {output_path}")
+    df2.to_csv(output_path, index=False)
+    print(f"Saved {len(df2)} rows to {output_path}")
 
     print("Pipeline finished successfully")
+    return df2
+
+
+def main() -> None:
+    input_path = Path("data/raw/sample.csv")
+    output_path = Path("data/processed/output.csv")
+    run_pipeline(input_path=input_path, output_path=output_path)
 
 
 if __name__ == "__main__":
