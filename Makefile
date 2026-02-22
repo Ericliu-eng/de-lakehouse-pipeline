@@ -24,3 +24,9 @@ test:
 
 clean:
 	rm -rf $(VENV)
+
+run:
+	$(PY) -m src.de_lakehouse_pipeline.main
+
+smoke:
+	$(PY) -m pytest -v tests/test_smoke.py

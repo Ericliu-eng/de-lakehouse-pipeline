@@ -15,13 +15,56 @@ Pipeline finished successfully
 
 This output should  be W1D03(for Testring)(make up day03)
 Commands:
-Commands:
 make lint
 make test
+
 Output:
 collected 4 items                                                                                                                         
-
 tests/test_pipeline.py::test_transform_normal_case PASSED                                                                           [ 25%]
 tests/test_pipeline.py::test_transform_drops_missing_name_and_nonpositive_amount PASSED                                             [ 50%] 
 tests/test_pipeline.py::test_main_raises_if_input_missing PASSED                                                                    [ 75%]
 tests/test_smoke.py::test_smoke PASSED                               
+
+This output should  be W1D04(make up day04)
+Commands:
+make lint
+make test
+make run
+make smoke
+
+Output:
+All checks passed!
+.venv/Scripts/python.exe -m pytest -v -s
+========================================================== test session starts ===========================================================
+platform win32 -- Python 3.11.9, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\liuxu\de-lakehouse-pipeline\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\liuxu\de-lakehouse-pipeline
+collected 4 items                                                                                                                         
+
+tests/test_pipeline.py::test_transform_normal_case PASSED
+tests/test_pipeline.py::test_transform_drops_missing_name_and_nonpositive_amount PASSED
+tests/test_pipeline.py::test_main_raises_if_input_missing Starting pipeline...
+Input file not found: data\raw\sample.csv. Create data/raw/sample.csv first.
+PASSED
+tests/test_smoke.py::test_smoke_pipeline Starting pipeline...
+Loaded 3 rows from C:\Users\liuxu\AppData\Local\Temp\pytest-of-liuxu\pytest-12\test_smoke_pipeline0\sample.csv
+Transformed: 3 -> 1 rows
+Saved 1 rows to C:\Users\liuxu\AppData\Local\Temp\pytest-of-liuxu\pytest-12\test_smoke_pipeline0\output.csv
+Pipeline finished successfully
+PASSED
+
+=========================================================== 4 passed in 1.34s ============================================================ 
+.venv/Scripts/python.exe -m src.de_lakehouse_pipeline.main
+Starting pipeline...
+Loaded 4 rows from data\raw\sample.csv
+Transformed: 4 -> 2 rows
+Saved 2 rows to data\processed\output.csv
+Pipeline finished successfully
+.venv/Scripts/python.exe -m pytest -v tests/test_smoke.py
+========================================================== test session starts ===========================================================
+platform win32 -- Python 3.11.9, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\liuxu\de-lakehouse-pipeline\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\liuxu\de-lakehouse-pipeline
+collected 1 item                                                                                                                          
+
+tests/test_smoke.py::test_smoke_pipeline PASSED      

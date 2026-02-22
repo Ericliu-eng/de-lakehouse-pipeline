@@ -53,3 +53,19 @@ main → behavior / integration
 ### Next steps
 Push code and ensure CI passes
 Continue improving pipeline structure and documentation
+
+
+
+### make up Day 03 in(2026-2-21)
+### What I did
+- How to write a smoke (E2E) test using `tmp_path`
+- Difference between unit tests and pipeline-level tests
+- How Makefile helps standardize commands (`make test`, `make smoke`, etc.)
+
+### Issues / Challenges
+- `make run` failed due to module import issue (`src/` structure not recognized)
+- Needed to refactor pipeline to support testing (add `run_pipeline`)
+
+### Next steps
+- Fix `make run` so pipeline can run from CLI
+- Re-run and update proof with successful output
