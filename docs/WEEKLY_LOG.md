@@ -29,3 +29,27 @@
 ### Next steps
 - Improve pipeline structure
 - Add logging and configuration
+
+
+### make up Day 03 in(2026-2-21)
+### What I did
+- Introduced a transform(df) function to isolate core data processing logic.
+- Kept main() as the pipeline entry (file I/O + orchestration).
+
+### What I learned
+Difference between unit tests (logic) and pipeline execution (orchestration)
+Importance of separating core logic (transform) from I/O (main)
+How to design:
+normal case tests
+edge case tests
+failure case tests
+Testing improves confidence and makes code reproducible
+### Issues / Challenges
+Initially confused about what to test (main vs transform)
+Learned that:
+transform → unit test
+main → behavior / integration
+
+### Next steps
+Push code and ensure CI passes
+Continue improving pipeline structure and documentation

@@ -4,6 +4,11 @@ from pathlib import Path
 
 import pandas as pd
 
+def transform(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.dropna(subset=["name"])
+    df = df[df["amount"] > 0]
+    return df
+
 
 def main() -> None:
     print("Starting pipeline...")

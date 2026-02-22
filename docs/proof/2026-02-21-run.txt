@@ -1,3 +1,4 @@
+This output should  be W1D02
 Commands:
 make lint
 make test
@@ -11,3 +12,16 @@ Dropped 1 rows with missing name
 Filtered out 1 rows where amount <= 0
 Saved 2 rows to data/processed/output.csv
 Pipeline finished successfully
+
+This output should  be W1D03(for Testring)(make up day03)
+Commands:
+Commands:
+make lint
+make test
+Output:
+collected 4 items                                                                                                                         
+
+tests/test_pipeline.py::test_transform_normal_case PASSED                                                                           [ 25%]
+tests/test_pipeline.py::test_transform_drops_missing_name_and_nonpositive_amount PASSED                                             [ 50%] 
+tests/test_pipeline.py::test_main_raises_if_input_missing PASSED                                                                    [ 75%]
+tests/test_smoke.py::test_smoke PASSED                               
