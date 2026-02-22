@@ -20,7 +20,7 @@ lint:
 	$(PY) -m ruff check .
 
 test:
-	$(PY) -m pytest -v
+	$(PY) -m pytest -v -s
 
 clean:
 	rm -rf $(VENV)
