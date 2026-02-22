@@ -1,10 +1,20 @@
-.venv/Scripts/python.exe -m pytest -v
-============================= test session starts =============================
-platform win32 -- Python 3.11.9, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\liuxu\de-lakehouse-pipeline\.venv\Scripts\python.exe
-cachedir: .pytest_cache
-rootdir: C:\Users\liuxu\de-lakehouse-pipeline
-collecting ... collected 1 item
+# Proof — Week 01 (Focused sessions)
+# Date: 2026-02-22 (local, Windows)
+# Repo: de-lakehouse-pipeline
 
-tests/test_smoke.py::test_smoke PASSED                                   [100%]
+============================================================
+Iteration 1 — Initial test validation (W01D1: repo skeleton)
 
-============================== 1 passed in 0.02s ==============================
+Commands:
+  make test
+
+Key Output:
+  collected 1 item
+  tests/test_smoke.py::test_smoke PASSED
+
+  1 passed in 0.02s
+
+Validation:
+  - Test framework (pytest) successfully configured
+  - Project structure is testable
+============================================================

@@ -1,9 +1,0 @@
-make run :
-Starting pipeline...
-Loaded 4 rows from data\raw\sample.csv
-Transformed: 4 -> 2 rows
-Saved 2 rows to data\processed\output.csv
-Pipeline finished successfully
-
-make test:
-(4 passed...)

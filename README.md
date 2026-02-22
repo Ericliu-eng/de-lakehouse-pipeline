@@ -13,6 +13,13 @@ This project implements a simple data pipeline:
 - Load: writes cleaned data to processed folder
 
 ---
+## Data
+Place input file at:
+data/raw/sample.csv
+Example format:
+name,amount
+A,10
+B,20
 
 ## Quickstart
 

@@ -1,0 +1,26 @@
+# Proof — Week 01 (Focused sessions)
+# Date: 2026-02-22 (local, Windows)
+# Repo: de-lakehouse-pipeline
+
+============================================================
+Iteration 6 — Reproducibility check (W01D6: fresh setup)
+
+Commands:
+  make setup
+  make test
+  make run
+
+Key Output:
+  (dependencies installed successfully)
+  4 passed
+
+  Starting pipeline...
+  Loaded 4 rows from data/raw/sample.csv
+  Transformed: 4 -> 2 rows
+  Saved 2 rows to data/processed/output.csv
+  Pipeline finished successfully
+
+Validation:
+  - Project runs from a fresh environment
+  - Results are reproducible via Makefile
+============================================================
