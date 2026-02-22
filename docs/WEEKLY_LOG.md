@@ -56,7 +56,7 @@ Continue improving pipeline structure and documentation
 
 
 
-### make up Day 03 in(2026-2-21)
+### make up Day 04 in(2026-2-21)
 ### What I did
 - How to write a smoke (E2E) test using `tmp_path`
 - Difference between unit tests and pipeline-level tests
@@ -69,3 +69,16 @@ Continue improving pipeline structure and documentation
 ### Next steps
 - Fix `make run` so pipeline can run from CLI
 - Re-run and update proof with successful output
+
+## make uo Day 05 in(2026-2-22) 
+
+### What I did
+- Verified CI pipeline success on GitHub
+- Improved README for reproducibility
+- Added proof of successful pipeline run
+
+### Issues / Challenges
+- Understanding CI workflow and verification
+
+### Next steps
+- Expand pipeline with more realistic data
