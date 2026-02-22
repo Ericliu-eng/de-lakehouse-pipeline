@@ -1,84 +1,114 @@
 # Weekly Log
 
-## Week 01
+## Week 01 — Repo Engineering Skeleton & MVP Pipeline
 
-### Day 1 (2026-02-19)
-- Done: repo skeleton (Makefile targets + CI + docs)
-- Proof: `docs/proof/`
-- Next: implement the first main feature block skeleton
+### Iteration 1 (2026-02-19) — Repo Foundation
 
-### Day 2 (2026-2-21)
-### What I did
-- Implemented a minimal ETL pipeline (Extract → Transform → Load)
-- Read data from `data/raw/sample.csv`
-- Applied simple transformations (drop missing values, filter rows)
-- Saved output to `data/processed/output.csv`
-- Added proof of execution in `docs/proof/`
+**Deliverables**
+- Set up repository skeleton (src/, data/, docs/)
+- Implemented Makefile (setup / lint / test)
+- Configured CI workflow (GitHub Actions)
+- Added documentation (DEV_SETUP, STANDARDS, WEEKLY_LOG)
+
+**Validation**
+- `make setup`, `make lint`, `make test` all pass
+- CI pipeline green
+
+**Next**
+- Implement minimal ETL pipeline
+
+---
+
+### Iteration 2 (2026-02-21) — MVP ETL Pipeline
+
+**Deliverables**
+- Implemented end-to-end ETL pipeline:
+  - Extract: read `data/raw/sample.csv`
+  - Transform: drop missing values, filter invalid rows
+  - Load: write to `data/processed/output.csv`
 - Updated README with run instructions
+- Added execution proof under `docs/proof/`
 
-### What I learned
-- How to structure a data engineering repo (src/, data/, docs/)
-- How to run Python modules using `python -m`
-- Importance of reproducibility (Makefile + README)
-- Basic ETL pipeline workflow
+**Validation**
+- Pipeline runs successfully via CLI
+- Output file generated correctly
 
-### Issues / Challenges
-- Module import issue (`de_lakehouse_pipeline` not found)
-- Learned to fix it using `python -m src.de_lakehouse_pipeline.main`
+**Challenges**
+- Module import issue (`de_lakehouse_pipeline`)
+- Fixed using module execution (`python -m`)
 
-### Next steps
-- Improve pipeline structure
-- Add logging and configuration
+**Next**
+- Add unit tests
 
+---
 
-### make up Day 03 in(2026-2-21)
-### What I did
-- Introduced a transform(df) function to isolate core data processing logic.
-- Kept main() as the pipeline entry (file I/O + orchestration).
+### Iteration 3 (2026-02-21) — Unit Testing
+(make up)
+**Deliverables**
+- Refactored logic into `transform(df)`
+- Added unit tests for:
+  - normal cases
+  - edge cases
+  - failure cases
 
-### What I learned
-Difference between unit tests (logic) and pipeline execution (orchestration)
-Importance of separating core logic (transform) from I/O (main)
-How to design:
-normal case tests
-edge case tests
-failure case tests
-Testing improves confidence and makes code reproducible
-### Issues / Challenges
-Initially confused about what to test (main vs transform)
-Learned that:
-transform → unit test
-main → behavior / integration
+**Validation**
+- `pytest` passes locally and in CI
 
-### Next steps
-Push code and ensure CI passes
-Continue improving pipeline structure and documentation
+**Key Insight**
+- Separated business logic (transform) from orchestration (main)
 
+**Next**
+- Add smoke / E2E test
 
+---
 
-### make up Day 04 in(2026-2-21)
-### What I did
-- How to write a smoke (E2E) test using `tmp_path`
-- Difference between unit tests and pipeline-level tests
-- How Makefile helps standardize commands (`make test`, `make smoke`, etc.)
+### Iteration 4 (2026-02-21) — Smoke Test & CLI
+(make up)
+**Deliverables**
+- Implemented smoke (E2E) test using `tmp_path`
+- Added Makefile commands:
+  - `make run`
+  - `make smoke`
 
-### Issues / Challenges
-- `make run` failed due to module import issue (`src/` structure not recognized)
-- Needed to refactor pipeline to support testing (add `run_pipeline`)
+**Validation**
+- One command runs pipeline end-to-end
 
-### Next steps
-- Fix `make run` so pipeline can run from CLI
-- Re-run and update proof with successful output
+**Challenges**
+- Import issue due to `src/` structure
+- Refactored entry point (`run_pipeline`)
 
-## make uo Day 05 in(2026-2-22) 
+**Next**
+- Ensure reproducibility and CI integration
 
-### What I did
-- Verified CI pipeline success on GitHub
+---
+
+### Iteration 5 (2026-02-21) — CI & Reproducibility
+
+**Deliverables**
+- CI pipeline fully passing (GitHub Actions)
 - Improved README for reproducibility
-- Added proof of successful pipeline run
+- Added execution proof
 
-### Issues / Challenges
-- Understanding CI workflow and verification
+**Validation**
+- Fresh environment can reproduce results via:
+  - `make setup`
+  - `make test`
+  - `make run`
 
-### Next steps
-- Expand pipeline with more realistic data
+**Next**
+- Demo rehearsal + documentation polish
+
+---
+
+### Iteration 6 (2026-02-22) — Demo Rehearsal
+
+**Deliverables**
+- Verified full pipeline using README instructions
+- Ensured project is runnable by external users
+
+**Validation**
+- End-to-end pipeline runs in <2 minutes
+- No missing steps or hidden dependencies
+
+**Outcome**
+- Project is now reproducible, testable, and demo-ready
