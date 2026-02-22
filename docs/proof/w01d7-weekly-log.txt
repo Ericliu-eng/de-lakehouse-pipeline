@@ -1,0 +1,49 @@
+# Proof — Week 01 Summary & Planning
+# Date: 2026-02-22
+# Repo: de-lakehouse-pipeline
+
+============================================================
+Task: Weekly reflection + next week planning (W01D7)
+
+Actions:
+  - Updated docs/WEEKLY_LOG.md
+  - Added Week 01 summary section:
+      * What I built
+      * Metrics / evidence
+      * Issues / challenges
+      * Learnings
+      * Risks / gaps
+      * Next week priorities
+
+Validation:
+  - WEEKLY_LOG.md contains full weekly summary
+  - Iterations (D1–D6) + final reflection included
+  - Next week plan clearly defined (Top 3 priorities)
+
+Result:
+  - Project is not only working, but also documented and explainable
+  - Ready for interview/demo discussion
+
+============================================================
+Sanity Check (project still works):
+
+Commands:
+  make test
+  make run
+
+Output:
+  4 passed
+
+  Starting pipeline...
+  Loaded 4 rows from data/raw/sample.csv
+  Transformed: 4 -> 2 rows
+  Saved 2 rows to data/processed/output.csv
+  Pipeline finished successfully
+
+============================================================
+Conclusion:
+  Week 01 completed:
+  - Reproducible
+  - Testable
+  - Documented
+  - Demo-ready
