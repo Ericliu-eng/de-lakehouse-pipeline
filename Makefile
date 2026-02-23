@@ -10,6 +10,7 @@ ifeq ($(OS),Windows_NT)
 else
 	PY := $(PY_NIX)
 endif
+export PYTHONPATH := src
 
 setup:
 	python -m venv $(VENV)
@@ -19,14 +20,14 @@ setup:
 lint:
 	$(PY) -m ruff check .
 
-test:
-	$(PY) -m pytest -v -s
 
 clean:
 	rm -rf $(VENV)
+test:
+	$(PY) -m pytest -v -s
 
 run:
-	$(PY) -m src.de_lakehouse_pipeline.main
+	$(PY) -m de_lakehouse_pipeline.main
 
 smoke:
 	$(PY) -m pytest -v tests/test_smoke.py
