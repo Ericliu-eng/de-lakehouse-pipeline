@@ -6,26 +6,40 @@ A lakehouse-style data engineering pipeline repo (skeleton) with reproducible co
 
 ## What this project does
 
-This project implements a simple data pipeline:
-
-- Extract: reads raw CSV data
-- Transform: removes invalid rows (missing name, non-positive amount)
-- Load: writes cleaned data to processed folder
+- Extract: read raw CSV  
+- Transform: clean invalid rows  
+- Load: write processed data  
 
 ---
-## Data
-Place input file at:
-data/raw/sample.csv
-Example format:
-name,amount
-A,10
-B,20
 
 ## Quickstart
-
-```bash
 cp .env.example .env
 make setup
-make lint
 make test
-python -m src.de_lakehouse_pipeline.main
+make run
+
+---
+
+## Local Postgres (Week 02)
+make db-up
+make migrate
+make test
+
+---
+
+## Project Structure
+
+src/de_lakehouse_pipeline/
+scripts/
+tests/
+data/
+docs/
+
+
+---
+
+## Notes
+
+- Reproducible via Makefile  
+- Tested locally + CI  
+- Built for extension (DE → MLOps)  
