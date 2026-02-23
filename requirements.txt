@@ -1,3 +1,4 @@
 pytest
 ruff
 pandas
+psycopg[binary]==3.1.19

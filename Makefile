@@ -30,3 +30,13 @@ run:
 
 smoke:
 	$(PY) -m pytest -v tests/test_smoke.py
+
+
+db-up:
+	docker compose up -d
+
+db-down:
+	docker compose down
+
+migrate:
+	$(PY) scripts/migrate.py	

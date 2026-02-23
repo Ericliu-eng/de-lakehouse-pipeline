@@ -1,0 +1,65 @@
+# Proof — W02D1 Local Data Stack (Postgres + migrate/seed)
+# Date: 2026-02-23
+# Repo: de-lakehouse-pipeline
+============================================================
+Step 1 — Start Postgres (Docker)
+
+Command:
+  make db-up
+
+Output:
+  docker compose up -d
+  [+] up 1/1
+   ✔ Container de_lakehouse_db Running
+
+
+============================================================
+Step 2 — Run Migration + Seed
+
+Command:
+  make migrate
+
+Output:
+  .venv/Scripts/python.exe scripts/migrate.py
+  Running migrations...
+  Applied: scripts/init_db.sql
+  Seeding data...
+  Applied: scripts/seed.sql
+  Done.
+
+
+============================================================
+Step 3 — Run Tests (DB + Pipeline)
+
+Command:
+  make test
+
+Output:
+  .venv/Scripts/python.exe -m pytest -v -s
+
+  collected 5 items
+
+  tests/test_db_smoke.py::test_db_smoke_can_query_users PASSED
+  tests/test_pipeline.py::test_transform_normal_case PASSED
+  tests/test_pipeline.py::test_transform_drops_missing_name_and_nonpositive_amount PASSED
+  tests/test_pipeline.py::test_main_raises_if_input_missing PASSED
+  tests/test_smoke.py::test_smoke_pipeline PASSED
+
+  ==========================================================
+  RESULT: 5 passed
+
+
+============================================================
+Summary
+
+- Postgres successfully started via Docker
+- Migration script created table(s)
+- Seed script inserted data
+- Smoke test verified DB connectivity and data correctness
+- All tests passed (5/5)
+
+Reproducible Commands:
+  make setup
+  make db-up
+  make migrate
+  make test
