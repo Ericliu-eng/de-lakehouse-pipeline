@@ -11,6 +11,8 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+#            "name": ["A", "B", None],
+          #  "amount": [10, -5, 20],
 def run_pipeline(input_path: Path, output_path: Path) -> pd.DataFrame:
     print("Starting pipeline...")
 

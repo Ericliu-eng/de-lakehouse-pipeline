@@ -10,6 +10,7 @@ ifeq ($(OS),Windows_NT)
 else
 	PY := $(PY_NIX)
 endif
+
 export PYTHONPATH := src
 
 setup:
@@ -18,13 +19,16 @@ setup:
 	$(PY) -m pip install -r requirements.txt
 
 lint:
+#.venv/Scripts/python.exe -m ruff check 
 	$(PY) -m ruff check .
 
 
 clean:
 	rm -rf $(VENV)
+	
 test:
 	$(PY) -m pytest -v -s
+	
 
 run:
 	$(PY) -m de_lakehouse_pipeline.main
@@ -33,11 +37,11 @@ smoke:
 	$(PY) -m pytest -v tests/test_smoke.py
 
 
-db-up:
+db-up:  # -d 后台运行
 	docker compose up -d
 
 db-down:
 	docker compose down
 
 migrate:
-	$(PY) scripts/migrate.py	
+	$(PY) -m scripts.migrate	
