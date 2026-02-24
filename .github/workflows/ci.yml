@@ -8,6 +8,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
     services:
       postgres:
         image: postgres:16
@@ -23,18 +24,25 @@ jobs:
           --health-timeout=5s
           --health-retries=10
 
-    
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_NAME: lakehouse
+      DB_USER: lakehouse
+      DB_PASSWORD: lakehouse
+
     steps:
       - uses: actions/checkout@v4
-      - name: Run tests
-        env:
-          DB_HOST: 127.0.0.1
-          DB_PORT: 5432
-          DB_NAME: lakehouse
-          DB_USER: lakehouse
-          DB_PASSWORD: lakehouse
+
+      - name: Setup + lint
         run: |
           make setup
           make lint
-          make test
 
+      - name: Migrate DB
+        run: |
+          .venv/bin/python -m scripts.migrate
+
+      - name: Run tests
+        run: |
+          make test
