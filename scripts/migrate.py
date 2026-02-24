@@ -4,7 +4,7 @@ from pathlib import Path
 
 from de_lakehouse_pipeline.db import load_db_config, wait_for_db, connect
 
-
+#Run a .sql file against the database
 def run_sql_file(path: Path) -> None:
     sql = path.read_text(encoding="utf-8")
     cfg = load_db_config()

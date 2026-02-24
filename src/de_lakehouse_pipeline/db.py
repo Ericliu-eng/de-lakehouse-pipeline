@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import os
 import time
-from dataclasses import dataclass
 
+#dataclass:Used to define structured config objects
+from dataclasses import dataclass
+#PostgreSQL driver (connect Python ↔ Postgres)
 import psycopg
 
-
+#auto-generates __init__, __repr__, etc.and frozen = true ,makes it immutable
 @dataclass(frozen=True)
 class DBConfig:
     host: str
@@ -15,9 +17,11 @@ class DBConfig:
     user: str
     password: str
 
-
+#DBConfig is a structured configuration object used to 
+#store database connection information.
 def load_db_config() -> DBConfig:
     return DBConfig(
+        #如果没有用默认值 ，第二个值
         host=os.environ.get("DB_HOST", "localhost"),
         port=int(os.environ.get("DB_PORT", "5432")),
         dbname=os.environ.get("DB_NAME", "lakehouse"),
@@ -25,27 +29,29 @@ def load_db_config() -> DBConfig:
         password=os.environ.get("DB_PASSWORD", "lakehouse"),
     )
 
-
+#Convert config → connection string (DSN)
 def make_dsn(cfg: DBConfig) -> str:
     return (
         f"host={cfg.host} port={cfg.port} dbname={cfg.dbname} "
         f"user={cfg.user} password={cfg.password}"
     )
 
-
+#Flow:DBConfig → DSN → psycopg → connection
 def connect(cfg: DBConfig) -> psycopg.Connection:
     return psycopg.connect(make_dsn(cfg))
 
-
+#Wait until database is ready to accept connections
 def wait_for_db(cfg: DBConfig, timeout_s: int = 60) -> None:
     """Wait until DB is accepting connections (useful in CI/local)."""
     start = time.time()
     last_err: Exception | None = None
 
     while time.time() - start < timeout_s:
-        try:
+        try:            #auto close connection
             with connect(cfg) as conn:
+                        #Cursor = run SQL
                 with conn.cursor() as cur:
+                    #check DB is alive and responding
                     cur.execute("SELECT 1;")
                     cur.fetchone()
             return
