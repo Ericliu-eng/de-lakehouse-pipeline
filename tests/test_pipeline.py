@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from src.de_lakehouse_pipeline.main import transform ,main
+from de_lakehouse_pipeline.main import transform ,main
 
 #normal case 
 def test_transform_normal_case():

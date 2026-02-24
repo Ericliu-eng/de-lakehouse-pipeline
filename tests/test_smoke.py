@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.de_lakehouse_pipeline.main  import run_pipeline
+from de_lakehouse_pipeline.main  import run_pipeline
 
 
 def test_smoke_pipeline(tmp_path: Path) -> None:

@@ -1,5 +1,7 @@
 name: CI
 
+
+
 on:
   pull_request:
   push:
@@ -8,17 +10,41 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: lakehouse
+          POSTGRES_USER: lakehouse
+          POSTGRES_PASSWORD: lakehouse
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U lakehouse -d lakehouse"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_NAME: lakehouse
+      DB_USER: lakehouse
+      DB_PASSWORD: lakehouse
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Run repo commands
+      - name: Setup + lint
         run: |
           make setup
           make lint
-          make test
+
+      - name: Migrate DB
+        run: |
+          PYTHONPATH=src .venv/bin/python -m scripts.migrate
+      
+      - name: Run tests
+        run: |
+          PYTHONPATH=src make test

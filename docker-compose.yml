@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:16
+    container_name: de_lakehouse_db
+    environment:
+      POSTGRES_DB: lakehouse
+      POSTGRES_USER: lakehouse
+      POSTGRES_PASSWORD: lakehouse
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lakehouse -d lakehouse"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+volumes:
+  pgdata:
