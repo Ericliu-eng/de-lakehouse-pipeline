@@ -1,4 +1,5 @@
-.PHONY: setup lint test clean
+#Tell make:These names are "targets", not files.
+.PHONY: setup lint test run migrate db-up db-down smoke
 
 VENV := .venv
 PY_WIN := $(VENV)/Scripts/python.exe
@@ -18,17 +19,15 @@ setup:
 	$(PY) -m pip install --upgrade pip
 	$(PY) -m pip install -r requirements.txt
 
-lint:
-#.venv/Scripts/python.exe -m ruff check 
+lint:#.venv/Scripts/python.exe -m ruff check 
 	$(PY) -m ruff check .
 
 
 clean:
 	rm -rf $(VENV)
-	
-test:
-	$(PY) -m pytest -v -s
-	
+
+test:   #-V verbose  -k .. 模糊
+	$(PY) -m pytest -v	
 
 run:
 	$(PY) -m de_lakehouse_pipeline.main
@@ -36,12 +35,14 @@ run:
 smoke:
 	$(PY) -m pytest -v tests/test_smoke.py
 
+# --- DB ---------------
 
 db-up:  # -d 后台运行
 	docker compose up -d
 
 db-down:
 	docker compose down
-
 migrate:
-	$(PY) -m scripts.migrate	
+	$(PY) -m scripts.migrate
+db-smoke:
+	$(PY) -m pytest -v tests/test_db_smoke.py	
