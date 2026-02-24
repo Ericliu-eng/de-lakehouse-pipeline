@@ -43,11 +43,8 @@ jobs:
 
       - name: Migrate DB
         run: |
-          .venv/bin/python -m scripts.migrate
-      - name: Migrate DB
-        run: |
-           PYTHONPATH=src .venv/bin/python -m scripts.migrate
+          PYTHONPATH=src .venv/bin/python -m scripts.migrate
       
       - name: Run tests
         run: |
-          make test
+          PYTHONPATH=src make test
