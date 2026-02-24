@@ -1,4 +1,4 @@
-# Proof — Week 01 (Focused sessions)
+# Proof — W01D1(Focused sessions)
 # Date: 2026-02-22 (local, Windows)
 # Repo: de-lakehouse-pipeline
 
