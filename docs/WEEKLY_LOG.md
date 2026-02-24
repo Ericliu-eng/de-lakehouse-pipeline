@@ -1,7 +1,20 @@
 # Weekly Log
+## Template
+## Week <W> — <Topic>
+### W<WW>D<D> (<YYYY-MM-DD>)— <Title>
+**Deliverables**
+...
+**Validation**
+...
+**Challenges**
+...
+**Fixes**
+...
+**Outcome**
+...
 
 ## Week 01 — Repo Engineering Skeleton & MVP Pipeline
-### Iteration 1 (2026-02-19) — Repo Foundation
+### Iteration 1 (2026-02-19) — Repo Foundation-----------------------------
 **Deliverables**
 - Set up repository skeleton (src/, data/, docs/)
 - Implemented Makefile (setup / lint / test)
@@ -13,9 +26,7 @@
 **Next**
 - Implement minimal ETL pipeline
 
--------
-
-### Iteration 2 (2026-02-21) — MVP ETL Pipeline
+### Iteration 2 (2026-02-21) — MVP ETL Pipeline------------------------
 **Deliverables**
 - Implemented end-to-end ETL pipeline:
   - Extract: read `data/raw/sample.csv`
@@ -32,9 +43,7 @@
 **Next**
 - Add unit tests
 
----------
-
-### Iteration 3 (2026-02-21) — Unit Testing
+### Iteration 3 (2026-02-21) — Unit Testing----------------------------
 **Deliverables**
 - Refactored logic into `transform(df)`
 - Added unit tests for:
@@ -48,9 +57,7 @@
 **Next**
 - Add smoke / E2E test
 
----------
-
-### Iteration 4 (2026-02-21) — Smoke Test & CLI
+### Iteration 4 (2026-02-21) — Smoke Test & CLI----------------------------
 **Deliverables**
 - Implemented smoke (E2E) test using `tmp_path`
 - Added Makefile commands:
@@ -64,9 +71,7 @@
 **Next**
 - Ensure reproducibility and CI integration
 
----------
-
-### Iteration 5 (2026-02-21) — CI & Reproducibility
+### Iteration 5 (2026-02-21) — CI & Reproducibility---------------------------------
 **Deliverables**
 - CI pipeline fully passing (GitHub Actions)
 - Improved README for reproducibility
@@ -76,12 +81,8 @@
   - `make setup`
   - `make test`
   - `make run`
-**Next**
-- Demo rehearsal + documentation polish
 
----------
-
-### Iteration 6 (2026-02-22) — Demo Rehearsal
+### Iteration 6 (2026-02-22) — Demo Rehearsal--------------------------------
 **Deliverables**
 - Verified full pipeline using README instructions
 - Ensured project is runnable by external users
@@ -91,9 +92,7 @@
 **Outcome**
 - Project is now reproducible, testable, and demo-ready
 
----------
-
-## Week 01 Summary
+## Week 01 Summary------------------------------------------------------
 
 ### System Capability
 - Reproducible ETL pipeline (CLI + Makefile)
@@ -124,7 +123,7 @@
 - Add migration + schema management
 - Add DB integration tests
 
-### W02/day08 (2026-02-23) — Local Postgres + Migration Setup
+### W02D1 (2026-02-23) — Local Postgres + Migration Setup---------------------------
 
 **Deliverables**
 - Set up local Postgres service using docker-compose
@@ -164,3 +163,46 @@
 - Local data stack (Postgres + migration + seed) fully operational
 - Database layer integrated into pipeline workflow
 - Project now supports both file-based and DB-backed workflows
+
+### W02D2 (2026-02-24) — Postgres Core Logic + DB Smoke Test----------------------
+
+**Deliverables**
+- Completed Postgres-backed data workflow:
+  - Docker Compose service (`db-up`, `db-down`)
+  - Migration script (`scripts/migrate.py`) runs via module
+  - Schema initialization (`init_db.sql`)
+  - Seed data loading (`seed.sql`)
+- Added DB smoke test:
+  - `tests/test_db_smoke.py` verifies connectivity and query
+- Refactored Makefile:
+  - Added `db-up`, `db-down`, `migrate`, `db-smoke`
+  - Standardized module execution (`-m`)
+- Improved README:
+  - Added Local Postgres workflow section
+  - Documented reproducible commands
+- Added proof artifact:
+  - `docs/proof/2026-02-24_w02d2_full_run.txt`
+
+**Validation**
+- `make db-up` successfully starts Postgres container
+- `make migrate` applies schema and seed without errors
+- `make db-smoke` passes (DB reachable + query works)
+- `make test` passes all tests (5/5)
+- End-to-end workflow reproducible from Makefile commands
+
+**Challenges**
+- Module import issue (`ModuleNotFoundError`)
+- DB readiness timing (container not ready immediately)
+- Confusion between pipeline smoke vs DB smoke
+
+**Fixes**
+- Used module execution (`python -m scripts.migrate`)
+- Set `PYTHONPATH := src` in Makefile
+- Added `wait_for_db()` to ensure DB readiness
+- Separated `smoke` (pipeline) vs `db-smoke` (database)
+
+**Outcome**
+- Established a reproducible local data stack with Postgres
+- Migration + seed + test workflow fully automated
+- Clear separation of pipeline vs infrastructure validation
+- Repository now demonstrates real DE workflow patterns

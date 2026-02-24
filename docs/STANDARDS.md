@@ -1,23 +1,12 @@
-```markdown
 # Standards
 
-## Branch naming
-- Use lowercase + hyphen, e.g. `w01/d1-repo-skeleton-ci-makefile`
+## Branch Naming
+- Use lowercase + hyphen  
+- Example: `w01/d1-repo-skeleton-ci-makefile`
 
-## Commits
-- Conventional style, e.g. `feat: ...`
+---
 
-## Local commands (must stay reproducible)
-- `make setup`
-- `make lint`
-- `make test`
-
-## PR checklist
-- CI green (or explain why not)
-- Include how to validate
-- Include proof under `docs/proof/`
-
-## Commit Message Convention
+## Commit Convention
 We follow Conventional Commits:
 
 | Type      | Meaning              |
@@ -30,7 +19,22 @@ We follow Conventional Commits:
 | chore     | Maintenance/config  |
 
 ### Examples
-
 feat: add postgres migration pipeline  
 fix: handle missing values in transform  
 test: add db smoke test  
+
+---
+
+## PR Checklist
+- CI is green (or explain why not)
+- Include how to validate
+- Include proof under `docs/proof/`
+
+---
+
+## Reproducible Commands
+All commands must be runnable from a fresh environment:
+
+- `make setup`
+- `make lint`
+- `make test`
