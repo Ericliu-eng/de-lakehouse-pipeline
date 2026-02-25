@@ -29,6 +29,9 @@ clean:
 test:   #-V verbose  -k .. 模糊
 	$(PY) -m pytest -v	
 
+unit:	#-k = Filter tests by "name keywords"
+	$(PY) -m pytest -v tests/test_db_unit.py
+
 run:
 	$(PY) -m de_lakehouse_pipeline.main
 
