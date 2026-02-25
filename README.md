@@ -6,12 +6,23 @@ A lakehouse-style data engineering pipeline with reproducible workflows, testing
 
 ## Overview
 This project implements a minimal but production-style data pipeline:
-Raw Data → Transform → Storage (File + Postgres)
+**Raw Data → Transform → Storage (File + Postgres)**
 It is designed to demonstrate:
 - Reproducible data engineering workflows
 - Modular pipeline design
 - Database integration (Postgres)
 - CI-tested data pipelines
+---
+
+##  Demo (2-minute run)
+```bash
+cp .env.example .env
+make setup
+make db-up
+make migrate
+make run
+make test
+```
 ---
 
 ##  Architecture
