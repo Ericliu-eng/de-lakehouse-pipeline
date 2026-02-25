@@ -164,45 +164,67 @@
 - Database layer integrated into pipeline workflow
 - Project now supports both file-based and DB-backed workflows
 
-### W02D2 (2026-02-24) — Postgres Core Logic + DB Smoke Test----------------------
-
+### W02D2 (2026-02-24) Postgres Data Stack + Testing (Unit + Integration)---------
 **Deliverables**
 - Completed Postgres-backed data workflow:
   - Docker Compose service (`db-up`, `db-down`)
   - Migration script (`scripts/migrate.py`) runs via module
   - Schema initialization (`init_db.sql`)
   - Seed data loading (`seed.sql`)
-- Added DB smoke test:
-  - `tests/test_db_smoke.py` verifies connectivity and query
+- Implemented testing layers:
+  - DB smoke test (`tests/test_db_smoke.py`) verifies connectivity and query
+  - Unit tests (`tests/test_db_unit.py`) for DB utilities:
+    - Config loading (default + env override)
+    - DSN generation
+    - Timeout behavior (`wait_for_db`)
 - Refactored Makefile:
-  - Added `db-up`, `db-down`, `migrate`, `db-smoke`
+  - Added `db-up`, `db-down`, `migrate`, `db-smoke`, `unit`
   - Standardized module execution (`-m`)
-- Improved README:
-  - Added Local Postgres workflow section
-  - Documented reproducible commands
-- Added proof artifact:
+- Improved documentation:
+  - README includes Local Postgres workflow
+  - Reproducible commands clearly documented
+- Added proof artifacts:
   - `docs/proof/2026-02-24_w02d2_full_run.txt`
+  - `docs/proof/w02d2_w02d3_proof.txt`
+
+---
 
 **Validation**
 - `make db-up` successfully starts Postgres container
 - `make migrate` applies schema and seed without errors
 - `make db-smoke` passes (DB reachable + query works)
-- `make test` passes all tests (5/5)
-- End-to-end workflow reproducible from Makefile commands
+- `make unit` passes (4/4 unit tests)
+- `make test` passes all tests (9/9 total)
+- Full workflow reproducible via Makefile commands
+
+---
 
 **Challenges**
 - Module import issue (`ModuleNotFoundError`)
 - DB readiness timing (container not ready immediately)
 - Confusion between pipeline smoke vs DB smoke
+- Distinguishing unit tests vs integration tests
+
+---
 
 **Fixes**
 - Used module execution (`python -m scripts.migrate`)
 - Set `PYTHONPATH := src` in Makefile
 - Added `wait_for_db()` to ensure DB readiness
-- Separated `smoke` (pipeline) vs `db-smoke` (database)
+- Separated test layers:
+  - `unit` (no DB, fast)
+  - `db-smoke` (DB connectivity)
+  - full `test` (end-to-end)
+- Added deterministic timeout test for robustness
+
+---
 
 **Outcome**
 - Established a reproducible local data stack with Postgres
 - Migration + seed + test workflow fully automated
-- Clear separation of pipeline vs infrastructure validation
-- Repository now demonstrates real DE workflow patterns
+- Added proper testing hierarchy (unit + integration + pipeline)
+- Improved system robustness with failure-case testing
+- Repository now demonstrates real-world Data Engineering practices:
+  - reproducibility
+  - layered testing
+  - infrastructure + pipeline integration
