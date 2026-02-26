@@ -1,0 +1,20 @@
+# Proof — W02D4 Smoke Test via Makefile (make smoke)
+# Date: 2026-02-26
+# Repo: de-lakehouse-pipeline
+# Goal: One command runs DB smoke validation (make smoke)
+
+Command:
+  make smoke
+
+Output:
+  .venv/Scripts/python.exe -m pytest -m smoke
+  ========================================================== test session starts ===========================================================
+  platform win32 -- Python 3.11.9, pytest-9.0.2, pluggy-1.6.0
+  rootdir: C:\Users\liuxu\de-lakehouse-pipeline
+  configfile: pytest.ini
+  collected 9 items / 8 deselected / 1 selected
+
+  tests\test_db_smoke.py .                                                                                                            [100%]
+
+Result:
+  PASS — make smoke succeeds and smoke test runs and passes.

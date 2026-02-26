@@ -35,8 +35,9 @@ unit:	#-k = Filter tests by "name keywords"
 run:
 	$(PY) -m de_lakehouse_pipeline.main
 
-smoke:
-	$(PY) -m pytest -v tests/test_smoke.py
+smoke:	#在 Python 里：-m = run modul ,in pytest -m is marker
+
+	$(PY) -m pytest -m smoke
 
 # --- DB ---------------
 
