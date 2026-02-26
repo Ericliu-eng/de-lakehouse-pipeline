@@ -48,5 +48,6 @@ db-down:
 	docker compose down
 migrate:
 	$(PY) -m scripts.migrate
-db-smoke:
-	$(PY) -m pytest -v tests/test_db_smoke.py	
+	
+db-smoke: db-up migrate
+	$(PY) -m pytest -q tests/test_db_smoke.py -vv	
