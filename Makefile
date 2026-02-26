@@ -35,8 +35,9 @@ unit:	#-k = Filter tests by "name keywords"
 run:
 	$(PY) -m de_lakehouse_pipeline.main
 
-smoke:
-	$(PY) -m pytest -v tests/test_smoke.py
+smoke:	#在 Python 里：-m = run modul ,in pytest -m is marker
+
+	$(PY) -m pytest -m smoke
 
 # --- DB ---------------
 
@@ -47,5 +48,6 @@ db-down:
 	docker compose down
 migrate:
 	$(PY) -m scripts.migrate
-db-smoke:
-	$(PY) -m pytest -v tests/test_db_smoke.py	
+	
+db-smoke: db-up migrate
+	$(PY) -m pytest -q tests/test_db_smoke.py -vv	
