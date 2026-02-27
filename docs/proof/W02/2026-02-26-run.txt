@@ -1,0 +1,120 @@
+Proof — W02D4 CI + Reproducibility
+Date: 2026-02-26 (local, Windows)
+Repo: de-lakehouse-pipeline
+
+------------------------------------------------------------
+
+Goal
+Make the Postgres-backed pipeline fully reproducible end-to-end with standardized Makefile commands and CI-ready execution.
+
+------------------------------------------------------------
+
+Step 1 — Setup environment (venv + deps + editable install)
+
+Command:
+make setup
+
+Key Output:
+python -m venv .venv
+.venv/Scripts/python.exe -m pip install --upgrade pip
+.venv/Scripts/python.exe -m pip install -r requirements.txt
+.venv/Scripts/python.exe -m pip install -e .
+Successfully installed de-lakehouse-pipeline-0.1.0
+
+Validation:
+- Virtual environment created successfully
+- Dependencies installed
+- Project installed in editable mode (imports work without PYTHONPATH)
+
+------------------------------------------------------------
+
+Step 2 — Start Postgres (Docker)
+
+Command:
+make db-up
+
+Output:
+docker compose up -d
+[+] up 2/2
+Network de-lakehouse-pipeline_default Created
+Container de_lakehouse_db Created
+
+Validation:
+- Postgres container starts successfully
+
+------------------------------------------------------------
+
+Step 3 — Run migrations + seed
+
+Command:
+make migrate
+
+Output:
+Running migrations...
+Applied: scripts/init_db.sql
+Seeding data...
+Applied: scripts/seed.sql
+Done.
+
+Validation:
+- Schema created
+- Seed data inserted
+
+------------------------------------------------------------
+
+Step 4 — Run pipeline
+
+Command:
+make run
+
+Output:
+Starting pipeline...
+Loaded 4 rows from data/raw/sample.csv
+Transformed: 4 -> 2 rows
+Saved 2 rows to data/processed/output.csv
+Pipeline finished successfully
+
+Validation:
+- Data transformed correctly
+- Output file generated
+
+------------------------------------------------------------
+
+Step 5 — Run tests
+
+Command:
+make test
+
+Output:
+collected 9 items
+9 passed
+
+Validation:
+- All unit + pipeline tests pass
+
+------------------------------------------------------------
+
+Step 6 — DB smoke test
+
+Command:
+make db-smoke
+
+Output:
+tests/test_db_smoke.py PASSED
+
+Validation:
+- DB connection works
+- Tables exist
+- Seed data verified
+
+------------------------------------------------------------
+
+Final Result
+
+- Pipeline runs end-to-end from scratch
+- Postgres integration is stable
+- All tests pass locally
+- Workflow is fully reproducible using Makefile
+- Ready for CI validation
+
+------------------------------------------------------------

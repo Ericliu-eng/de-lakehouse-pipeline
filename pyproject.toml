@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "de-lakehouse-pipeline"
+version = "0.1.0"
+description = "Data Engineering Lakehouse Pipeline Project"
+requires-python = ">=3.9"
+dependencies = [
+    # 这里可以列出你的核心依赖，或者保持为空，继续使用 requirements.txt
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]  # 关键点：告诉工具代码在 src 文件夹里

@@ -1,4 +1,4 @@
-# Proof — W02D4 Smoke Test via Makefile (make smoke)
+# Proof — W02D3 Smoke Test via Makefile (make smoke)
 # Date: 2026-02-26
 # Repo: de-lakehouse-pipeline
 # Goal: One command runs DB smoke validation (make smoke)
