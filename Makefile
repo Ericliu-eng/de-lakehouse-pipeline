@@ -1,9 +1,10 @@
 #Tell make:These names are "targets", not files.
-.PHONY: setup lint test run migrate db-up db-down smoke
+.PHONY: setup lint test run migrate db-up db-down smoke proof
 
 VENV := .venv
 PY_WIN := $(VENV)/Scripts/python.exe
 PY_NIX := $(VENV)/bin/python
+
 
 # Choose python path depending on OS (Windows_NT is set on Windows)
 ifeq ($(OS),Windows_NT)
@@ -12,15 +13,17 @@ else
 	PY := $(PY_NIX)
 endif
 
-export PYTHONPATH := src
+
 
 setup:
 	python -m venv $(VENV)
 	$(PY) -m pip install --upgrade pip
 	$(PY) -m pip install -r requirements.txt
+	$(PY) -m pip install -e .
 
 lint:#.venv/Scripts/python.exe -m ruff check 
 	$(PY) -m ruff check .
+
 
 
 clean:
@@ -49,5 +52,8 @@ db-down:
 migrate:
 	$(PY) -m scripts.migrate
 	
-db-smoke: db-up migrate
-	$(PY) -m pytest -q tests/test_db_smoke.py -vv	
+#this for CI
+db-smoke:
+	$(PY) -m pytest -q tests/test_db_smoke.py -vv
+
+db-smoke-local: db-up migrate db-smoke

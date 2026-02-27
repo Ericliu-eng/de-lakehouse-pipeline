@@ -1,4 +1,4 @@
-# Proof — W02D2 + W02D3 Local Data Stack (Postgres + migrate/seed + unit tests)
+# Proof — W02D2 Local Data Stack (Postgres + migrate/seed + unit tests)
 # Date: 2026-02-24
 # Repo: de-lakehouse-pipeline
 

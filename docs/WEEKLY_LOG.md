@@ -92,6 +92,7 @@
 **Outcome**
 - Project is now reproducible, testable, and demo-ready
 
+
 ## Week 01 Summary------------------------------------------------------
 
 ### System Capability
@@ -228,3 +229,93 @@
   - reproducibility
   - layered testing
   - infrastructure + pipeline integration
+
+---
+
+### W02D3 (2026-02-25) — DB Smoke Test + CI Alignment--------------------
+
+**Deliverables**
+- Implemented DB smoke test (`tests/test_db_smoke.py`)
+- Verified:
+  - Database connectivity
+  - Table existence (`users`)
+  - Seed data presence (Alice, Bob)
+- Added helper function `_table_exists(conn, table_name)`
+- Introduced pytest marker: `@pytest.mark.smoke`
+- Registered marker in `pytest.ini`
+- Refactored Makefile:
+  - `db-smoke` runs pytest only (no docker in CI)
+
+**Validation**
+- Local:
+  - Ran `make db-up` → Postgres container healthy
+  - Ran `make migrate` → tables created + seed inserted
+  - Ran `pytest -m smoke -vv` → PASSED
+- CI:
+  - Postgres provided via GitHub Actions `services`
+  - Smoke test executed without docker compose
+  - CI pipeline PASSED
+
+**Challenges**
+- `PytestUnknownMarkWarning` for `smoke`
+- Confusion with SQL parameter tuple `(table_name,)`
+- Local vs CI DB startup difference
+- CI failure due to `docker compose` dependency
+
+**Fixes**
+- Added marker config in `pytest.ini`
+- Fixed SQL parameter format `(table_name,)`
+- Removed `db-up` from `db-smoke` in CI
+- Clarified execution model:
+  - Local → manual DB setup
+  - CI → service container
+
+**Outcome**
+- Established stable DB smoke testing workflow
+- CI-compatible testing achieved
+- Clear separation of concerns:
+  - Infrastructure vs testing
+- Ready for next steps:
+  - W02D4 (data load into Postgres)
+  - W02D5 (pipeline integration)
+
+### W02D4 (2026-02-26) — CI Integration + End-to-End Reproducibility
+
+**Deliverables**
+- Integrated Postgres workflow into CI (GitHub Actions)
+- Standardized execution via Makefile (`setup`, `migrate`, `db-smoke`, `test`)
+- Fixed Python import issue using editable install (`pip install -e .`)
+- Improved README with clear Quickstart + DB workflow
+- Added reproducible proof under `docs/proof/w02/2026-02-27-run`
+- Verified full pipeline runs from scratch (local)
+
+**Validation**
+- `make setup` successfully creates venv and installs dependencies
+- `make db-up` starts Postgres container
+- `make migrate` applies schema + seed without error
+- `make run` processes data (4 → 2 rows) and writes output
+- `make test` → 9 tests passed
+- `make db-smoke` verifies DB connectivity + schema + seed
+- CI pipeline runs: setup → lint → migrate → db-smoke → test
+
+**Challenges**
+- `ModuleNotFoundError: de_lakehouse_pipeline` when running migrate
+- PYTHONPATH inconsistencies between Windows, Makefile, and CI
+- Conflict between local Docker workflow and CI Postgres service
+- Ambiguity between pipeline smoke tests vs DB smoke tests
+
+**Fixes**
+- Introduced `pyproject.toml` and installed project with `pip install -e .`
+- Removed reliance on fragile `PYTHONPATH`
+- Split DB smoke targets: `db-smoke` (CI-safe) vs `db-smoke-local`
+- Updated CI to rely only on Makefile commands
+- Clarified README commands and DB workflow
+
+**Outcome**
+- Fully reproducible pipeline from clean environment
+- Stable Postgres integration (local + CI)
+- All tests passing (unit + pipeline + DB)
+- Project upgraded to “production-style” reproducibility standard
+- Repository is now runnable, testable, and CI-validated end-to-end
+
+

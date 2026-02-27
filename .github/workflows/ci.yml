@@ -1,5 +1,6 @@
 name: CI
-
+#CI = Continuous Integration
+#Think of the CI configuration file (this YAML file) as a nanny-style tutorial for GitHub bots
 on:
   pull_request:
   push:
@@ -34,15 +35,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup + lint
+      - name: Setup (deps)
         run: |
           make setup
+
+      - name: Lint
+        run: |
           make lint
 
       - name: Migrate DB
         run: |
-          PYTHONPATH=src .venv/bin/python -m scripts.migrate
-      
+          make migrate
+
+      - name: Smoke (DB)
+        run: |
+          make db-smoke
+
       - name: Run tests
         run: |
-          PYTHONPATH=src make test
+          make test

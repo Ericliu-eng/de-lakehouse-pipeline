@@ -15,6 +15,7 @@ It is designed to demonstrate:
 ---
 
 ##  Demo (2-minute run)
+Run the full pipeline locally:
 ```bash
 cp .env.example .env
 make setup
@@ -56,18 +57,23 @@ make test
 ---
 
 ## Database (Postgres)
-Start DB:
+### Start database
 ```bash
 make db-up
 ```
-Run migrations:
+### Run migrations (create schema + seed data)
 ```bash
 make migrate
 ```
-Smoke test
+### Verify database (smoke test)
 ```bash
-make smoke
+make db-smoke
 ```
+### Stop database
+```bash 
+make db-down
+```
+
 ---
 
 ## Testing
@@ -116,7 +122,7 @@ docs/                        # proof / logs
 ---
 
 ## Reproducibility
-##### All workflows are standardized via Makefile:
+### All workflows are standardized via Makefile:
 ```bash
 make setup
 make lint
@@ -124,15 +130,18 @@ make test
 make run
 make migrate
 ```
-#### Works consistently across:
+### Works consistently across:
  - Local environment
  - CI (GitHub Actions)
 ---
 
-## CI
-#### GitHub Actions automatically runs:
+## CI (GitHub Actions)
+### On every pull request, CI automatically runs:
 ```bash
+make setup
 make lint
+make migrate
+make db-smoke
 make test
 ```
 #### on every pull request.
