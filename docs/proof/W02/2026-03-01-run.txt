@@ -1,0 +1,123 @@
+W02D6 Proof — Postgres + migrate/seed + CI
+Date:
+2026-03-01
+
+--------------------------------------------------
+
+Goal:
+Validate that the local data stack (Postgres + migrations + seed + Makefile workflow)
+is fully reproducible from scratch.
+
+--------------------------------------------------
+
+Environment Setup
+
+Command:
+make setup
+
+Key Output:
+python -m venv .venv
+pip install -r requirements.txt
+Successfully installed de-lakehouse-pipeline-0.1.0
+
+Result:
+- Virtual environment created
+- Dependencies installed
+- Editable package installed
+
+--------------------------------------------------
+
+Lint Check
+
+Command:
+make lint
+
+Output:
+All checks passed!
+
+Result:
+- Code passes linting (ruff)
+
+--------------------------------------------------
+
+Database Reset
+
+Command:
+make db-down
+
+Output:
+Container removed
+Network removed
+
+Command:
+make db-up
+
+Output:
+Container created
+Network created
+
+Result:
+- Fresh Postgres instance started
+
+--------------------------------------------------
+
+Run Migrations + Seed
+
+Command:
+make migrate
+
+Output:
+Running migrations...
+Applied: migrations\001_init.sql
+Applied: migrations\002_tables.sql
+
+Seeding data...
+Applied: scripts\seed.sql
+
+Done.
+
+Result:
+- Migration system executed successfully
+- Schema created (users table)
+- Seed data inserted
+
+--------------------------------------------------
+
+Validation (Manual Check)
+
+Expected:
+- users table exists
+- updated_at column exists
+- seed data exists (e.g., Alice, Bob)
+
+--------------------------------------------------
+
+Reproducibility Check
+
+Full pipeline:
+make setup
+make lint
+make db-down
+make db-up
+make migrate
+
+Result:
+- Runs without errors
+- No manual steps required
+
+--------------------------------------------------
+
+Key Learnings
+
+- Migrations must be idempotent (IF NOT EXISTS)
+- Seed scripts should avoid duplication
+- Makefile ensures reproducibility
+- Logs + tests improve visibility
+
+--------------------------------------------------
+
+Outcome
+
+- Fully reproducible local data stack
+- Migration + seed pipeline works end-to-end
+- Ready for Week 03 (SQL engineering)

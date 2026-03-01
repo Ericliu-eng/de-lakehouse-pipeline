@@ -11,3 +11,4 @@ tests/test_db_smoke.py
 tests/test_db_unit.py
 tests/test_pipeline.py
 tests/test_smoke.py
+tests/test_sql_queries.py

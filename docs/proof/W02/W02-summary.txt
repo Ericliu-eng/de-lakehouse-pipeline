@@ -1,0 +1,89 @@
+W02 Summary (Proof Bundle)
+
+Date Range:
+2026-02-23 → 2026-03-01
+
+--------------------------------------------------
+
+Objective:
+Build a local Postgres-based data stack with migration, seed,
+testing, and CI integration.
+
+--------------------------------------------------
+
+Key Work Completed:
+
+- Set up Postgres using Docker Compose
+- Implemented migration system:
+  - 001_init.sql (base schema)
+  - 002_tables.sql (schema evolution)
+- Added seed script (seed.sql)
+- Built DB connection module (db.py)
+- Implemented migration runner (scripts/migrate.py)
+
+- Added testing:
+  - Unit tests (DB config, connection logic)
+  - DB smoke tests (connectivity, table existence, seed data)
+  - Pipeline tests (end-to-end validation)
+
+- Integrated workflow into Makefile:
+  - setup / db-up / db-down / migrate / test / db-smoke
+
+- Integrated CI (GitHub Actions):
+  - Postgres service container
+  - Test pipeline execution
+
+--------------------------------------------------
+
+Validation:
+
+- Postgres container starts successfully
+- Migrations applied without errors
+- Seed data inserted correctly
+- DB smoke test passes (connection + schema + data)
+- Unit tests pass
+- Full test suite passes
+- Pipeline reproducible via Makefile commands
+
+--------------------------------------------------
+
+Reproducibility:
+
+Full workflow verified:
+
+make setup
+make lint
+make db-down
+make db-up
+make migrate
+make test
+
+Result:
+- Runs successfully from clean environment
+- No manual steps required
+
+--------------------------------------------------
+
+Notes:
+
+- DB readiness handled via wait_for_db()
+- Migration scripts are idempotent (IF NOT EXISTS)
+- CI uses service container instead of docker compose
+- Testing layers separated (unit vs smoke vs pipeline)
+
+--------------------------------------------------
+
+Related Logs:
+
+- 2026-02-23-run.txt
+- 2026-02-24-run.txt
+- 2026-02-25-run.txt
+- 2026-02-26-run.txt
+- 2026-02-28-run.txt
+- 2026-03-01-run.txt
+
+--------------------------------------------------
+
+Status:
+Week 02 completed successfully.
+System is stable and reproducible.

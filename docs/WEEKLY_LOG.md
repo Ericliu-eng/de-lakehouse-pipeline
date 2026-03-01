@@ -119,10 +119,7 @@
 - No schema enforcement
 - No configuration layer (.env not fully utilized)
 
-### Next Focus
-- Introduce Postgres-backed storage
-- Add migration + schema management
-- Add DB integration tests
+
 
 ### W02D1 (2026-02-23) — Local Postgres + Migration Setup---------------------------
 
@@ -319,3 +316,129 @@
 - Repository is now runnable, testable, and CI-validated end-to-end
 
 
+
+
+### W02D5 (2026-02-28) — SQL Foundation Setup
+
+**Deliverables**
+- Created SQL layer:
+  - `sql/patterns_window.sql` (window function + dedup logic)
+  - `sql/quality_checks.sql` (data quality checks)
+- Added schema evolution:
+  - `migrations/002_tables.sql` (added `updated_at`)
+- Implemented SQL tests:
+  - `tests/test_sql_queries.py`
+- Successfully executed full test suite (`make test`)
+
+---
+
+**Validation**
+- Ran:
+  ```bash
+  make test
+
+
+ # 📅 Week 02 — Local Data Stack (Postgres + Migration + CI)
+
+**Date Range:** 2026-02-23 → 2026-03-01  
+**Focus:** Build a reproducible local data platform with Postgres, migrations, testing, and CI integration.
+
+---
+
+## 🎯 Weekly Goal
+
+Establish a **production-style local data stack** that supports:
+
+- Postgres-based storage
+- Migration + seed workflow
+- Layered testing (unit + integration + smoke)
+- End-to-end reproducibility via Makefile
+- CI integration (GitHub Actions)
+
+---
+
+## 🧱 What Was Built
+
+### 1. Database Infrastructure
+- Local Postgres service via Docker Compose
+- DB connection module (`db.py`)
+  - Environment-based configuration
+  - Connection handling with psycopg
+  - Readiness check (`wait_for_db`)
+- Migration system:
+  - `001_init.sql` (base schema)
+  - `002_tables.sql` (schema evolution)
+- Seed pipeline (`seed.sql`)
+- Migration runner (`scripts/migrate.py`)
+
+---
+
+### 2. Workflow Standardization (Makefile)
+- Unified commands:
+  - `make setup`
+  - `make db-up / db-down`
+  - `make migrate`
+  - `make test`
+  - `make db-smoke`
+- Module-based execution (`python -m ...`)
+- Editable install (`pip install -e .`) to resolve import issues
+
+---
+
+### 3. Testing Architecture (Key Upgrade 🚀)
+
+Established **3-layer testing system**:
+
+- **Unit Tests**
+  - No DB dependency
+  - Test config loading, DSN, timeout behavior
+- **DB Smoke Tests**
+  - Validate DB connectivity, schema, and seed data
+- **Pipeline Tests**
+  - Validate end-to-end processing logic
+
+Key files:
+- `tests/test_db_unit.py`
+- `tests/test_db_smoke.py`
+- `tests/test_pipeline.py`
+
+---
+
+### 4. CI Integration
+- GitHub Actions pipeline:
+  - Setup → Lint → Migrate → DB Smoke → Test
+- Postgres service container in CI
+- Removed dependency on local Docker inside CI
+- Ensured consistent execution via Makefile
+
+---
+
+### 5. SQL Layer (Week 03 Preparation)
+- Introduced SQL engineering layer:
+  - `sql/patterns_window.sql` (window functions, dedup)
+  - `sql/quality_checks.sql` (data validation rules)
+- Added SQL test file:
+  - `tests/test_sql_queries.py`
+- Extended schema (`updated_at` column)
+
+---
+
+### 6. Documentation & Proof
+- README updated with clear Quickstart + DB workflow
+- Proof artifacts added under:
+  - `docs/proof/`
+- Reproducible commands documented
+
+---
+
+## 🧪 Validation Summary
+
+All workflows verified locally:
+
+```bash
+make setup
+make lint
+make db-up
+make migrate
+make test
+make db-smoke 
