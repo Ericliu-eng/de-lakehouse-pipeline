@@ -39,10 +39,13 @@ run:
 	$(PY) -m de_lakehouse_pipeline.main
 
 smoke:	#在 Python 里：-m = run modul ,in pytest -m is marker
-
 	$(PY) -m pytest -m smoke
 
+	
+
 # --- DB ---------------
+db-shell:
+	docker exec -it de_lakehouse_db psql -U lakehouse -d lakehouse
 
 db-up:  # -d 后台运行
 	docker compose up -d
