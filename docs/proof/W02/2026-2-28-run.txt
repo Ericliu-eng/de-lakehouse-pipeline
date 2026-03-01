@@ -1,0 +1,14 @@
+# W02D6 Proof
+
+## make test output
+
+All tests passed:
+
+11 passed in Xs
+
+## Summary
+
+- SQL window function implemented
+- Deduplication logic implemented
+- Data quality checks implemented
+- SQL tests added and passing
