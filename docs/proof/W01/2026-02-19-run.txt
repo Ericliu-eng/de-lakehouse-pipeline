@@ -3,7 +3,7 @@
 # Repo: de-lakehouse-pipeline
 
 ============================================================
-Iteration 1 — Initial test validation (W01D1: repo skeleton)
+Iteration 1 — Initial test validation : repo skeleton
 
 Commands:
   make test

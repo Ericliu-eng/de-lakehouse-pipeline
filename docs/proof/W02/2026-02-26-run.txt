@@ -4,11 +4,6 @@ Repo: de-lakehouse-pipeline
 
 ------------------------------------------------------------
 
-Goal
-Make the Postgres-backed pipeline fully reproducible end-to-end with standardized Makefile commands and CI-ready execution.
-
-------------------------------------------------------------
-
 Step 1 — Setup environment (venv + deps + editable install)
 
 Command:

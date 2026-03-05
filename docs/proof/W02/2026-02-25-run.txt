@@ -1,7 +1,7 @@
 # Proof — W02D3 Smoke Test via Makefile (make smoke)
-# Date: 2026-02-26
+# Date: 2026-02-25
 # Repo: de-lakehouse-pipeline
-# Goal: One command runs DB smoke validation (make smoke)
+
 
 Command:
   make smoke

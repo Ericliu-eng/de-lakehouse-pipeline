@@ -3,7 +3,7 @@
 # Repo: de-lakehouse-pipeline
 
 ============================================================
-Iteration 6 — Reproducibility check (W01D6: fresh setup)
+Iteration 6 — Reproducibility check : fresh setup
 
 Commands:
   make setup

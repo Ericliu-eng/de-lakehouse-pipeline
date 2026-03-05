@@ -11,8 +11,6 @@ Output:
   docker compose up -d
   [+] up 1/1
    ✔ Container de_lakehouse_db Running
-
-
 ============================================================
 Step 2 — Run Migration + Seed
 
@@ -26,8 +24,6 @@ Output:
   Seeding data...
   Applied: scripts/seed.sql
   Done.
-
-
 ============================================================
 Step 3 — Run Tests (DB + Pipeline)
 
@@ -47,7 +43,6 @@ Output:
 
   ==========================================================
   RESULT: 5 passed
-
 
 ============================================================
 Summary
