@@ -1,13 +1,7 @@
 
-W02D5 Proof — Postgres + migrate/seed + CI
-Date:
-2026-02-28
-
---------------------------------------------------
-
-Goal:
-Validate that the local data stack (Postgres + migrations + seed + Makefile workflow)
-is fully reproducible from scratch.
+Proof — W02D5 CI + Reproducibility
+Date: 2026-02-28 (local, Windows)
+Repo: de-lakehouse-pipeline
 
 --------------------------------------------------
 

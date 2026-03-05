@@ -3,7 +3,7 @@
 # Repo: de-lakehouse-pipeline
 
 ============================================================
-Iteration 2 — MVP pipeline run (W01D2: ETL pipeline)
+Iteration 2 — MVP pipeline run : ETL pipeline
 
 Commands:
   make lint
@@ -28,7 +28,7 @@ Validation:
 
 
 ============================================================
-Iteration 3 — Unit tests (W01D3: core logic validation)
+Iteration 3 — Unit tests : core logic validation
 
 Commands:
   make test
@@ -47,7 +47,7 @@ Validation:
 
 
 ============================================================
-Iteration 4 — Smoke / E2E test (W01D4: pipeline validation)
+Iteration 4 — Smoke / E2E test : pipeline validation
 
 Commands:
   make test

@@ -1,5 +1,6 @@
-W03D1 Proof — 2026-03-04
-Branch: w03/d01-sql-patterns-checks
+# Proof — W03D1 (Focused sessions)
+# Date: 2026-03-04 (local, Windows)
+# Repo: de-lakehouse-pipeline
 
 Command: make migrate
 ----------------------------------------

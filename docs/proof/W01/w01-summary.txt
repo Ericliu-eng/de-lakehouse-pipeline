@@ -1,0 +1,90 @@
+W01 Summary (Proof Bundle)
+
+Date Range:
+2026-02-19 → 2026-02-22
+
+--------------------------------------------------
+
+Objective:
+Establish the engineering foundation of the project by building a reproducible
+data engineering repository, implementing an MVP ETL pipeline, and integrating
+testing and CI.
+
+--------------------------------------------------
+
+Key Work Completed:
+- Initialized repository structure:
+  - src/ (pipeline code)
+  - data/ (raw + processed datasets)
+  - docs/ (proof logs and documentation)
+
+- Implemented Makefile-based workflow:
+  - setup
+  - lint
+  - test
+  - run
+  - smoke
+
+- Built MVP ETL pipeline:
+  - Load data from data/raw/sample.csv
+  - Clean data (remove missing name values)
+  - Filter invalid rows (amount <= 0)
+  - Save processed output to data/processed/output.csv
+
+- Implemented testing framework:
+  - Unit tests for transformation logic
+  - Edge case validation
+  - Smoke test for full pipeline execution
+
+- Integrated CI pipeline (GitHub Actions):
+  - Automated lint checks
+  - Automated test execution
+
+--------------------------------------------------
+
+Validation:
+
+- Unit tests pass consistently
+- Smoke test validates end-to-end pipeline execution
+- Pipeline runs successfully via CLI
+- Output dataset verified (4 input rows → 2 valid rows)
+- CI pipeline passes without errors
+
+--------------------------------------------------
+
+Reproducibility:
+
+Full workflow verified:
+
+make setup
+make lint
+make test
+make run
+
+Result:
+- Project runs successfully from a clean environment
+- Pipeline execution reproducible using Makefile commands
+- No manual setup steps required
+
+--------------------------------------------------
+
+Notes:
+
+- Project structure designed for future expansion
+- Testing layers separated (unit vs smoke)
+- CLI-based workflow ensures consistent execution
+- Proof logs stored in docs/proof/
+
+--------------------------------------------------
+
+Related Logs:
+
+- 2026-02-19-run.txt
+- 2026-02-21-run.txt
+- 2026-02-22-run.txt
+
+--------------------------------------------------
+
+Status:
+Week 01 completed successfully.
+Engineering foundation and MVP pipeline established.
