@@ -93,7 +93,7 @@
 - Project is now reproducible, testable, and demo-ready
 
 
-## Week 01 Summary------------------------------------------------------
+# Week 01 Summary------------------------------------------------------
 
 ### System Capability
 - Reproducible ETL pipeline (CLI + Makefile)
@@ -283,7 +283,7 @@
 - Standardized execution via Makefile (`setup`, `migrate`, `db-smoke`, `test`)
 - Fixed Python import issue using editable install (`pip install -e .`)
 - Improved README with clear Quickstart + DB workflow
-- Added reproducible proof under `docs/proof/w02/2026-02-27-run`
+- Added reproducible proof under `docs/proof/w02/2026-02-26-run.txt`
 - Verified full pipeline runs from scratch (local)
 
 **Validation**
@@ -317,128 +317,111 @@
 
 
 
-
-### W02D5 (2026-02-28) — SQL Foundation Setup
+### W02D5 (2026-02-28) — Establish SQL Patterns, Data Quality Checks, and Initial SQL Tests
 
 **Deliverables**
-- Created SQL layer:
-  - `sql/patterns_window.sql` (window function + dedup logic)
-  - `sql/quality_checks.sql` (data quality checks)
-- Added schema evolution:
-  - `migrations/002_tables.sql` (added `updated_at`)
-- Implemented SQL tests:
-  - `tests/test_sql_queries.py`
-- Successfully executed full test suite (`make test`)
-
----
+- Created/updated `docs/DATA_MODEL.md` describing the current schema and table fields.
+- Added migration file `migrations/002_tables.sql` to support schema evolution (added `updated_at` column).
+- Implemented SQL pattern library:
+  - `sql/patterns_window.sql` — window function examples (`ROW_NUMBER`, dedup logic).
+- Implemented data validation queries:
+  - `sql/quality_checks.sql` — row count, null checks, duplicate detection.
+- Added SQL smoke tests:
+  - `tests/test_sql_queries.py` to verify SQL files execute correctly.
+- Generated ERD placeholder diagram:
+  - `docs/erd.png`.
+- Recorded reproducibility proof:
+  - `docs/proof/2026-02-28-run.txt`.
 
 **Validation**
-- Ran:
-  ```bash
-  make test
-
-
- # 📅 Week 02 — Local Data Stack (Postgres + Migration + CI)
-
-**Date Range:** 2026-02-23 → 2026-03-01  
-**Focus:** Build a reproducible local data platform with Postgres, migrations, testing, and CI integration.
-
----
-
-## 🎯 Weekly Goal
-
-Establish a **production-style local data stack** that supports:
-
-- Postgres-based storage
-- Migration + seed workflow
-- Layered testing (unit + integration + smoke)
-- End-to-end reproducibility via Makefile
-- CI integration (GitHub Actions)
-
----
-
-## 🧱 What Was Built
-
-### 1. Database Infrastructure
-- Local Postgres service via Docker Compose
-- DB connection module (`db.py`)
-  - Environment-based configuration
-  - Connection handling with psycopg
-  - Readiness check (`wait_for_db`)
-- Migration system:
-  - `001_init.sql` (base schema)
-  - `002_tables.sql` (schema evolution)
-- Seed pipeline (`seed.sql`)
-- Migration runner (`scripts/migrate.py`)
-
----
-
-### 2. Workflow Standardization (Makefile)
-- Unified commands:
-  - `make setup`
-  - `make db-up / db-down`
+- Ran migrations successfully:
   - `make migrate`
+- Verified code quality:
+  - `make lint` (ruff checks passed).
+- Executed tests:
   - `make test`
-  - `make db-smoke`
-- Module-based execution (`python -m ...`)
-- Editable install (`pip install -e .`) to resolve import issues
+  - Smoke tests confirmed SQL queries run without errors.
+- Confirmed CI workflow compatibility with migration + SQL checks.
 
----
+**Challenges**
+- SQL examples were initially mixed inside migration files, which is not best practice.
+- SQL tests originally executed only a single statement from the SQL file.
+- Duplicate-check query produced multiple rows, which conflicted with test expectations.
 
-### 3. Testing Architecture (Key Upgrade 🚀)
+**Fixes**
+- Separated repository responsibilities:
+  - `migrations/` for schema evolution only.
+  - `sql/` for reusable query patterns and validation logic.
+- Updated SQL tests to execute statements sequentially and safely.
+- Modified duplicate detection query to return a summarized result compatible with tests.
 
-Established **3-layer testing system**:
+**Outcome**
+- Established the initial **SQL foundation layer** for the pipeline.
+- Introduced reusable SQL patterns and automated validation queries.
+- Integrated SQL checks into the testing workflow.
+- Strengthened reproducibility through proof logs and documentation updates.
+- Project now includes a structured SQL layer supporting future data quality and transformation logic.
 
-- **Unit Tests**
-  - No DB dependency
-  - Test config loading, DSN, timeout behavior
-- **DB Smoke Tests**
-  - Validate DB connectivity, schema, and seed data
-- **Pipeline Tests**
-  - Validate end-to-end processing logic
+# Week 02 Summary---------------------------------------------------------------------------------------
 
-Key files:
-- `tests/test_db_unit.py`
-- `tests/test_db_smoke.py`
-- `tests/test_pipeline.py`
+### System Capability
+- Postgres-backed storage layer
+- Versioned database migrations
+- Seed workflow for deterministic test data
+- Layered testing (unit + DB smoke + pipeline)
+- Reproducible DB workflow via Makefile
+- CI pipeline with Postgres service
 
----
+### Engineering Guarantees
+- Reproducibility: full stack runs from clean environment
+- Determinism: migrations + seed ensure consistent DB state
+- Testability: DB unit tests + integration smoke tests
+- Automation: CI validates migrations and DB connectivity
 
-### 4. CI Integration
-- GitHub Actions pipeline:
-  - Setup → Lint → Migrate → DB Smoke → Test
-- Postgres service container in CI
-- Removed dependency on local Docker inside CI
-- Ensured consistent execution via Makefile
+### Metrics
+- CI passing (GitHub Actions with Postgres service)
+- Migration runtime: <10s
+- Full pipeline runtime: <2 minutes
+- Tests: unit + DB smoke + pipeline tests passing
 
----
+### Gaps / Next Risks
+- SQL modeling layer still minimal
+- Data quality checks not yet enforced
+- Observability/logging still missing
+- No query performance optimization yet
+- ERD and data model documentation still evolving
 
-### 5. SQL Layer (Week 03 Preparation)
-- Introduced SQL engineering layer:
-  - `sql/patterns_window.sql` (window functions, dedup)
-  - `sql/quality_checks.sql` (data validation rules)
-- Added SQL test file:
-  - `tests/test_sql_queries.py`
-- Extended schema (`updated_at` column)
 
----
+### W03D1 (2026-03-03) — SQL Validation and Testing
 
-### 6. Documentation & Proof
-- README updated with clear Quickstart + DB workflow
-- Proof artifacts added under:
-  - `docs/proof/`
-- Reproducible commands documented
+**Deliverables**
+- Executed SQL queries in `sql/patterns_window.sql`
+- Verified deduplication logic using window functions
+- Ran data quality checks from `sql/quality_checks.sql`
+- Executed development workflow commands:
+  - `make migrate`
+  - `make lint`
+  - `make smoke`
+- Recorded proof artifact in `docs/proof/2026-03-03-run.txt`
 
----
+**Validation**
+- SQL queries executed successfully in local Postgres
+- Database migration completed without errors
+- Lint checks passed
+- Smoke tests confirmed database connectivity and query execution
+- Workflow verified to be reproducible from command-line execution
 
-## 🧪 Validation Summary
+**Challenges**
+- Ensuring local Postgres container was running before executing SQL queries
+- Verifying window function logic behaved correctly with available sample data
+- Confirming schema definitions matched the expected SQL queries
 
-All workflows verified locally:
+**Fixes**
+- Verified database container status using `docker compose up -d`
+- Re-ran migration to ensure schema consistency
+- Validated queries manually and via smoke tests
 
-```bash
-make setup
-make lint
-make db-up
-make migrate
-make test
-make db-smoke 
+**Outcome**
+- SQL patterns and quality checks confirmed working in the local environment
+- Development workflow (`migrate + lint + smoke`) validated
+- Reproducible proof recorded for the pipeline validation step

@@ -1,5 +1,5 @@
 W03D1 Proof — 2026-03-04
-Branch: w03/d2-sql-patterns-checks
+Branch: w03/d01-sql-patterns-checks
 
 Command: make migrate
 ----------------------------------------
