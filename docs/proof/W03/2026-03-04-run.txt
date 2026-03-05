@@ -1,0 +1,28 @@
+W03D1 Proof — 2026-03-04
+Branch: w03/d2-sql-patterns-checks
+
+Command: make migrate
+----------------------------------------
+.venv/Scripts/python.exe -m scripts.migrate
+Running migrations...
+Applied: migrations\001_init.sql
+Applied: migrations\002_tables.sql
+Seeding data...
+Applied: scripts\seed.sql
+Done.
+
+Command: make lint
+----------------------------------------
+.venv/Scripts/python.exe -m ruff check .
+All checks passed!
+
+Command: make smoke
+----------------------------------------
+.venv/Scripts/python.exe -m pytest -m smoke
+platform win32 -- Python 3.11.9, pytest-9.0.2, pluggy-1.6.0
+collected 11 items / 8 deselected / 3 selected
+
+tests\test_db_smoke.py . [ 33%]
+tests\test_sql_queries.py .. [100%]
+
+3 passed, 8 deselected in 1.09s

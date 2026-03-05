@@ -3,6 +3,7 @@
 -- Rank users by newest created_at
 -- ========================================
 
+-- Save reusable SQL schemas
 SELECT
     id,
     name,

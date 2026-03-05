@@ -1,6 +1,8 @@
 # de-lakehouse-pipeline
 
-A lakehouse-style data engineering pipeline with reproducible workflows, testing, and CI integration.
+A minimal production-style **data engineering pipeline** demonstrating
+reproducible workflows, SQL validation, database migrations, and CI-tested data pipelines.
+Built as a foundation for **Data Engineering → MLOps → AI Platform systems.**
 
 ---
 
@@ -14,6 +16,7 @@ It is designed to demonstrate:
 - CI-tested data pipelines
 ---
 
+
 ##  Demo (2-minute run)
 Run the full pipeline locally:
 ```bash
@@ -24,6 +27,17 @@ make migrate
 make run
 make test
 ```
+---
+
+## Tech Stack
+- Python 3.11
+- Postgres
+- Docker Compose
+- Pytest (testing)
+- Ruff (linting)
+- Makefile (reproducible workflows)
+- GitHub Actions (CI)
+
 ---
 
 ##  Architecture
@@ -43,17 +57,6 @@ B --> D[(Postgres DB)]
 - **Load**:
   - Save processed CSV
   - Insert into Postgres tables
----
-
-## Quickstart
-```bash
-cp .env.example .env
-make setup
-make db-up
-make migrate
-make run
-make test
-```
 ---
 
 ## Database (Postgres)
@@ -111,7 +114,7 @@ make migrate
 ---
 
 ## Project Structure
-```markdown 
+```
 src/de_lakehouse_pipeline/   # pipeline logic
 scripts/                     # migration scripts
 tests/                       # unit + smoke tests
@@ -120,6 +123,20 @@ docs/                        # proof / logs
 ```
 
 ---
+
+## SQL Validation Layer
+The pipeline includes reusable SQL patterns and validation queries:
+
+- Window functions (`ROW_NUMBER`) for deduplication
+- Data quality checks (null / duplicate detection)
+- SQL execution tested via pytest
+
+Location:
+```
+sql/
+├── patterns_window.sql
+└── quality_checks.sql
+```
 
 ## Reproducibility
 ### All workflows are standardized via Makefile:
@@ -144,8 +161,12 @@ make migrate
 make db-smoke
 make test
 ```
-#### on every pull request.
+
+
+#### Runs automatically on every pull request.
 ----
+
+
 
 ## Why this project
 #### This project demonstrates:
