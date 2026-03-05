@@ -1,6 +1,5 @@
--- ========================================
--- Data Quality Checks (starter)
--- ========================================
+-- quality_checks.sql
+-- Each statement should return exactly 1 row.
 
 -- 1) Row count should be > 0
 SELECT COUNT(*) AS users_count
@@ -16,10 +15,11 @@ SELECT COUNT(*) AS null_name_count
 FROM users
 WHERE name IS NULL;
 
--- 4) Detect duplicate names (if name is expected unique for now)
-SELECT
-    name,
-    COUNT(*) AS cnt
-FROM users
-GROUP BY name
-HAVING COUNT(*) > 1;
+-- 4) Duplicate names count (if name expected unique)
+SELECT COUNT(*) AS duplicate_name_groups
+FROM (
+    SELECT name
+    FROM users
+    GROUP BY name
+    HAVING COUNT(*) > 1
+) t;

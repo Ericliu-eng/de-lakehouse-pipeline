@@ -1,9 +1,6 @@
 from __future__ import annotations
-
 from pathlib import Path
-
 import pytest
-
 from de_lakehouse_pipeline.db import connect, load_db_config, wait_for_db
 
 
