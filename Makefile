@@ -32,8 +32,8 @@ clean:
 test:   #-V verbose  -k .. 模糊
 	$(PY) -m pytest -v	
 
-unit:	#-k = Filter tests by "name keywords"
-	$(PY) -m pytest -v tests/test_db_unit.py
+sql-utils:	
+	$(PY) -m pytest -v -s tests/test_sql_utils.py
 
 run:
 	$(PY) -m de_lakehouse_pipeline.main
@@ -44,6 +44,9 @@ smoke:	#在 Python 里：-m = run modul ,in pytest -m is marker
 	
 
 # --- DB ---------------
+#this for CI
+db-smoke:
+	$(PY) -m pytest -q tests/test_db_smoke.py -vv
 db-shell:
 	docker exec -it de_lakehouse_db psql -U lakehouse -d lakehouse
 
@@ -54,9 +57,8 @@ db-down:
 	docker compose down
 migrate:
 	$(PY) -m scripts.migrate
-	
-#this for CI
-db-smoke:
-	$(PY) -m pytest -q tests/test_db_smoke.py -vv
 
+unit:	
+	$(PY) -m pytest -v tests/test_db_unit.py
+	
 db-smoke-local: db-up migrate db-smoke

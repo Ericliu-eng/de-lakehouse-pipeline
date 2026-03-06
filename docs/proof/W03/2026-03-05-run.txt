@@ -1,0 +1,25 @@
+# Proof — W03D2 (SQL Unit Tests)
+# Date: 2026-03-05
+# Environment: Local (Windows)
+# Repo: de-lakehouse-pipeline
+
+============================================================
+Step 1 — Run Lint
+Command:
+    make lint
+Output:
+  All checks passed!
+============================================================
+Step 2 — Run SQL Utility Unit Tests
+Command:
+  make sql-utils
+Output:
+  tests/test_sql_utils.py::test_split_sql_statements_basic PASSED
+  tests/test_sql_utils.py::test_split_sql_statements_removes_empty PASSED
+  tests/test_sql_utils.py::test_split_sql_statements_strips_whitespace PASSED
+  tests/test_sql_utils.py::test_split_sql_statements_empty_or_whitespace_input PASSED
+============================================================
+
+Reproducible Commands:
+    make lint
+    make sql-utils

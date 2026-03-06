@@ -15,13 +15,11 @@ Command:
   make unit
 Output:
   collected 4 items
-
   tests/test_db_unit.py::test_load_db_config_defaults PASSED
   tests/test_db_unit.py::test_load_db_config_env_override PASSED
   tests/test_db_unit.py::test_make_dsn_contains_expected_fields PASSED
   tests/test_db_unit.py::test_wait_for_db_times_out_fast_on_bad_port PASSED
 
-  ==========================================================
   RESULT: 4 passed
 
 ============================================================
@@ -72,19 +70,7 @@ Output:
   tests/test_pipeline.py::test_main_raises_if_input_missing PASSED
   tests/test_smoke.py::test_smoke_pipeline PASSED
 
-  ==========================================================
   RESULT: 9 passed
-
-============================================================
-Summary
-
-- Unit tests added for DB utilities (config, DSN, timeout behavior)
-- Edge case (timeout) tested deterministically
-- Postgres successfully started via Docker
-- Migration script applied schema and seed data
-- DB smoke test verified connectivity and query execution
-- Full pipeline tests passed (9/9)
-- Workflow fully reproducible via Makefile commands
 
 ============================================================
 Reproducible Commands:

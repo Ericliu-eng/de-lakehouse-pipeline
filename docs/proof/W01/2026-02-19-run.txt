@@ -8,13 +8,9 @@ Iteration 1 — Initial test validation : repo skeleton
 Commands:
   make test
 
-Key Output:
+Output:
   collected 1 item
   tests/test_smoke.py::test_smoke PASSED
 
   1 passed in 0.02s
 
-Validation:
-  - Test framework (pytest) successfully configured
-  - Project structure is testable
-============================================================
