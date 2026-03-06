@@ -3,110 +3,55 @@ Proof — W02D5 CI + Reproducibility
 Date: 2026-02-28 (local, Windows)
 Repo: de-lakehouse-pipeline
 
---------------------------------------------------
-
-Environment Setup
-
+============================================================
+step 1 Environment Setup
 Command:
-make setup
+    make setup
+output
+    python -m venv .venv
+    pip install -r requirements.txt
+    Successfully installed de-lakehouse-pipeline-0.1.0
+============================================================
 
-Key Output:
-python -m venv .venv
-pip install -r requirements.txt
-Successfully installed de-lakehouse-pipeline-0.1.0
-
-Result:
-- Virtual environment created
-- Dependencies installed
-- Editable package installed
-
---------------------------------------------------
-
-Lint Check
-
+step 2 Lint Check
 Command:
-make lint
-
+    make lint
 Output:
 All checks passed!
 
-Result:
-- Code passes linting (ruff)
+============================================================
 
---------------------------------------------------
-
-Database Reset
-
+step 3 Database Reset
 Command:
-make db-down
-
+    make db-down
 Output:
-Container removed
-Network removed
-
+    Container removed
+    Network removed
+============================================================
+step 4
 Command:
-make db-up
-
+    make db-up
 Output:
-Container created
-Network created
+    Container created
+    Network created
+============================================================
 
-Result:
-- Fresh Postgres instance started
-
---------------------------------------------------
-
-Run Migrations + Seed
-
+step 5 Run Migrations + Seed
 Command:
-make migrate
-
+    make migrate
 Output:
-Running migrations...
-Applied: migrations\001_init.sql
-Applied: migrations\002_tables.sql
+    Running migrations...
+    Applied: migrations\001_init.sql
+    Applied: migrations\002_tables.sql
+    Seeding data...
+    Applied: scripts\seed.sql
+    Done.
+============================================================
 
-Seeding data...
-Applied: scripts\seed.sql
+Reproducibility commands:
+    make setup
+    make lint
+    make db-down
+    make db-up
+    make migrate
 
-Done.
-
-Result:
-- Migration system executed successfully
-- Schema created (users table)
-- Seed data inserted
-
---------------------------------------------------
-
-Validation (Manual Check)
-
-Expected:
-- users table exists
-- updated_at column exists
-- seed data exists (e.g., Alice, Bob)
-
---------------------------------------------------
-
-Reproducibility Check
-
-Full pipeline:
-make setup
-make lint
-make db-down
-make db-up
-make migrate
-
-Result:
-- Runs without errors
-- No manual steps required
-
---------------------------------------------------
-
-Key Learnings
-
-- Migrations must be idempotent (IF NOT EXISTS)
-- Seed scripts should avoid duplication
-- Makefile ensures reproducibility
-- Logs + tests improve visibility
-
---------------------------------------------------

@@ -2,7 +2,7 @@
 ## Template
 ## Week <W> — <Topic>
 ### W<WW>D<D> (<YYYY-MM-DD>)— <Title>
-**Deliverables**
+**Deliverables** 
 ...
 **Validation**
 ...
@@ -392,36 +392,46 @@
 - ERD and data model documentation still evolving
 
 
-### W03D1 (2026-03-03) — SQL Validation and Testing
+### W03D01 (2026-03-04) — SQL Validation and Testing
 
 **Deliverables**
 - Executed SQL queries in `sql/patterns_window.sql`
 - Verified deduplication logic using window functions
 - Ran data quality checks from `sql/quality_checks.sql`
 - Executed development workflow commands:
-  - `make migrate`
   - `make lint`
   - `make smoke`
-- Recorded proof artifact in `docs/proof/2026-03-03-run.txt`
+- Recorded proof in 
 
 **Validation**
 - SQL queries executed successfully in local Postgres
-- Database migration completed without errors
 - Lint checks passed
 - Smoke tests confirmed database connectivity and query execution
 - Workflow verified to be reproducible from command-line execution
+- Proof log recorded under:
+  - `docs/proof/2026-03-04-run.txt`
 
-**Challenges**
-- Ensuring local Postgres container was running before executing SQL queries
-- Verifying window function logic behaved correctly with available sample data
-- Confirming schema definitions matched the expected SQL queries
 
-**Fixes**
-- Verified database container status using `docker compose up -d`
-- Re-ran migration to ensure schema consistency
-- Validated queries manually and via smoke tests
 
-**Outcome**
-- SQL patterns and quality checks confirmed working in the local environment
-- Development workflow (`migrate + lint + smoke`) validated
-- Reproducible proof recorded for the pipeline validation step
+### W03D02 (2026-03-05) — SQL Utility Unit Tests
+
+**Deliverables**
+- Implemented SQL utility function tests for `split_sql_statements`
+- Added unit test file: `tests/test_sql_utils.py`
+- Implemented 4 unit tests:
+  - `test_split_sql_statements_basic`
+  - `test_split_sql_statements_removes_empty_fragments`
+  - `test_split_sql_statements_strips_whitespace`
+  - `test_split_sql_statements_empty_or_whitespace_input`
+- Verified correct SQL statement splitting logic
+- Recorded proof of successful test execution
+
+**Validation**
+- Ran lint check:
+  - `make lint`
+  - Result: All checks passed
+- Ran unit tests:
+  - `make sql-utils`
+  - Result: 4 tests passed
+- Proof log recorded under:
+  - `docs/proof/2026-03-05-run.txt`

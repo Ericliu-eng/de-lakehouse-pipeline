@@ -1,11 +1,10 @@
-# Proof — W02D3 Smoke Test via Makefile (make smoke)
+# Proof — W02D3 Smoke Test via Makefile 
 # Date: 2026-02-25
 # Repo: de-lakehouse-pipeline
 
-
+===========================================================
 Command:
   make smoke
-
 Output:
   .venv/Scripts/python.exe -m pytest -m smoke
   ========================================================== test session starts ===========================================================
@@ -13,8 +12,7 @@ Output:
   rootdir: C:\Users\liuxu\de-lakehouse-pipeline
   configfile: pytest.ini
   collected 9 items / 8 deselected / 1 selected
-
   tests\test_db_smoke.py .                                                                                                            [100%]
-
-Result:
-  PASS — make smoke succeeds and smoke test runs and passes.
+===========================================================
+Reproducibility commands:
+  make smoke

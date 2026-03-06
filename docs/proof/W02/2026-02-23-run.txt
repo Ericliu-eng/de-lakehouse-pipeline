@@ -42,16 +42,6 @@ Output:
   tests/test_smoke.py::test_smoke_pipeline PASSED
 
   ==========================================================
-  RESULT: 5 passed
-
-============================================================
-Summary
-
-- Postgres successfully started via Docker
-- Migration script created table(s)
-- Seed script inserted data
-- Smoke test verified DB connectivity and data correctness
-- All tests passed (5/5)
 
 Reproducible Commands:
   make setup

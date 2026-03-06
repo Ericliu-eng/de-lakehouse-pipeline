@@ -10,7 +10,7 @@ Commands:
   make test
   make run
 
-Key Output:
+Output:
   All checks passed!
   4 passed
 
@@ -21,11 +21,6 @@ Key Output:
   Saved 2 rows to data/processed/output.csv
   Pipeline finished successfully
 
-Validation:
-  - ETL pipeline runs end-to-end
-  - Output file generated successfully
-============================================================
-
 
 ============================================================
 Iteration 3 — Unit tests : core logic validation
@@ -33,18 +28,12 @@ Iteration 3 — Unit tests : core logic validation
 Commands:
   make test
 
-Key Output:
+Output:
   collected 4 items
   tests/test_pipeline.py::test_transform_normal_case PASSED
   tests/test_pipeline.py::test_transform_drops_missing_name_and_nonpositive_amount PASSED
   tests/test_pipeline.py::test_main_raises_if_input_missing PASSED
   tests/test_smoke.py::test_smoke PASSED
-
-Validation:
-  - Core transformation logic is tested
-  - Edge and failure cases are covered
-============================================================
-
 
 ============================================================
 Iteration 4 — Smoke / E2E test : pipeline validation
@@ -54,7 +43,7 @@ Commands:
   make run
   make smoke
 
-Key Output:
+Output:
   4 passed
 
   Starting pipeline...
@@ -64,11 +53,6 @@ Key Output:
   Pipeline finished successfully
 
   tests/test_smoke.py::test_smoke_pipeline PASSED
-
-Validation:
-  - Pipeline runs end-to-end via CLI
-  - Smoke test validates full workflow
-============================================================
 ============================================================
 Iteration 5 — CI validation & stable pipeline run 
 
@@ -76,7 +60,7 @@ Commands:
   make test
   make run
 
-Key Output:
+Output:
   4 passed
 
   Starting pipeline...
@@ -84,9 +68,3 @@ Key Output:
   Transformed: 4 -> 2 rows
   Saved 2 rows to data/processed/output.csv
   Pipeline finished successfully
-
-Validation:
-  - Tests pass consistently (local + CI)
-  - Pipeline runs reliably via Makefile
-============================================================
-
