@@ -1,4 +1,4 @@
-from tests.test_sql_queries import split_sql_statements
+from de_lakehouse_pipeline.sql_utils import split_sql_statements
 
 
 #Verify that split_sql_statements correctly splits a SQL 
