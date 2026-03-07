@@ -1,5 +1,5 @@
 from __future__ import annotations
-from pathlib import Path
+
 import pytest
 from de_lakehouse_pipeline.db import connect, load_db_config, wait_for_db
 from de_lakehouse_pipeline.sql_utils import project_root, _read_sql, split_sql_statements

@@ -1,0 +1,15 @@
+# Proof — W03D3 
+# Date: 2026-03-06
+# Environment: Local (Windows)
+# Repo: de-lakehouse-pipeline
+
+Changes
+- Updated DATA_MODEL.md
+- Added simple ERD for users table
+
+Validation
+make lint
+make test
+
+Result
+All checks passed
