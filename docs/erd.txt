@@ -1,0 +1,6 @@
+Entity: users
+---------------------------------
+PK   id           : integer
+     name         : text
+     created_at   : timestamp
+     updated_at   : timestamp

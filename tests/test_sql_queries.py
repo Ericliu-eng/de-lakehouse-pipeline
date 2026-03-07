@@ -2,16 +2,8 @@ from __future__ import annotations
 from pathlib import Path
 import pytest
 from de_lakehouse_pipeline.db import connect, load_db_config, wait_for_db
+from de_lakehouse_pipeline.sql_utils import project_root, _read_sql, split_sql_statements
 
-def project_root() -> Path:
-    return Path(__file__).resolve().parents[1]
-
-def _read_sql(path: Path) -> str:
-    return path.read_text(encoding="utf-8").strip()
-
-    
-def split_sql_statements(sqls: str) -> list[str]:
-    return [sql.strip() for sql in sqls.split(";") if sql.strip()]
 
 
 

@@ -20,12 +20,16 @@ It is designed to demonstrate:
 ##  Demo (2-minute run)
 Run the full pipeline locally:
 ```bash
+git clone https://github.com/Ericliu-eng/de-lakehouse-pipeline.git
 cp .env.example .env
 make setup
 make db-up
 make migrate
 make run
 make test
+make smoke
+make sql-utils
+
 ```
 ---
 
