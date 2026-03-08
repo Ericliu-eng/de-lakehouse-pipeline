@@ -1,0 +1,138 @@
+# Proof — W03D4
+# Date: 2026-03-07
+# Environment: Local (Windows)
+# Repo: de-lakehouse-pipeline
+Command:
+make lint
+
+Output:
+All checks passed!
+
+Command:
+make db-up
+    docker compose up -d
+    [+] up 2/2
+    ✔ Network de-lakehouse-pipeline_default Created                                                                                                                                0.1s
+    ✔ Container de_lakehouse_db             Created     
+
+
+Command:
+make test
+Output:
+    collected 15 items                                                                                                                                                                 
+    tests/test_db_smoke.py::test_db_smoke_connect_tables_seed PASSED                                                                                                             [  6%]
+    tests/test_db_unit.py::test_load_db_config_defaults PASSED                                                                                                                   [ 13%] 
+    tests/test_db_unit.py::test_load_db_config_env_override PASSED                                                                                                               [ 20%] 
+    tests/test_db_unit.py::test_make_dsn_contains_expected_fields PASSED                                                                                                         [ 26%] 
+    tests/test_db_unit.py::test_wait_for_db_times_out_fast_on_bad_port PASSED                                                                                                    [ 33%]
+    tests/test_pipeline.py::test_transform_normal_case PASSED                                                                                                                    [ 40%]
+    tests/test_pipeline.py::test_transform_drops_missing_name_and_nonpositive_amount PASSED                                                                                      [ 46%] 
+    tests/test_pipeline.py::test_main_raises_if_input_missing PASSED                                                                                                             [ 53%]
+    tests/test_smoke.py::test_smoke_pipeline PASSED                                                                                                                              [ 60%]
+    tests/test_sql_queries.py::test_window_query_runs PASSED                                                                                                                     [ 66%]
+    tests/test_sql_queries.py::test_quality_checks_run PASSED                                                                                                                    [ 73%]
+    tests/test_sql_utils.py::test_split_sql_statements_basic PASSED                                                                                                              [ 80%] 
+    tests/test_sql_utils.py::test_split_sql_statements_removes_empty PASSED                                                                                                      [ 86%] 
+    tests/test_sql_utils.py::test_split_sql_statements_strips_whitespace PASSED                                                                                                  [ 93%] 
+    tests/test_sql_utils.py::test_split_sql_statements_empty_or_whitespace_input PASSED   
+Command:
+python -m src.de_lakehouse_pipeline.cli run_weather
+Output:
+Running weather pipeline...
+    Step 1: ingest
+    {
+    "coord": {
+        "lon": -122.2728,
+        "lat": 37.8716
+    },
+    "weather": [
+        {
+        "id": 802,
+        "main": "Clouds",
+        "description": "scattered clouds",
+        "icon": "03n"
+        }
+    ],
+    "base": "stations",
+    "main": {
+        "temp": 12.1,
+        "feels_like": 11.45,
+        "temp_min": 12.1,
+        "temp_max": 12.1,
+        "pressure": 1018,
+        "humidity": 80,
+        "sea_level": 1018,
+        "grnd_level": 1011
+    },
+    "visibility": 10000,
+    "wind": {
+        "speed": 1.02,
+        "deg": 86,
+        "gust": 1.12
+    },
+    "clouds": {
+        "all": 25
+    },
+    "dt": 1772958146,
+    "sys": {
+        "country": "US",
+        "sunrise": 1772980240,
+        "sunset": 1773022156
+    },
+    "timezone": -28800,
+    "id": 5327684,
+    "name": "Berkeley",
+    "cod": 200
+    }
+    Step 2: load
+    Step 3: transform
+
+
+Command:
+python -m src.de_lakehouse_pipeline.cli run_daily
+Output:
+    Running daily pipeline...
+Step 1: ingest
+  "Meta Data": {
+    "1. Information": "Daily Prices (open, high, low, close) and Volumes",
+    "2. Symbol": "AAPL",
+    "3. Last Refreshed": "2026-03-06",
+    "4. Output Size": "Compact",
+    "5. Time Zone": "US/Eastern"
+  },
+  "Time Series (Daily)": 
+    "2026-03-06": {
+      "1. open": "258.6300",
+      "2. high": "258.7700",
+      "3. low": "254.3700",
+      "4. close": "257.4600",
+      "5. volume": "41120042"
+    },
+    "2026-03-05": {
+      "1. open": "260.7900",
+      "2. high": "261.5550",
+      "3. low": "257.2500",
+      "4. close": "260.2900",
+      "5. volume": "49658626"
+    },
+    "2026-03-04": {
+      "1. open": "264.6500",
+      "2. high": "266.1500",
+      "3. low": "261.4200",
+      "4. close": "262.5200",
+      "5. volume": "39803119"
+    },
+    "2026-03-03": {
+      "1. open": "263.4800",
+      "2. high": "265.5600",
+      "3. low": "260.1300",
+      "4. close": "263.7500",
+      "5. volume": "38568921"
+    },
+    "2026-03-02": 
+      "1. open": "262.4100",
+
+Step 2: load
+Step 3: transform
+
+All checks passed.
