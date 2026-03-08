@@ -435,3 +435,37 @@
   - Result: 4 tests passed
 - Proof log recorded under:
   - `docs/proof/2026-03-05-run.txt`
+
+
+### W03D3 (2026-03-06) — Data Model Alignment & ERD
+
+**Deliverables**
+- Updated `docs/DATA_MODEL.md` to align with the current `users` table schema
+- Added a simple ERD for the `users` table to visualize structure and relationships
+- Ensured documentation reflects the latest schema fields (`id`, `name`, `created_at`, `updated_at`)
+- Added proof record under `docs/proof/`
+
+**Validation**
+- Ran `make lint`
+- Ran `make test`
+- Verified documentation matches the current schema implementation
+- Confirmed repository checks passed locally
+
+
+### W03D4 (2026-03-07) — SQL Validation + Pipeline Smoke Test
+
+**Deliverables**
+- Ran full pipeline validation locally
+- Verified CLI pipelines for:
+  - Weather API ingestion
+  - Stock (Alpha Vantage) ingestion
+- Confirmed project passes linting and automated tests
+
+**Validation**
+Commands executed:
+```bash
+make lint
+make db-up
+make test
+python -m src.de_lakehouse_pipeline.cli run_weather
+python -m src.de_lakehouse_pipeline.cli run_daily
