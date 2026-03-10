@@ -453,7 +453,6 @@
 
 
 ### W03D4 (2026-03-07) — SQL Validation + Pipeline Smoke Test
-
 **Deliverables**
 - Ran full pipeline validation locally
 - Verified CLI pipelines for:
@@ -469,3 +468,37 @@ make db-up
 make test
 python -m src.de_lakehouse_pipeline.cli run_weather
 python -m src.de_lakehouse_pipeline.cli run_daily
+```
+
+### W03D5 (2026-03-08) — Extraction Layer Core Logic
+**Deliverables**
+- Implemented API ingestion for external data sources
+- Integrated stock data ingestion via `alpha_vantage_client.py`
+- Integrated weather data ingestion via `weather_client.py`
+- Connected ingestion flow into CLI commands:
+  - `run_daily`
+  - `run_weather`
+- Implemented raw data landing using `save_raw_data()` with date-based folders
+- Saved API responses as JSON files for downstream pipeline stages
+
+**Validation**
+- Successfully executed CLI commands locally
+- Verified raw data files were created
+- Ran project checks:
+  - `make lint`
+  - `make test`
+
+
+## Week 04 — Extraction Layer
+
+### W04D3 (2026-03-11) — Extraction Unit Tests
+
+**Deliverables**
+- Implemented unit tests for `save_raw_data`
+- Implemented edge tests for `fetch_current_weather`
+- Verified error handling when API key is missing
+
+**Validation**
+- Ran `make lint`
+- Ran `pytest tests/test_extraction.py`
+- All tests passed locally

@@ -10,12 +10,10 @@ def project_root() -> Path:
 
     return Path(__file__).resolve().parents[2]
 
-def save_raw_data(data, source):
+def save_raw_data(data, source, root: Path):
 
     today = date.today().isoformat()
-    
-    root = project_root()
-    raw_dir = root / "data" / "raw" / today
+    raw_dir = root / "raw" / today
     raw_dir.mkdir(parents=True, exist_ok=True)
 
     file_path = raw_dir / f"{source}.json"
@@ -29,7 +27,7 @@ def run_daily() -> None:
     print("Running daily pipeline...")
     print("Step 1: ingest")
     data = fetch_daily_stock("AAPL")
-    file_path = save_raw_data(data,"stock")
+    file_path = save_raw_data(data,"stock",Path("data"))
     print(json.dumps(data, indent=2)[:1000])
     print(f"Saved raw file to: {file_path}")
     print("Step 2: load")
@@ -40,7 +38,7 @@ def run_weather(city: str) -> None:
     print("Running weather pipeline...")
     print("Step 1: ingest")
     data = fetch_current_weather(city)
-    file_path = save_raw_data(data,"weather")
+    file_path = save_raw_data(data,"weather",Path("data"))
     print(json.dumps(data, indent=2)[:1000])
     print(f"Saved raw file to: {file_path}")
     print("Step 2: load")

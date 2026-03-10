@@ -59,7 +59,7 @@ db-down:
 migrate:
 	$(PY) -m scripts.migrate
 
-unit:	
+db-unit:	
 	$(PY) -m pytest -v tests/test_db_unit.py
 	
 db-smoke-local: db-up migrate db-smoke
