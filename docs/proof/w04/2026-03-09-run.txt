@@ -16,4 +16,3 @@ Output:
     configfile: pytest.ini
     collected 2 items                                                                                                                                                                  
     tests\test_extraction.py ..     
-test: add unit tests for extraction layer (save_raw_data and weather client)
