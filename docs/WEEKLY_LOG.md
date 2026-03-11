@@ -491,14 +491,22 @@ python -m src.de_lakehouse_pipeline.cli run_daily
 
 ## Week 04 — Extraction Layer
 
-### W04D3 (2026-03-11) — Extraction Unit Tests
-
+### W04D01(2026-03-9) — Extraction Unit Tests
 **Deliverables**
 - Implemented unit tests for `save_raw_data`
 - Implemented edge tests for `fetch_current_weather`
 - Verified error handling when API key is missing
-
 **Validation**
 - Ran `make lint`
 - Ran `pytest tests/test_extraction.py`
 - All tests passed locally
+
+### W04D02(2026-03-10) — Pipeline Smoke Test
+**Deliverables**
+- Implemented `test_pipeline_smoke`
+- Used pytest `tmp_path` fixture to isolate test data
+- Verified pipeline writes `raw/<date>/stock.json`
+**Validation**
+pytest output:
+18 passed in X.XXs
+

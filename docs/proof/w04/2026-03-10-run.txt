@@ -1,0 +1,32 @@
+# Proof — W04D2 
+# Date: 2026-03-10(local, Windows)
+# Repo: de-lakehouse-pipeline
+============================================================
+step 1:
+Command:
+    make lint:
+Output:
+    All checks passed!
+============================================================
+step 2:
+Command:
+    make test
+Output:
+    tests/test_db_smoke.py::test_db_smoke_connect_tables_seed PASSED                                                                                                             [  5%]
+    tests/test_db_unit.py::test_load_db_config_defaults PASSED                                                                                                                   [ 11%] 
+    tests/test_db_unit.py::test_load_db_config_env_override PASSED                                                                                                               [ 16%] 
+    tests/test_db_unit.py::test_make_dsn_contains_expected_fields PASSED                                                                                                         [ 22%] 
+    tests/test_db_unit.py::test_wait_for_db_times_out_fast_on_bad_port PASSED                                                                                                    [ 27%]
+    tests/test_extraction.py::test_save_raw_data PASSED                                                                                                                          [ 33%] 
+    tests/test_extraction.py::test_fetch_current_weather_raises_when_api_key_missing PASSED                                                                                      [ 38%] 
+    tests/test_pipeline.py::test_transform_normal_case PASSED                                                                                                                    [ 44%] 
+    tests/test_pipeline.py::test_transform_drops_missing_name_and_nonpositive_amount PASSED                                                                                      [ 50%] 
+    tests/test_pipeline.py::test_main_raises_if_input_missing PASSED                                                                                                             [ 55%]
+    tests/test_pipeline_smoke.py::test_pipeline_smoke PASSED                                                                                                                     [ 61%]
+    tests/test_smoke.py::test_smoke_pipeline PASSED                                                                                                                              [ 66%]
+    tests/test_sql_queries.py::test_window_query_runs PASSED                                                                                                                     [ 72%]
+    tests/test_sql_queries.py::test_quality_checks_run PASSED                                                                                                                    [ 77%]
+    tests/test_sql_utils.py::test_split_sql_statements_basic PASSED                                                                                                              [ 83%] 
+    tests/test_sql_utils.py::test_split_sql_statements_removes_empty PASSED                                                                                                      [ 88%] 
+    tests/test_sql_utils.py::test_split_sql_statements_strips_whitespace PASSED                                                                                                  [ 94%] 
+    tests/test_sql_utils.py::test_split_sql_statements_empty_or_whitespace_input PASSED 
