@@ -25,4 +25,3 @@ def test_fetch_current_weather_raises_when_api_key_missing(monkeypatch) -> None:
     with pytest.raises(ValueError):
          fetch_current_weather("Berkeley,US")
 
-# test_run_weather_calls_save_raw_data
