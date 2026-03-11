@@ -23,15 +23,16 @@ def save_raw_data(data, source, root: Path):
 
     return file_path
 
-def run_daily() -> None:
+def run_daily(path:Path) -> None:
     print("Running daily pipeline...")
     print("Step 1: ingest")
     data = fetch_daily_stock("AAPL")
-    file_path = save_raw_data(data,"stock",Path("data"))
+    file_path = save_raw_data(data,"stock",path)
     print(json.dumps(data, indent=2)[:1000])
     print(f"Saved raw file to: {file_path}")
     print("Step 2: load")
     print("Step 3: transform")
+    return path / "raw"
 
 
 def run_weather(city: str) -> None:

@@ -30,7 +30,7 @@ clean:
 	rm -rf $(VENV)
 
 test:   #-V verbose  -k .. 模糊
-	$(PY) -m pytest -v	
+	$(PY) -m pytest -v
 
 sql-utils:	
 	$(PY) -m pytest -v -s tests/test_sql_utils.py
