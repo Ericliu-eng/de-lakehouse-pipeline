@@ -35,13 +35,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Setup (deps)
+        run: |
+          make setup
+      
       - name: Pipeline smoke
         run: |
           make smoke
 
-      - name: Setup (deps)
-        run: |
-          make setup
+
 
       - name: Lint
         run: |

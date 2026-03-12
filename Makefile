@@ -8,10 +8,11 @@ PY_NIX := $(VENV)/bin/python
 
 # Choose python path depending on OS (Windows_NT is set on Windows)
 ifeq ($(OS),Windows_NT)
-    PY=.venv\\Scripts\\python.exe
+	PY := $(PY_WIN)
 else
-    PY=.venv/bin/python
+	PY := $(PY_NIX)
 endif
+
 
 
 setup:
@@ -43,8 +44,6 @@ run:
 
 smoke:	#在 Python 里：-m = run modul ,in pytest -m is marker
 	$(PY) -m pytest -m smoke
-
-
 run-weather:
 	$(PY) -m src.de_lakehouse_pipeline.cli run_weather
 run-stock:
