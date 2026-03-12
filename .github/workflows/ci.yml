@@ -34,26 +34,24 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup (deps)
         run: |
           make setup
-      
-      - name: Pipeline smoke
-        run: |
-          make smoke
-
-
 
       - name: Lint
         run: |
           make lint
 
+      - name: Pipeline smoke
+        run: |
+          make smoke
+
       - name: Migrate DB
         run: |
           make migrate
 
-      - name: Smoke (DB)
+      - name: DB smoke
         run: |
           make db-smoke
 
