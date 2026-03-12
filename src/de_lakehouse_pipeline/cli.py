@@ -18,14 +18,12 @@ def today_time():
 def save_raw_data(data, source, root:Path = None):
     if root is None:
         root  = project_root()
-    print("print root =================")
-    print(root)
     today = today_time()
     raw_dir = root /"data"/ "raw" / today
     raw_dir.mkdir(parents=True, exist_ok=True)
 
     file_path = raw_dir / f"{source}.json"
-    print(file_path)
+
     with open(file_path, "w") as f:
         json.dump(data, f, indent=2)
 
@@ -45,17 +43,14 @@ def run_stock(root:Path = None):
 
 
 def run_weather(city: str) -> None:
-    print("Running weather pipeline...")
-    print("Step 1: ingest")
+    #"Step 1: ingest"
     data = fetch_current_weather(city)
     file_path = save_raw_data(data,"weather")
-    #print(json.dumps(data, indent=2)[:1000])
-    print(f"Saved raw file to: {file_path}")
-    print("Step 2: load")
-    load_file = load_raw_file(source="weather")
-    #def record_load(source: str, load_date: str, version: str, record_count: int):
+    #"Step 2: load"
+    load_file = load_raw_file(file_path)
+
     record_load("weather",today_time(),"1","1")
-    print("Step 3: transform")
+    #"Step 3: transform"
     infor = trans_weather(load_file)
     print(infor)
 

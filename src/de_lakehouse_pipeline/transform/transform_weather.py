@@ -1,4 +1,3 @@
-import json
 
 def trans_weather(data: dict):
     name = data["name"] 
