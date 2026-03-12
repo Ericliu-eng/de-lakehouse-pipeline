@@ -1,10 +1,12 @@
 name: CI
-#CI = Continuous Integration
-#Think of the CI configuration file (this YAML file) as a nanny-style tutorial for GitHub bots
+
 on:
   pull_request:
   push:
     branches: [ main ]
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -33,7 +35,8 @@ jobs:
       DB_PASSWORD: lakehouse
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Setup (deps)
         run: |
@@ -43,13 +46,13 @@ jobs:
         run: |
           make lint
 
-      - name: Pipeline smoke
-        run: |
-          make smoke
-
       - name: Migrate DB
         run: |
           make migrate
+
+      - name: Pipeline smoke
+        run: |
+          make smoke
 
       - name: DB smoke
         run: |
