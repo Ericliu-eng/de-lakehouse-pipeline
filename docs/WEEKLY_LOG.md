@@ -459,7 +459,6 @@
   - Weather API ingestion
   - Stock (Alpha Vantage) ingestion
 - Confirmed project passes linting and automated tests
-
 **Validation**
 Commands executed:
 ```bash
@@ -489,8 +488,8 @@ python -m src.de_lakehouse_pipeline.cli run_daily
   - `make test`
 
 
-## Week 04 — Extraction Layer
-
+# Week 04 — Extraction Layer
+---
 ### W04D01(2026-03-9) — Extraction Unit Tests
 **Deliverables**
 - Implemented unit tests for `save_raw_data`
@@ -500,8 +499,8 @@ python -m src.de_lakehouse_pipeline.cli run_daily
 - Ran `make lint`
 - Ran `pytest tests/test_extraction.py`
 - All tests passed locally
-
 ### W04D02(2026-03-10) — Pipeline Smoke Test
+---
 **Deliverables**
 - Implemented `test_pipeline_smoke`
 - Used pytest `tmp_path` fixture to isolate test data
@@ -509,4 +508,15 @@ python -m src.de_lakehouse_pipeline.cli run_daily
 **Validation**
 pytest output:
 18 passed in X.XXs
+### W04D03(2026-03-11) — Load Layer Scaffold for Weather Pipeline
+---
+**Deliverables**
+- Implemented `test_pipeline_smoke`
+- Implemented `test_pipeline_smoke`
+- Connected weather CLI pipeline to run:
+  - ingest → save raw → load → metadata → transform.
+- Implemented simple weather transform output for end-to-end validation.
+- Created proof artifact under `docs/proof/`.
+**Validation**
+- Successfully ran:
 

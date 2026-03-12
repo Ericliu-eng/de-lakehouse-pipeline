@@ -1,0 +1,28 @@
+# Proof — W04D3
+# Date: 2026-03-11 (local)
+# Feature: Load layer scaffold + metadata tracking (weather pipeline)
+
+============================================================
+Step 1: Run weather pipeline
+Command:
+    python -m de_lakehouse_pipeline.cli run_weather 
+Output:
+    Metadata to record:
+    {'source': 'weather',
+    'load_date': '2026-03-23',
+    'version': 'v1',
+    'record_count': 1,
+    'recorded_at': '2026-03-23'}
+    Today's temperature in Berkeley is XX.
+============================================================
+Step 2: Verify raw file exists
+Command:
+    ls data/raw/2026-03-11/
+Output:
+    weather.json
+============================================================
+Step 3: Run tests
+Command:
+    make test
+Output:
+ALL TESTS PASSED
