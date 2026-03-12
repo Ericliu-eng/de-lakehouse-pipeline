@@ -44,8 +44,6 @@ run:
 smoke:	#在 Python 里：-m = run modul ,in pytest -m is marker
 	$(PY) -m pytest -m smoke
 
-smoke:
-    $(PYTHON) -m pytest -m smoke
 
 run-weather:
 	$(PY) -m src.de_lakehouse_pipeline.cli run_weather
