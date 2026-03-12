@@ -1,4 +1,4 @@
-from de_lakehouse_pipeline.cli import run_daily
+from de_lakehouse_pipeline.cli import run_stock
 
 
 def test_pipeline_smoke(tmp_path, monkeypatch):
@@ -9,7 +9,8 @@ def test_pipeline_smoke(tmp_path, monkeypatch):
         "de_lakehouse_pipeline.cli.fetch_daily_stock",
         fake_fetch,
     )
+    file_path = run_stock(tmp_path)
 
-    raw_dir = run_daily(tmp_path)
-    files = list(raw_dir.glob("*/stock.json"))
-    assert len(files) > 0
+    print(file_path)
+    assert file_path.exists()
+    assert file_path.name == "stock.json"

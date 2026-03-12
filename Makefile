@@ -32,6 +32,10 @@ clean:
 test:   #-V verbose  -k .. 模糊
 	$(PY) -m pytest -v
 
+test-s:   #-V verbose  -k .. 模糊  输出 print
+	$(PY) -m pytest -s
+
+
 sql-utils:	
 	$(PY) -m pytest -v -s tests/test_sql_utils.py
 
@@ -42,7 +46,9 @@ smoke:	#在 Python 里：-m = run modul ,in pytest -m is marker
 	$(PY) -m pytest -m smoke
 run-weather:
 	$(PY) -m src.de_lakehouse_pipeline.cli run_weather
-	
+run-stock:
+	$(PY) -m de_lakehouse_pipeline.cli run_stock
+
 
 # --- DB ---------------
 #this for CI
