@@ -10,6 +10,7 @@ def run_sql_file(conn, path: Path) -> None:
     sql = path.read_text(encoding="utf-8").strip()
     if not sql:
         return  # ignore empty files safely
+    print("Running:", path)
     with conn.cursor() as cur:
         cur.execute(sql)
         conn.commit()
