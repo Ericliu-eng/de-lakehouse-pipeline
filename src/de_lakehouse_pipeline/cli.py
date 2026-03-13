@@ -46,6 +46,7 @@ def run_stock(root:Path = None):
     with connect(cfg) as conn:
         #write into db    
         upsert_stock_prices(conn,db_row)
+    return file_path
 
 
     #return a multiply row which can write into the db
