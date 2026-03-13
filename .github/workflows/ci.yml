@@ -45,6 +45,9 @@ jobs:
       - name: Lint
         run: |
           make lint
+      - name: run
+        run: |
+          make run
 
       - name: Migrate DB
         run: |
