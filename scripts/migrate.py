@@ -10,13 +10,20 @@ def run_sql_file(conn, path: Path) -> None:
     sql = path.read_text(encoding="utf-8").strip()
     if not sql:
         return  # ignore empty files safely
-
     with conn.cursor() as cur:
         cur.execute(sql)
+        conn.commit()
 
 
 def list_migration_files(migrations_dir: Path):
     return sorted(migrations_dir.glob("*.sql"))
+
+def seed():
+    root = Path(__file__).resolve().parents[1]
+    path = root/"scripts"/"seed.sql"
+    cfg  = load_db_config()
+    conn =connect(cfg)
+    run_sql_file(conn,path)
 
 
 def main() -> None:
@@ -37,4 +44,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    seed()
