@@ -1,0 +1,33 @@
+# Proof — W04D4
+# Date: 2026-03-12
+# Repo: de-lakehouse-pipeline
+========================================================
+step 1:
+Command:
+    make db-down
+    make db-up
+    make migrate
+Output:
+    docker compose down
+    [+] down 2/2
+    ✔ Container de_lakehouse_db             Removed                                                                                                                                0.5s
+    ✔ Network de-lakehouse-pipeline_default Removed                                                                                                                                0.3s
+    docker compose up -d
+    [+] up 2/2
+    ✔ Network de-lakehouse-pipeline_default Created                                                                                                                                0.0s
+    ✔ Container de_lakehouse_db             Created                                                                                                                                0.2s
+    .venv/Scripts/python.exe -m scripts.migrate
+========================================================
+step 2:
+Command:
+    make run
+    make db-shell
+    SELECT * FROM market_bars;
+Output:
+            ts           | symbol |  open   |   high   |   low    | close  |  volume
+    ------------------------+--------+---------+----------+----------+--------+-----------
+    2026-03-10 04:00:00+00 | AAPL   | 257.645 |   262.48 |   256.95 | 260.83 |  30590765
+    2026-03-09 04:00:00+00 | AAPL   |  255.69 |   261.15 | 253.6805 | 259.88 |  38218533
+    2026-03-06 05:00:00+00 | AAPL   |  258.63 |   258.77 |   254.37 | 257.46 |  41120042
+    2026-03-05 05:00:00+00 | AAPL   |  260.79 |  261.555 |   257.25 | 260.29 |  49658626
+

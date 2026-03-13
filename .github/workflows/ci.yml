@@ -50,6 +50,10 @@ jobs:
         run: |
           make migrate
 
+      - name: Seed DB for smoke tests
+        run: |
+          make db-seed
+
       - name: Pipeline smoke
         run: |
           make smoke

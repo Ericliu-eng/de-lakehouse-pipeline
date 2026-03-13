@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from de_lakehouse_pipeline.db import DBConfig, load_db_config, make_dsn, wait_for_db
+from de_lakehouse_pipeline.load.db.connection import DBConfig, load_db_config, make_dsn, wait_for_db
 
 
 #Unit Test 1 — defaults load correctly

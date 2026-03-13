@@ -40,12 +40,12 @@ sql-utils:
 	$(PY) -m pytest -v -s tests/test_sql_utils.py
 
 run:
-	$(PY) -m de_lakehouse_pipeline.main
+	$(PY) -m de_lakehouse_pipeline.cli run_stock
 
 smoke:	#在 Python 里：-m = run modul ,in pytest -m is marker
 	$(PY) -m pytest -m smoke
 run-weather:
-	$(PY) -m src.de_lakehouse_pipeline.cli run_weather
+	$(PY) -m de_lakehouse_pipeline.cli run_weather
 run-stock:
 	$(PY) -m de_lakehouse_pipeline.cli run_stock
 
@@ -59,7 +59,8 @@ db-shell:
 
 db-up:  # -d 后台运行
 	docker compose up -d
-
+db-seed:
+	$(PY) -m scripts.seed_db
 db-down:
 	docker compose down
 migrate:

@@ -6,7 +6,7 @@ import psycopg
 #import the pytest testing framework into your Python file
 import pytest
 
-from de_lakehouse_pipeline.db import load_db_config, wait_for_db, connect
+from de_lakehouse_pipeline.load.db.connection import load_db_config, wait_for_db, connect
 
 
 def _table_exists(conn: psycopg.Connection, table_name: str) -> bool:
@@ -55,7 +55,7 @@ def test_db_smoke_connect_tables_seed() -> None:
 
     wait_for_db(cfg, timeout_s=60)
 
-    expected_table = os.environ.get("SMOKE_TABLE", "users")
+    expected_table = os.environ.get("SMOKE_TABLE", "market_bars")
 
     with connect(cfg) as conn:
         assert _table_exists(conn, expected_table), f"Expected table missing: {expected_table}"

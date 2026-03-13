@@ -11,6 +11,5 @@ def test_pipeline_smoke(tmp_path, monkeypatch):
     )
     file_path = run_stock(tmp_path)
 
-    print(file_path)
     assert file_path.exists()
     assert file_path.name == "stock.json"
