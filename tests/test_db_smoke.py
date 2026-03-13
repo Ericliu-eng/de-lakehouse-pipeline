@@ -38,7 +38,7 @@ def _row_count(conn: psycopg.Connection, table_name: str) -> int:
         return int(n)
 
 #pytest's "marker system"   only run pytest -m smoke , pytest -m "not smoke"
-@pytest.mark.smoke
+#@pytest.mark.smoke
 def test_db_smoke_connect_tables_seed() -> None:
     """
     Smoke test:
