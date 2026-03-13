@@ -52,8 +52,8 @@ jobs:
 
       - name: Seed DB for smoke tests
         run: |
-          make db-Seed
-          
+          make db-seed
+
       - name: Pipeline smoke
         run: |
           make smoke
