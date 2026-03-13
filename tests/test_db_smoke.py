@@ -4,7 +4,7 @@ import os
 # psycopg = Python ↔ Postgres bridge 
 import psycopg
 #import the pytest testing framework into your Python file
-import pytest
+#import pytest
 
 from de_lakehouse_pipeline.load.db.connection import load_db_config, wait_for_db, connect
 
