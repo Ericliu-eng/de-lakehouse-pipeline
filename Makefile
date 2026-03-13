@@ -59,7 +59,8 @@ db-shell:
 
 db-up:  # -d 后台运行
 	docker compose up -d
-
+db-seed:
+	$(PY) -m scripts.seed_db
 db-down:
 	docker compose down
 migrate:
