@@ -4,10 +4,12 @@ from pathlib import Path
 from datetime import date
 
 from de_lakehouse_pipeline.ingest.alpha_vantage_client import fetch_daily_stock
-from de_lakehouse_pipeline.ingest.weather_client import fetch_current_weather
-from de_lakehouse_pipeline.load.loader import load_raw_file
-from de_lakehouse_pipeline.transform.transform_weather import trans_weather
-from de_lakehouse_pipeline.load.metadata import record_load
+#from de_lakehouse_pipeline.ingest.weather_client import fetch_current_weather
+from de_lakehouse_pipeline.load.loader import load_stock_file
+from de_lakehouse_pipeline.transform.transform_sotck import parse_alpha_vantage_daily
+from de_lakehouse_pipeline.load.db.stock_writer import upsert_stock_prices
+from de_lakehouse_pipeline.load.db.connection import load_db_config, wait_for_db, connect
+
 
 def project_root() -> Path:
 
@@ -31,28 +33,45 @@ def save_raw_data(data, source, root:Path = None):
 
 def run_stock(root:Path = None):
     print("Running daily pipeline...")
-    print("Step 1: ingest")
+    #Step 1: ingest
     data = fetch_daily_stock("AAPL")
     file_path = save_raw_data(data,"stock",root)
-    print(json.dumps(data, indent=2)[:1000])
-    print(f"Saved raw file to: {file_path}")
-    print("Step 2: load")
-    print("Step 3: transform")
-    return  file_path
+    #read today json
+    dict = load_stock_file(file_path)
+    #transform the dict readiable
+    db_row = parse_alpha_vantage_daily(dict)
+    #connect db
+    cfg = load_db_config()
+    wait_for_db(cfg, timeout_s=60)
+    with connect(cfg) as conn:
+        #write into db    
+        upsert_stock_prices(conn,db_row)
+
+
+    #return a multiply row which can write into the db
+    #list_tuple = parse_alpha_vantage_daily(db_row)
+
+ 
+    # upsert_stock_prices(list_tuple)
+    # print(json.dumps(data, indent=2)[:1000])
+    # print(f"Saved raw file to: {file_path}")
+    # print("Step 2: load")
+    # print("Step 3: transform")
+    # return  file_path
 
 
 
 def run_weather(city: str) -> None:
     #"Step 1: ingest"
-    data = fetch_current_weather(city)
-    file_path = save_raw_data(data,"weather")
+    #data = fetch_current_weather(city)
+    #file_path = save_raw_data(data,"weather")
     #"Step 2: load"
-    load_file = load_raw_file(file_path)
+    #load_file = load_weather_file_to_db(file_path)
+    print()
 
-    record_load("weather",today_time(),"1","1")
     #"Step 3: transform"
-    infor = trans_weather(load_file)
-    print(infor)
+    #infor = trans_weather(load_file)
+    #print(infor)
 
 
 def main() -> None:

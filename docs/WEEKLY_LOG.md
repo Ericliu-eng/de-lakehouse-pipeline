@@ -520,3 +520,17 @@ pytest output:
 **Validation**
 - Successfully ran:
 
+### W04D03 (2026-03-12) — Introduced Database Load Layer for Market Data
+---
+**Deliverables**
+- Created `market_bars` Postgres table with composite primary key `(ts, symbol)` for time-series storage.
+- Implemented Alpha Vantage daily parser to convert nested API payload into relational row tuples.
+- Integrated full load path into `run_stock` CLI flow:
+  - ingest → raw landing → parse → load (upsert into Postgres)
+**Validation**
+Pipeline execution:
+```bash
+make db-up
+make migrate
+make run-stock
+```

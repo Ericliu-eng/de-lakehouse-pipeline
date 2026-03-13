@@ -1,6 +1,6 @@
 # Proof — W04D3
 # Date: 2026-03-11 (local)
-# Feature: Load layer scaffold + metadata tracking (weather pipeline)
+# Repo: de-lakehouse-pipeline
 
 ============================================================
 Step 1: Run weather pipeline

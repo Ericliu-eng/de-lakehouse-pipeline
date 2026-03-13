@@ -6,7 +6,7 @@ import psycopg
 #import the pytest testing framework into your Python file
 import pytest
 
-from de_lakehouse_pipeline.db import load_db_config, wait_for_db, connect
+from de_lakehouse_pipeline.load.db.connection import load_db_config, wait_for_db, connect
 
 
 def _table_exists(conn: psycopg.Connection, table_name: str) -> bool:
