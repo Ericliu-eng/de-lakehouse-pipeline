@@ -12,6 +12,4 @@ def record_load(source: str, load_date: str, version: str, record_count: int):
         
     }
 
-    print("Metadata to record:", metadata_payload)
-
     return metadata_payload

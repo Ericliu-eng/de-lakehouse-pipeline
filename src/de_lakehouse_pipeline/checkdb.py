@@ -11,7 +11,7 @@ def view_market_bars():
         df = pd.read_sql(
         """
         SELECT *
-        FROM market_bars
+        FROM load_metadata
         ORDER BY ts DESC
         """,
         conn

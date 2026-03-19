@@ -1,0 +1,36 @@
+# Proof — W05D01
+# Date: 2026-03-18
+# Repo: de-lakehouse-pipeline
+========================================================
+step 1:
+Command:
+    make db-down
+    make db-up
+    make migrate
+Output:
+    docker compose down
+    [+] down 2/2
+    ✔ Container de_lakehouse_db             Removed                                                                                                                                0.5s
+    ✔ Network de-lakehouse-pipeline_default Removed                                                                                                                                0.3s
+    docker compose up -d
+    [+] up 2/2
+    ✔ Network de-lakehouse-pipeline_default Created                                                                                                                                0.0s
+    ✔ Container de_lakehouse_db             Created                                                                                                                                0.2s
+    .venv/Scripts/python.exe -m scripts.migrate
+========================================================
+step 2:
+Command:
+    make run
+    make db-shell
+    SELECT * FROM load_metadata;
+Output:
+    Running daily pipeline...
+    write stock into db
+    start record metadata to db 
+    finish...
+ id |    source     | load_date  |  version   | record_count |      recorded_at       
+----+---------------+------------+------------+--------------+------------------------
+  1 | alpha_vantage | 2026-03-13 | 2026-03-13 |          100 | 2026-03-13 00:00:00+00
+  2 | alpha_vantage | 2026-03-18 | 2026-03-18 |          100 | 2026-03-18 00:00:00+00
+  3 | alpha_vantage | 2026-03-18 | 2026-03-18 |          100 | 2026-03-18 00:00:00+00
+  4 | alpha_vantage | 2026-03-18 | 2026-03-18 |          100 | 2026-03-18 00:00:00+00
