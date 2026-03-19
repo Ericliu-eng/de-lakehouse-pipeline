@@ -9,6 +9,8 @@ from de_lakehouse_pipeline.load.loader import load_stock_file
 from de_lakehouse_pipeline.transform.transform_sotck import parse_alpha_vantage_daily
 from de_lakehouse_pipeline.load.db.stock_writer import upsert_stock_prices
 from de_lakehouse_pipeline.load.db.connection import load_db_config, wait_for_db, connect
+from de_lakehouse_pipeline.load.metadata import record_load
+from de_lakehouse_pipeline.load.db.metadata_writer import insert_load_metadata
 
 
 def project_root() -> Path:
@@ -45,7 +47,18 @@ def run_stock(root:Path = None):
     wait_for_db(cfg, timeout_s=60)
     with connect(cfg) as conn:
         #write into db    
+        print("write stock into db")
         upsert_stock_prices(conn,db_row)
+        #record it 
+        metadata_payload = record_load(
+        source="alpha_vantage",
+        load_date=today_time(),
+        version=today_time(),
+        record_count=len(db_row),
+        )
+        print("start record metadata to db ")
+        insert_load_metadata(conn, metadata_payload)
+        print("finish...")
     return file_path
 
 
