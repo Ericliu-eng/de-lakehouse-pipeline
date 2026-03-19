@@ -40,7 +40,7 @@ def fetch_daily_stock(symbol="AAPL") -> dict:
             return payload
 
         except (requests.Timeout, requests.ConnectionError, RuntimeError) as e:
-
+            print(f"Fetch failed: {e}")
             if attempt == max_retries:
                 raise
 
