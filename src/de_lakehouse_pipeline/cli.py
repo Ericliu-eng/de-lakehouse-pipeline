@@ -1,37 +1,19 @@
 import argparse
-import json
 from pathlib import Path
 from datetime import date
 
 from de_lakehouse_pipeline.ingest.alpha_vantage_client import fetch_daily_stock
 #from de_lakehouse_pipeline.ingest.weather_client import fetch_current_weather
-from de_lakehouse_pipeline.load.loader import load_stock_file
+from de_lakehouse_pipeline.load.loader import load_raw_stock_json
 from de_lakehouse_pipeline.transform.transform_sotck import parse_alpha_vantage_daily
 from de_lakehouse_pipeline.load.db.stock_writer import upsert_stock_prices
 from de_lakehouse_pipeline.load.db.connection import load_db_config, wait_for_db, connect
 from de_lakehouse_pipeline.load.metadata import record_load
 from de_lakehouse_pipeline.load.db.metadata_writer import insert_load_metadata
+from de_lakehouse_pipeline.ingest.io import save_raw_data
 
-
-def project_root() -> Path:
-
-    return Path(__file__).resolve().parents[2]
 def today_time():
     return date.today().isoformat()
-
-def save_raw_data(data, source, root:Path = None):
-    if root is None:
-        root  = project_root()
-    today = today_time()
-    raw_dir = root /"data"/ "raw" / today
-    raw_dir.mkdir(parents=True, exist_ok=True)
-
-    file_path = raw_dir / f"{source}.json"
-
-    with open(file_path, "w") as f:
-        json.dump(data, f, indent=2)
-
-    return file_path
 
 def run_stock(root:Path = None):
     print("Running daily pipeline...")
@@ -39,7 +21,7 @@ def run_stock(root:Path = None):
     data = fetch_daily_stock("AAPL")
     file_path = save_raw_data(data,"stock",root)
     #read today json
-    dict = load_stock_file(file_path)
+    dict = load_raw_stock_json(file_path)
     #transform the dict readiable
     db_row = parse_alpha_vantage_daily(dict)
     #connect db

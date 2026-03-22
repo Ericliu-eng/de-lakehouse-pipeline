@@ -29,25 +29,17 @@ lint:#.venv/Scripts/python.exe -m ruff check
 clean:
 	rm -rf $(VENV)
 
-test:   #-V verbose  -k .. 模糊
-	$(PY) -m pytest -v
+test:   #-V verbose  -k **包含这个名字的
+	$(PY) -m pytest tests -v
 
 test-s:   #-V verbose  -k .. 模糊  输出 print
-	$(PY) -m pytest -s
-
-
-sql-utils:	
-	$(PY) -m pytest -v -s tests/test_sql_utils.py
+	$(PY) -m pytest tests -s
 
 run:
 	$(PY) -m de_lakehouse_pipeline.cli run_stock
 
 smoke:	#在 Python 里：-m = run modul ,in pytest -m is marker
 	$(PY) -m pytest -m smoke
-run-weather:
-	$(PY) -m de_lakehouse_pipeline.cli run_weather
-run-stock:
-	$(PY) -m de_lakehouse_pipeline.cli run_stock
 
 
 # --- DB ---------------
@@ -59,14 +51,12 @@ db-shell:
 
 db-up:  # -d 后台运行
 	docker compose up -d
-db-seed:
-	$(PY) -m scripts.seed_db
+
 db-down:
 	docker compose down
-migrate:
+db-migrate:
 	$(PY) -m scripts.migrate
-
-db-unit:	
-	$(PY) -m pytest -v tests/test_db_unit.py
+db-seed:
+	$(PY) -m scripts.seed_db
 	
 db-smoke-local: db-up migrate db-smoke

@@ -1,0 +1,16 @@
+from pathlib import Path
+from de_lakehouse_pipeline.ingest.io import save_raw_data
+
+
+#unit test 1 能否创建 data/raw/YYYY-MM-DD/能否把 JSON 写进去/返回的 file path 是否正确
+# tmp_path 临时文件夹
+def test_save_raw_data():
+    data = {"temp": 20}
+    test_root = Path("data/test") 
+    file_path = save_raw_data(
+        data,
+        "weather",
+        root=test_root
+    )
+    assert file_path.exists()
+    assert file_path.suffix == ".json"

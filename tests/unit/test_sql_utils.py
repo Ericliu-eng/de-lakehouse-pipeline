@@ -1,6 +1,4 @@
 from de_lakehouse_pipeline.sql_utils import split_sql_statements
-
-
 #Verify that split_sql_statements correctly splits a SQL 
 #string into individual statements using the semicolon (;) delimiter.
 #unit test 1
@@ -22,6 +20,7 @@ def test_split_sql_statements_strips_whitespace() ->None:
     sql_input = "  SELECT 1 ; \n   SELECT 2   ;"
     sqls = split_sql_statements(sql_input)
     assert sqls == ["SELECT 1","SELECT 2"]
+    
 #Edge case
 def test_split_sql_statements_empty_or_whitespace_input() ->None:
     assert split_sql_statements("") == []

@@ -3,6 +3,7 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+archive/
 
 .env
 .DS_Store
@@ -17,4 +18,4 @@ data/processed/
 
 .ipynb_checkpoints/
 
-*.egg-info/
+*.egg-info/ 

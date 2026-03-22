@@ -19,13 +19,6 @@ def run_sql_file(conn, path: Path) -> None:
 def list_migration_files(migrations_dir: Path):
     return sorted(migrations_dir.glob("*.sql"))
 
-def seed():
-    root = Path(__file__).resolve().parents[1]
-    path = root/"scripts"/"seed.sql"
-    cfg  = load_db_config()
-    conn =connect(cfg)
-    run_sql_file(conn,path)
-
 
 def main() -> None:
     root = Path(__file__).resolve().parents[1]
