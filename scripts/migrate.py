@@ -23,8 +23,7 @@ def list_migration_files(migrations_dir: Path):
 def main() -> None:
     root = Path(__file__).resolve().parents[1]
     migrations_dir = root / "migrations"
-    #
-    # seed_sql = root / "scripts" / "seed.sql"
+    
 
     cfg = load_db_config()
     wait_for_db(cfg, timeout_s=60)

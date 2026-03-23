@@ -24,21 +24,21 @@ def test_window_query_runs() -> None:
             assert rows is not None
 
 
-# @pytest.mark.smoke
-# def test_quality_checks_run() -> None:
-#     """Quality checks file should execute statement-by-statement without error."""
-#     root = project_root()
-#     sql_path = root / "sql" / "quality_checks.sql"
-#     sqls = _read_sql(sql_path)
-#     assert sqls, "quality_checks.sql is empty"
+@pytest.mark.smoke
+def test_quality_checks_run() -> None:
+    """Quality checks file should execute statement-by-statement without error."""
+    root = project_root()
+    sql_path = root / "sql" / "quality_checks.sql"
+    sqls = _read_sql(sql_path)
+    assert sqls, "quality_checks.sql is empty"
 
-#     cfg = load_db_config()
-#     wait_for_db(cfg, timeout_s=60)
+    cfg = load_db_config()
+    wait_for_db(cfg, timeout_s=60)
 
-#     statements = split_sql_statements(sqls)
+    statements = split_sql_statements(sqls)
 
-#     with connect(cfg) as conn:
-#         with conn.cursor() as cur:
-#             for stmt in statements:
-#                 cur.execute(stmt)
-#                 _ = cur.fetchone()  # each check returns a single row
+    with connect(cfg) as conn:
+        with conn.cursor() as cur:
+            for stmt in statements:
+                cur.execute(stmt)
+                _ = cur.fetchone()  # each check returns a single row

@@ -44,8 +44,7 @@ smoke:	#在 Python 里：-m = run modul ,in pytest -m is marker
 
 # --- DB ---------------
 #this for CI
-db-smoke:
-	$(PY) -m pytest -q tests/test_db_smoke.py -vv
+
 db-shell:
 	docker exec -it de_lakehouse_db psql -U lakehouse -d lakehouse
 
