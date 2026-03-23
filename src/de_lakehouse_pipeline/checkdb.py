@@ -11,8 +11,7 @@ def view_market_bars():
         df = pd.read_sql(
         """
         SELECT *
-        FROM market_bars
-        ORDER BY ts DESC
+        FROM mart_symbol_volume_rank
         """,
         conn
     )

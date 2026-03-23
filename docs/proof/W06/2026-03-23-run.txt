@@ -1,0 +1,28 @@
+# Proof — W06D01
+# Date: 2026-03-23
+# Repo: de-lakehouse-pipeline
+========================================================
+step 1:
+Command:
+    make db-down
+    make db-up
+Output:
+    [+] down 2/2
+    ✔ Container de_lakehouse_db             Removed                                                                                                                                0.4s
+    ✔ Network de-lakehouse-pipeline_default Removed                                                                                                                                0.3s
+    docker compose up -d
+    [+] up 2/2
+    ✔ Network de-lakehouse-pipeline_default Created                                                                                                                                0.0s
+    ✔ Container de_lakehouse_db             Created  
+========================================================
+step 2:
+Command:
+    python -m de_lakehouse_pipeline.transform.marts.mart_daily_symbol_summary run
+    python -m de_lakehouse_pipeline.transform.marts.mart_symbol_latest_price run
+    python -m de_lakehouse_pipeline.transform.marts.mart_symbol_volume_rank run
+Output:
+    INFO:__main__:Starting Mart 1: mart_daily_symbol_summary transformation...
+    Executing SQL from C:\Users\liuxu\de-lakehouse-pipeline\sql\marts\mart_daily_symbol_summary.sql...
+    INFO:__main__:Successfully populated mart_daily_symbol_summary table.
+    Mart 2: Successfully updated latest snapshots for all symbols.
+    Mart 3: Successfully ranked symbols by volume.

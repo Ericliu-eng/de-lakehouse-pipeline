@@ -508,6 +508,7 @@ python -m src.de_lakehouse_pipeline.cli run_daily
 **Validation**
 pytest output:
 18 passed in X.XXs
+
 ### W04D03(2026-03-11) — Load Layer Scaffold for Weather Pipeline
 ---
 **Deliverables**
@@ -557,3 +558,22 @@ Pipeline execution:
 ```bash
 make test
 ```
+
+### W006D01(2026-03-23) — Iimplement basic metadata tracking for stock load pipeline
+---
+**Deliverables**
+- Implemented `mart_daily_symbol_summary.py`
+- Implemented `mart_symbol_latest_price.py` 
+- Implemented `marts.mart_symbol_volume_rank.py` 
+- Implemented `mart_daily_symbol_summary.sql` 
+- Implemented `mart_symbol_latest_price.sql` 
+- Implemented `marts.mart_symbol_volume_rank.sql` 
+
+**Validation**
+Pipeline execution:
+```bash
+    python -m de_lakehouse_pipeline.transform.marts.mart_daily_symbol_summary run
+    python -m de_lakehouse_pipeline.transform.marts.mart_symbol_latest_price run
+    python -m de_lakehouse_pipeline.transform.marts.mart_symbol_volume_rank run
+```
+

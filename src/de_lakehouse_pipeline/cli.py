@@ -5,7 +5,7 @@ from datetime import date
 from de_lakehouse_pipeline.ingest.market_data_client import fetch_daily_stock
 #from de_lakehouse_pipeline.ingest.weather_client import fetch_current_weather
 from de_lakehouse_pipeline.load.loader import load_raw_stock_json
-from de_lakehouse_pipeline.transform.transform_sotck import parse_alpha_vantage_daily
+from de_lakehouse_pipeline.transform.transform_stock import parse_alpha_vantage_daily
 from de_lakehouse_pipeline.load.db.stock_writer import upsert_stock_prices
 from de_lakehouse_pipeline.load.db.connection import load_db_config, wait_for_db, connect
 from de_lakehouse_pipeline.load.metadata import record_load
@@ -19,6 +19,7 @@ def run_stock(root:Path = None):
     print("Running daily pipeline...")
     #Step 1: ingest
     data = fetch_daily_stock("AAPL")
+    
     file_path = save_raw_data(data,"stock",root)
     #read today json
     dict = load_raw_stock_json(file_path)

@@ -4,7 +4,7 @@ import json
 
 def project_root() -> Path:
 
-    return Path(__file__).resolve().parents[2]
+    return Path(__file__).resolve().parents[3]
 
 def today_time():
     return date.today().isoformat()
