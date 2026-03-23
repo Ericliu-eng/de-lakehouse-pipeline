@@ -4,7 +4,7 @@ import pytest
 import requests
 
 #把 .env 文件内容变成 Python 可以用的环境变量
-from de_lakehouse_pipeline.ingest.alpha_vantage_client import get_api_key,build_params,fetch_json_with_retry
+from de_lakehouse_pipeline.ingest.market_data_client import get_api_key,build_params,fetch_json_with_retry
 load_dotenv()
 #unit test
 def test_get_api_key_when_env_exists() :
