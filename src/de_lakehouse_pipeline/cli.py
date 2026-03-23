@@ -2,7 +2,7 @@ import argparse
 from pathlib import Path
 from datetime import date
 
-from de_lakehouse_pipeline.ingest.alpha_vantage_client import fetch_daily_stock
+from de_lakehouse_pipeline.ingest.market_data_client import fetch_daily_stock
 #from de_lakehouse_pipeline.ingest.weather_client import fetch_current_weather
 from de_lakehouse_pipeline.load.loader import load_raw_stock_json
 from de_lakehouse_pipeline.transform.transform_sotck import parse_alpha_vantage_daily

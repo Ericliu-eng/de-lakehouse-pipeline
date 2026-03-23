@@ -18,4 +18,10 @@ data/processed/
 
 .ipynb_checkpoints/
 
-*.egg-info/ 
+
+# Python packaging
+*.egg-info/
+.eggs/
+
+data/raw/*
+!data/raw/.gitkeep

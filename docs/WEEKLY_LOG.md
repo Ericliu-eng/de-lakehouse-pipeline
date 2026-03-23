@@ -546,3 +546,14 @@ make db-up
 make migrate
 make run
 ```
+
+### W005D02(2026-03-22) — Iimplement basic metadata tracking for stock load pipeline
+---
+**Deliverables**
+- Implemented `test_market_data_client.py` include 6 unit test
+- Implemented `test_loader.py` to test load layer ,include 1unit test
+**Validation**
+Pipeline execution:
+```bash
+make test
+```
