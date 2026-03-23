@@ -59,3 +59,5 @@ db-seed:
 	$(PY) -m scripts.seed_db
 	
 db-smoke-local: db-up migrate db-smoke
+db-visu:
+	$(PY) -m de_lakehouse_pipeline.checkdb view_market_bars
