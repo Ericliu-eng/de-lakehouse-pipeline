@@ -1,18 +1,11 @@
 from dotenv import load_dotenv
-from unittest.mock import patch
+from unittest.mock import patch,Mock
 import pytest
 import requests
 
-
-from unittest.mock import Mock, patch
 #把 .env 文件内容变成 Python 可以用的环境变量
+from de_lakehouse_pipeline.ingest.alpha_vantage_client import get_api_key,build_params,fetch_json_with_retry
 load_dotenv()
-from de_lakehouse_pipeline.ingest.alpha_vantage_client import (
-    get_api_key,
-    build_params,
-    fetch_json_with_retry,
-    fetch_daily_stock,
-)
 #unit test
 def test_get_api_key_when_env_exists() :
     with patch("de_lakehouse_pipeline.ingest.alpha_vantage_client.os.getenv",return_value = "fake-key"):
