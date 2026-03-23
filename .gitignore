@@ -25,3 +25,6 @@ data/processed/
 
 data/raw/*
 !data/raw/.gitkeep
+
+.venv/
+venv/
