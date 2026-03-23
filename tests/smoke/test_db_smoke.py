@@ -7,7 +7,7 @@ import psycopg
 import pytest
 
 from de_lakehouse_pipeline.load.db.connection import load_db_config, wait_for_db, connect
-
+#for market_bars
 
 def _table_exists(conn: psycopg.Connection, table_name: str) -> bool:
     with conn.cursor() as cur:

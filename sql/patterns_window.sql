@@ -1,32 +1,19 @@
 -- ========================================
 -- Window Function Example
--- Rank users by newest created_at
+-- Rank stock rows by newest timestamp per symbol
 -- ========================================
 
--- Save reusable SQL schemas
+-- Assign a sequential number (rank) to the data for each stock symbol, ordered by time from newest to oldest.
 SELECT
-    id,
-    name,
-    created_at,
-    ROW_NUMBER() OVER (ORDER BY created_at DESC) AS row_num
-FROM users;
-
-
--- ========================================
--- Deduplication Example
--- Keep latest record per user name
--- ========================================
-
-SELECT *
-FROM (
-    SELECT
-        id,
-        name,
-        created_at,
-        ROW_NUMBER() OVER (
-            PARTITION BY name
-            ORDER BY created_at DESC
-        ) AS rn
-    FROM users
-) t
-WHERE rn = 1;
+    ts,
+    symbol,
+    open,
+    high,
+    low,
+    close,
+    volume,
+    ROW_NUMBER() OVER (
+        PARTITION BY symbol
+        ORDER BY ts DESC
+    ) AS row_num
+FROM market_bars;

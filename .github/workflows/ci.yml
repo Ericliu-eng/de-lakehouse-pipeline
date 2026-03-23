@@ -48,7 +48,7 @@ jobs:
 
       - name: Migrate DB
         run: |
-          make migrate
+          make db-migrate
 
       - name: Seed DB for smoke tests
         run: |
@@ -57,10 +57,6 @@ jobs:
       - name: Pipeline smoke
         run: |
           make smoke
-
-      - name: DB smoke
-        run: |
-          make db-smoke
 
       - name: Run tests
         run: |

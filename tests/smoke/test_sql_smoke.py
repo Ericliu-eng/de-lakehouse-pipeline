@@ -5,8 +5,6 @@ from de_lakehouse_pipeline.load.db.connection import connect, load_db_config, wa
 from de_lakehouse_pipeline.sql_utils import project_root, _read_sql, split_sql_statements
 
 
-
-
 @pytest.mark.smoke
 def test_window_query_runs() -> None:
     """Window function query file should execute without error."""
@@ -17,7 +15,6 @@ def test_window_query_runs() -> None:
 
     cfg = load_db_config()
     wait_for_db(cfg, timeout_s=60)
-
     with connect(cfg) as conn:
         with conn.cursor() as cur:
             # Execute only the FIRST statement in the file (up to first ;)
