@@ -36,11 +36,18 @@ Key engineering goals:
 
 ```mermaid
 graph TD
-A[External Market API] --> B[data/raw/YYYY-MM-DD/*.json]
-B --> C[Load Layer Parser]
-C --> D[(Postgres Raw Tables)]
-D --> E[Transform / Staging]
-E --> F[Analytics Outputs]
+    A[External Market API] --> B[Raw Landing: JSON Artifacts]
+    B --> C[Load Layer: Postgres Raw Tables]
+    C --> D[Staging Layer: Type Casting & Cleaning]
+    D --> E[Marts Layer: Analytical Data Models]
+    
+    subgraph "Marts Layer (Business Logic)"
+        E1[mart_daily_symbol_summary]
+        E2[mart_symbol_latest_price]
+        E3[mart_symbol_volume_rank]
+    end
+    
+    E1 --> G[Downstream AI/ML Features]
 ```
 
 ---
