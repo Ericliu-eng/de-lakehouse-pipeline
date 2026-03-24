@@ -559,7 +559,7 @@ Pipeline execution:
 make test
 ```
 
-### W006D01(2026-03-23) — Iimplement basic metadata tracking for stock load pipeline
+### W006D01(2026-03-23) — Implement basic metadata tracking for stock load pipeline
 ---
 **Deliverables**
 - Implemented `mart_daily_symbol_summary.py`
@@ -577,3 +577,11 @@ Pipeline execution:
     python -m de_lakehouse_pipeline.transform.marts.mart_symbol_volume_rank run
 ```
 
+### W006D02(2026-03-24) — Marts Layer Quality & Integration
+**Deliverables**
+- Implemented `test_marts.py`
+**Validation**
+Pipeline execution:
+```bash
+make run-marts
+```

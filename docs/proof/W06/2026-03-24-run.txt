@@ -1,0 +1,31 @@
+# Proof — W06D02
+# Date: 2026-03-24
+# Repo: de-lakehouse-pipeline
+========================================================
+step 1:
+Command:
+    make db-down
+    make db-up
+Output:
+    [+] down 2/2
+    ✔ Container de_lakehouse_db             Removed                                                                                                                                0.4s
+    ✔ Network de-lakehouse-pipeline_default Removed                                                                                                                                0.3s
+    docker compose up -d
+    [+] up 2/2
+    ✔ Network de-lakehouse-pipeline_default Created                                                                                                                                0.0s
+    ✔ Container de_lakehouse_db             Created  
+========================================================
+step 2:
+Command:
+    make run-marts
+Output:
+    .venv/Scripts/python.exe -m de_lakehouse_pipeline.transform.marts.mart_daily_symbol_summary run_daily_summary
+    INFO:__main__:Starting Mart 1: mart_daily_symbol_summary transformation...
+    INFO:__main__:Successfully populated mart_daily_symbol_summary table.
+    .venv/Scripts/python.exe -m de_lakehouse_pipeline.transform.marts.mart_symbol_latest_price run_latest_price
+    INFO:__main__:Updating Latest Price Mart...
+    INFO:__main__:Mart 2: Successfully updated latest snapshots for all symbols.
+    .venv/Scripts/python.exe -m de_lakehouse_pipeline.transform.marts.mart_symbol_volume_rank run_symbol_volume 
+    INFO:__main__:Calculating Market Volume Ranks...
+    INFO:__main__:Mart 3: Successfully ranked symbols by volume.
+    " All Marts transformations completed successfully."

@@ -46,12 +46,9 @@ jobs:
         run: |
           make lint
 
-      - name: Migrate DB
+      - name: Migrate & Seed DB
         run: |
           make db-migrate
-
-      - name: Seed DB for smoke tests
-        run: |
           make db-seed
 
       - name: Pipeline smoke
@@ -61,3 +58,6 @@ jobs:
       - name: Run tests
         run: |
           make test
+      - name: Run Integration Tests
+        run: |
+          make run-marts

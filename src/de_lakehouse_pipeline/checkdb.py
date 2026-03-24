@@ -11,7 +11,7 @@ def view_market_bars():
         df = pd.read_sql(
         """
         SELECT *
-        FROM mart_symbol_volume_rank
+        FROM market_bars
         """,
         conn
     )
