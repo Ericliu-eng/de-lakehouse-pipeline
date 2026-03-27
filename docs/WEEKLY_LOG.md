@@ -568,7 +568,6 @@ make test
 - Implemented `mart_daily_symbol_summary.sql` 
 - Implemented `mart_symbol_latest_price.sql` 
 - Implemented `marts.mart_symbol_volume_rank.sql` 
-
 **Validation**
 Pipeline execution:
 ```bash
@@ -584,4 +583,18 @@ Pipeline execution:
 Pipeline execution:
 ```bash
 make run-marts
+```
+
+### W006D03(2026-03-26) — feat/idempotency-incremental-processin
+**Deliverables**
+- `test_filter_new_rows_when_watermark_is_none`  unit test in `test_incremental.py`  
+- `test_filter_new_rows_only_keeps_newer_rows` unit test in `test_incremental.py`
+- `test_filter_new_rows_returns_empty_when_no_new_data` unit test in `test_incremental.py`
+- `test_get_max_timestamp_empty`unit test in `test_incremental.py`
+- `pipeline_metadata.py`have ges_last_watermark function and upsert watermark function
+- `incremental.py` have filter_new_rows and get_max_timestamp functions
+Pipeline execution:
+```bash
+make run
+make test
 ```
