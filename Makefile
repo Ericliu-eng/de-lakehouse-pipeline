@@ -40,6 +40,8 @@ run:
 
 smoke:	#在 Python 里：-m = run modul ,in pytest -m is marker
 	$(PY) -m pytest -m smoke
+tree:
+	$(PY) tree_tool.py
 	
 # 总命令：按照逻辑顺序一键运行所有 Marts
 # 注意：在大厂中，顺序很重要。通常先跑 Summary，再跑基于它的 Rank

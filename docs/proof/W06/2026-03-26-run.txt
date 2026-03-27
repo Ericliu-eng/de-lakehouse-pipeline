@@ -1,0 +1,60 @@
+# Proof — W06D02
+# Date: 2026-03-24
+# Repo: de-lakehouse-pipeline
+========================================================
+step 1:
+Command:
+    make db-down
+    make db-up
+Output:
+    [+] down 2/2
+    ✔ Container de_lakehouse_db             Removed                                                                                                                                0.4s
+    ✔ Network de-lakehouse-pipeline_default Removed                                                                                                                                0.3s
+    docker compose up -d
+    [+] up 2/2
+    ✔ Network de-lakehouse-pipeline_default Created                                                                                                                                0.0s
+    ✔ Container de_lakehouse_db             Created  
+========================================================
+step 2:
+Command:
+    make run
+Output:
+    2026-03-26 20:46:55,526 | INFO | __main__ | Starting stock pipeline
+    2026-03-26 20:46:55,526 | INFO | __main__ | Fetching stock data for symbol=AAPL
+    2026-03-26 20:46:55,950 | INFO | __main__ | Saved raw stock data to C:\Users\liuxu\de-lakehouse-pipeline\data\raw\2026-03-26\stock.json
+    2026-03-26 20:46:55,950 | INFO | __main__ | Loaded raw stock json from C:\Users\liuxu\de-lakehouse-pipeline\data\raw\2026-03-26\stock.json
+    2026-03-26 20:46:55,950 | INFO | __main__ | Transformed stock payload into 0 rows
+    2026-03-26 20:46:56,005 | INFO | __main__ | Writing stock rows into database
+    2026-03-26 20:46:56,010 | INFO | __main__ | No new rows to load
+
+step 3:
+Command:
+    make test
+Output:
+    tests/integration/test_marts.py::test_summary_aggregates PASSED                                                                                                              [  3%]
+    tests/integration/test_marts.py::test_latest_price_is_most_recent PASSED                                                                                                     [  7%]
+    tests/integration/test_marts.py::test_volume_rank_order PASSED                                                                                                               [ 11%]
+    tests/smoke/test_db_smoke.py::test_db_smoke_connect_tables_seed PASSED                                                                                                       [ 14%]
+    tests/smoke/test_pipeline_smoke.py::test_incremental_behavior PASSED                                                                                                         [ 18%]
+    tests/smoke/test_sql_smoke.py::test_window_query_runs PASSED                                                                                                                 [ 22%]
+    tests/smoke/test_sql_smoke.py::test_quality_checks_run PASSED                                                                                                                [ 25%]
+    tests/unit/test_connection.py::test_load_db_config_defaults PASSED                                                                                                           [ 29%] 
+    tests/unit/test_connection.py::test_load_db_config_env_override PASSED                                                                                                       [ 33%] 
+    tests/unit/test_connection.py::test_make_dsn_contains_expected_fields PASSED                                                                                                 [ 37%] 
+    tests/unit/test_connection.py::test_wait_for_db_times_out_fast_on_bad_port PASSED                                                                                            [ 40%]
+    tests/unit/test_incremental.py::test_filter_new_rows_when_watermark_is_none PASSED                                                                                           [ 44%] 
+    tests/unit/test_incremental.py::test_filter_new_rows_only_keeps_newer_rows PASSED                                                                                            [ 48%] 
+    tests/unit/test_incremental.py::test_filter_new_rows_returns_empty_when_no_new_data PASSED                                                                                   [ 51%] 
+    tests/unit/test_incremental.py::test_get_max_timestamp_empty PASSED                                                                                                          [ 55%] 
+    tests/unit/test_ingest_io.py::test_save_raw_data PASSED                                                                                                                      [ 59%] 
+    tests/unit/test_loader.py::test_load_raw_stock_json_success PASSED                                                                                                           [ 62%]
+    tests/unit/test_market_data_client.py::test_get_api_key_when_env_exists PASSED                                                                                               [ 66%]
+    tests/unit/test_market_data_client.py::test_get_api_key_when_env_not_exists PASSED                                                                                           [ 70%] 
+    tests/unit/test_market_data_client.py::test_build_params_returns_expected_dict PASSED                                                                                        [ 74%] 
+    tests/unit/test_market_data_client.py::test_fetch_json_with_retry_returns_payload_on_success PASSED                                                                          [ 77%] 
+    tests/unit/test_market_data_client.py::test_fetch_json_with_retry_raises_value_error_on_api_error PASSED                                                                     [ 81%] 
+    tests/unit/test_market_data_client.py::test_fetch_json_with_retry_raises_after_max_retries PASSED                                                                            [ 85%] 
+    tests/unit/test_sql_utils.py::test_split_sql_statements_basic PASSED                                                                                                         [ 88%] 
+    tests/unit/test_sql_utils.py::test_split_sql_statements_removes_empty PASSED                                                                                                 [ 92%]
+    tests/unit/test_sql_utils.py::test_split_sql_statements_strips_whitespace PASSED                                                                                             [ 96%] 
+    tests/unit/test_sql_utils.py::test_split_sql_statements_empty_or_whitespace_input PASSED      

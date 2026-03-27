@@ -1,9 +1,9 @@
 import argparse
+import logging
 from pathlib import Path
 from datetime import date
 
 from de_lakehouse_pipeline.ingest.market_data_client import fetch_daily_stock
-#from de_lakehouse_pipeline.ingest.weather_client import fetch_current_weather
 from de_lakehouse_pipeline.load.loader import load_raw_stock_json
 from de_lakehouse_pipeline.transform.transform_stock import parse_alpha_vantage_daily
 from de_lakehouse_pipeline.load.db.stock_writer import upsert_stock_prices
@@ -11,52 +11,81 @@ from de_lakehouse_pipeline.load.db.connection import load_db_config, wait_for_db
 from de_lakehouse_pipeline.load.metadata import record_load
 from de_lakehouse_pipeline.load.db.metadata_writer import insert_load_metadata
 from de_lakehouse_pipeline.ingest.io import save_raw_data
+from de_lakehouse_pipeline.load.db.pipeline_metadata import get_last_watermark, upsert_watermark
+from de_lakehouse_pipeline.transform.incremental import get_max_timestamp,filter_new_rows
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+)
 
+logger = logging.getLogger(__name__)
 def today_time():
     return date.today().isoformat()
 
-def run_stock(root:Path = None):
-    print("Running daily pipeline...")
-    #Step 1: ingest
-    data = fetch_daily_stock("AAPL")
-    
-    file_path = save_raw_data(data,"stock",root)
-    #read today json
-    dict = load_raw_stock_json(file_path)
-    #transform the dict readiable
-    db_row = parse_alpha_vantage_daily(dict)
-    #connect db
-    cfg = load_db_config()
-    wait_for_db(cfg, timeout_s=60)
-    with connect(cfg) as conn:
-        #write into db    
-        print("write stock into db")
-        upsert_stock_prices(conn,db_row)
-        #record it 
-        metadata_payload = record_load(
-        source="alpha_vantage",
-        load_date=today_time(),
-        version=today_time(),
-        record_count=len(db_row),
-        )
-        print("start record metadata to db ")
-        insert_load_metadata(conn, metadata_payload)
-        print("finish...")
-    return file_path
+def run_stock(root: Path = None):
+    logger.info("Starting stock pipeline")
 
+    try:
 
-    #return a multiply row which can write into the db
-    #list_tuple = parse_alpha_vantage_daily(db_row)
+        # Step 1: ingest
+        logger.info("Fetching stock data for symbol=AAPL")
+        data = fetch_daily_stock("AAPL")
+       
 
- 
-    # upsert_stock_prices(list_tuple)
-    # print(json.dumps(data, indent=2)[:1000])
-    # print(f"Saved raw file to: {file_path}")
-    # print("Step 2: load")
-    # print("Step 3: transform")
-    # return  file_path
+        file_path = save_raw_data(data, "stock", root)
+        logger.info("Saved raw stock data to %s", file_path)
 
+        # Step 2: load raw json
+        raw_data = load_raw_stock_json(file_path)
+        logger.info("Loaded raw stock json from %s", file_path)
 
+        # Step 3: transform
+        db_rows = parse_alpha_vantage_daily(raw_data)
+  
+        logger.info("Transformed stock payload into %d rows", len(db_rows))
+
+        # Step 4: connect db
+        cfg = load_db_config()
+        wait_for_db(cfg, timeout_s=60)
+
+        with connect(cfg) as conn:
+            logger.info("Writing stock rows into database")
+                    
+            last_ts = get_last_watermark(conn,"alpha_vantage","AAPL")
+            # 1. filter
+            new_rows  = filter_new_rows(rows=db_rows,last_watermark=last_ts)
+            # 2. empty case
+            if not new_rows:
+                logger.info("No new rows to load")
+                return file_path
+            
+            upsert_stock_prices(conn, new_rows)
+            max_ts = get_max_timestamp(new_rows)
+
+            upsert_watermark(
+            conn,
+            "alpha_vantage",
+            "AAPL",
+            last_watermark=max_ts,
+            last_row_count=len(db_rows),
+            status="success"
+            )
+            metadata_payload = record_load(
+                source="alpha_vantage",
+                load_date=today_time(),
+                version=today_time(),
+                record_count=len(db_rows),
+            )
+
+            logger.info("Recording load metadata: %s", metadata_payload)
+            insert_load_metadata(conn, metadata_payload)
+
+        logger.info("Stock pipeline finished successfully")
+        return file_path
+
+    except Exception:
+        logger.exception("Stock pipeline failed")
+        raise
 
 def run_weather(city: str) -> None:
     #"Step 1: ingest"
@@ -69,7 +98,6 @@ def run_weather(city: str) -> None:
     #"Step 3: transform"
     #infor = trans_weather(load_file)
     #print(infor)
-
 
 def main() -> None:
     parser = argparse.ArgumentParser()
