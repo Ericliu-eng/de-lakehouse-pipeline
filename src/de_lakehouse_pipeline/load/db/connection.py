@@ -17,6 +17,7 @@ class DBConfig:
     dbname: str
     user: str
     password: str
+    connect_timeout: int = 2
 
 #DBConfig is a structured configuration object used to store database connection information.
 
@@ -29,6 +30,7 @@ def load_db_config() -> DBConfig:
         dbname=os.environ.get("DB_NAME", "lakehouse"),
         user=os.environ.get("DB_USER", "lakehouse"),
         password=os.environ.get("DB_PASSWORD", "lakehouse"),
+        connect_timeout=int(os.environ.get("DB_CONNECT_TIMEOUT", "2")),
     )
 
 #Convert config → connection string (DSN)
@@ -36,7 +38,8 @@ def make_dsn(cfg: DBConfig) -> str:
     #Data Source Name
     return (
         f"host={cfg.host} port={cfg.port} dbname={cfg.dbname} "
-        f"user={cfg.user} password={cfg.password}"
+        f"user={cfg.user} password={cfg.password} "
+        f"connect_timeout={cfg.connect_timeout}"
     )
 
 #Flow:DBConfig → DSN → psycopg → connection
