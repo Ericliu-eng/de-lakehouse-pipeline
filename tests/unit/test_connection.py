@@ -55,7 +55,7 @@ def test_make_dsn_contains_expected_fields() -> None:
 # edge/failure test
 def test_wait_for_db_times_out_fast_on_bad_port() -> None:
 # deterministic: local unused port should refuse immediately; timeout keeps it bounded
-    cfg = DBConfig(host="127.0.0.1", port=65432, dbname="x", user="x", password="x")
+    cfg = DBConfig(host="127.0.0.1", port=65432, dbname="x", user="x", password="x" )
     #Assert that the code will throw an exception(pytest.raises（error）) if raise a error passed 
     with pytest.raises(Exception):
         wait_for_db(cfg, timeout_s=1)

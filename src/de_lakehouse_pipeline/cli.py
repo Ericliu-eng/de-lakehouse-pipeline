@@ -13,6 +13,10 @@ from de_lakehouse_pipeline.load.db.metadata_writer import insert_load_metadata
 from de_lakehouse_pipeline.ingest.io import save_raw_data
 from de_lakehouse_pipeline.load.db.pipeline_metadata import get_last_watermark, upsert_watermark
 from de_lakehouse_pipeline.transform.incremental import get_max_timestamp,filter_new_rows
+from de_lakehouse_pipeline.transform.marts.mart_daily_symbol_summary import run_daily_summary
+from de_lakehouse_pipeline.transform.marts.mart_symbol_latest_price import run_latest_price
+from de_lakehouse_pipeline.transform.marts.mart_symbol_volume_rank import run_symbol_volume
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
@@ -67,7 +71,7 @@ def run_stock(root: Path = None):
             "alpha_vantage",
             "AAPL",
             last_watermark=max_ts,
-            last_row_count=len(db_rows),
+            last_row_count=len(new_rows),
             status="success"
             )
             metadata_payload = record_load(
@@ -99,9 +103,24 @@ def run_weather(city: str) -> None:
     #infor = trans_weather(load_file)
     #print(infor)
 
+def run_marts() -> None:
+    logger.info("Starting marts pipeline")
+
+    cfg = load_db_config()
+    wait_for_db(cfg, timeout_s=60)
+
+    with connect(cfg) as conn:
+        run_daily_summary(conn)
+        run_latest_price(conn)
+        run_symbol_volume(conn)
+        conn.commit()
+
+    logger.info("Marts pipeline finished successfully")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=["run_stock", "run_weather"])
+    parser.add_argument("command", choices=["run_stock", "run_weather", "run_marts"])
     parser.add_argument("--city", default="Berkeley,US")
     args = parser.parse_args()
 
@@ -109,6 +128,8 @@ def main() -> None:
         run_stock()
     elif args.command == "run_weather":
         run_weather(args.city)
+    elif args.command == "run_marts":
+        run_marts()
 
 
 if __name__ == "__main__":

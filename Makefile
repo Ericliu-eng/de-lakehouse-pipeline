@@ -45,14 +45,8 @@ tree:
 	
 # 总命令：按照逻辑顺序一键运行所有 Marts
 # 注意：在大厂中，顺序很重要。通常先跑 Summary，再跑基于它的 Rank
-run-marts:mart-1 mart-2 mart-3
-	@echo " All Marts transformations completed successfully."
-mart-1:
-	$(PY) -m de_lakehouse_pipeline.transform.marts.mart_daily_symbol_summary run_daily_summary
-mart-2:
-	$(PY) -m de_lakehouse_pipeline.transform.marts.mart_symbol_latest_price run_latest_price
-mart-3:
-	$(PY) -m de_lakehouse_pipeline.transform.marts.mart_symbol_volume_rank run_symbol_volume 
+run-marts:
+	$(PY) -m de_lakehouse_pipeline.cli run_marts
 
 # --- DB ---------------
 #this for CI
