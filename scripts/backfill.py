@@ -1,56 +1,43 @@
 from __future__ import annotations
 
 import argparse
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 
-def parse_date(value: str) -> date:
-    try:
-        return datetime.strptime(value, "%Y-%m-%d").date()
-    except ValueError as exc:
-        raise argparse.ArgumentTypeError(
-            f"Invalid date '{value}'. Expected format: YYYY-MM-DD."
-        ) from exc
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run backfill for a date range.")
+    parser.add_argument("--start", required=True, help="Start date in YYYY-MM-DD")
+    parser.add_argument("--end", required=True, help="End date in YYYY-MM-DD")
+    return parser.parse_args()
+
+
+def parse_iso_date(value: str) -> date:
+    return date.fromisoformat(value)
+
+
+def validate_date_range(start_date: date, end_date: date) -> None:
+    if start_date > end_date:
+        raise ValueError("start date must be on or before end date")
 
 
 def iter_dates(start: date, end: date):
     current = start
-
     while current <= end:
         yield current
         current += timedelta(days=1)
 
 
-def validate_date_range(start: date, end: date) -> None:
-    if start > end:
-        raise ValueError("--start must be less than or equal to --end")
-
-
-def run_backfill(start: date, end: date) -> list[date]:
-    validate_date_range(start, end)
-
-    dates = list(iter_dates(start, end))
-
-    for run_date in dates:
-        print(f"Backfill scaffold: would process {run_date.isoformat()}")
-
-    return dates
-
-
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description="Backfill scaffold for historical pipeline runs."
-    )
-    parser.add_argument("--start", required=True, type=parse_date)
-    parser.add_argument("--end", required=True, type=parse_date)
-    return parser
-
-
 def main() -> None:
-    parser = build_parser()
-    args = parser.parse_args()
+    args = parse_args()
 
-    run_backfill(args.start, args.end)
+    start_date = parse_iso_date(args.start)
+    end_date = parse_iso_date(args.end)
+
+    validate_date_range(start_date, end_date)
+
+    print(f"Backfill requested from {start_date} to {end_date}")
+    for run_date in iter_dates(start_date, end_date):
+        print(f"Would process: {run_date}")
 
 
 if __name__ == "__main__":
