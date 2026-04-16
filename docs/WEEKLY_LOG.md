@@ -598,3 +598,12 @@ Pipeline execution:
 make run
 make test
 ```
+
+### W009D01(2026-04-15) — backfill-range-backfill-resume
+**Deliverables**
+- `scripts/backfill.py`
+- `tests/test_backfill.py`
+- `docs/BACKFILL.md`
+```bash
+python scripts/backfill.py --start 2026-01-01 --end 2026-01-07
+```
