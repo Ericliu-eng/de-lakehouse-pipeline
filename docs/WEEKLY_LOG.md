@@ -607,3 +607,10 @@ make test
 ```bash
 python scripts/backfill.py --start 2026-01-01 --end 2026-01-07
 ```
+### W009D02(2026-04-16) — backfill-range-resume-from-checkpoint-runbook
+**Deliverables**
+- `scripts/backfill.py -Add simple checkpoint/resume behavior`
+- `tests/test_backfill.py -Add simple checkpoint/resume behavior Test`
+```bash
+python scripts/backfill.py --start 2026-01-01 --end 2026-01-07
+```
