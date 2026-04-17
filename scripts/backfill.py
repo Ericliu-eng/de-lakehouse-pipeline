@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import argparse
 from datetime import date, timedelta
+import json
+from pathlib import Path
 
+CHECKPOINT_PATH = Path(".checkpoints/backfill_checkpoint.json")
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run backfill for a date range.")
@@ -26,19 +29,55 @@ def iter_dates(start: date, end: date):
         yield current
         current += timedelta(days=1)
 
+def run_backfill_for_date(target_date: date) -> None:
+    print(f"Processing {target_date.isoformat()}...")
+
+
+def run_backfill(start: date, end: date) -> None:
+    completed_dates = load_checkpoint()
+
+    for target_date in iter_dates(start, end):
+        if is_date_completed(target_date, completed_dates):
+            print(f"Skipping {target_date.isoformat()} (already completed)")
+            continue
+
+        run_backfill_for_date(target_date)
+        mark_date_completed(target_date, completed_dates)
+
+def load_checkpoint() -> set[str]:
+    if not CHECKPOINT_PATH.exists():
+        return set()
+
+    with CHECKPOINT_PATH.open("r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    completed_dates = data.get("completed_dates", [])
+    return set(completed_dates)
+
+def save_checkpoint(completed_dates: set[str]) -> None:
+    CHECKPOINT_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+    payload = {
+        "completed_dates": sorted(completed_dates)
+    }
+
+    with CHECKPOINT_PATH.open("w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2)
+
+def is_date_completed(target_date: date, completed_dates: set[str]) -> bool:
+    return target_date.isoformat() in completed_dates
+
+def mark_date_completed(target_date: date, completed_dates: set[str]) -> None:
+    completed_dates.add(target_date.isoformat())
+    save_checkpoint(completed_dates)
 
 def main() -> None:
     args = parse_args()
+    start = parse_iso_date(args.start)
+    end = parse_iso_date(args.end)
+    validate_date_range(start, end)
+    run_backfill(start, end)
 
-    start_date = parse_iso_date(args.start)
-    end_date = parse_iso_date(args.end)
-
-    validate_date_range(start_date, end_date)
-
-    print(f"Backfill requested from {start_date} to {end_date}")
-    for run_date in iter_dates(start_date, end_date):
-        print(f"Would process: {run_date}")
-
-
+    
 if __name__ == "__main__":
     main()
