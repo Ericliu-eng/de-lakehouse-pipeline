@@ -74,6 +74,7 @@ def run_stock(root: Path = None):
             last_row_count=len(new_rows),
             status="success"
             )
+            
             metadata_payload = record_load(
                 source="alpha_vantage",
                 load_date=today_time(),
