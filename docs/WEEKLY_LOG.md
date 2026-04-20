@@ -614,3 +614,11 @@ python scripts/backfill.py --start 2026-01-01 --end 2026-01-07
 ```bash
 python scripts/backfill.py --start 2026-01-01 --end 2026-01-07
 ```
+
+### W009D03(2026-04-19) — backfill-range-resume-from-checkpoint-runbook
+**Deliverables**
+- `quality/checks.py` add two function check_not_null  check_unique
+- `unit/test_quality_checks.py` add two unit test for each function 
+```bash
+python -m pytest tests/unit/test_quality_checks.py   
+```
