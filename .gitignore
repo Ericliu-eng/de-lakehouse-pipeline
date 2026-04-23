@@ -29,3 +29,7 @@ data/raw/*
 
 .venv/
 venv/
+
+.checkpoints/
+.pytest_tmp/
+.pytest_cache/

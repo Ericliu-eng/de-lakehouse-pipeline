@@ -580,7 +580,6 @@ Pipeline execution:
 **Deliverables**
 - Implemented `test_marts.py`
 **Validation**
-Pipeline execution:
 ```bash
 make run-marts
 ```
@@ -604,6 +603,7 @@ make test
 - `scripts/backfill.py`
 - `tests/test_backfill.py`
 - `docs/BACKFILL.md`
+**Validation**
 ```bash
 python scripts/backfill.py --start 2026-01-01 --end 2026-01-07
 ```
@@ -611,6 +611,7 @@ python scripts/backfill.py --start 2026-01-01 --end 2026-01-07
 **Deliverables**
 - `scripts/backfill.py -Add simple checkpoint/resume behavior`
 - `tests/test_backfill.py -Add simple checkpoint/resume behavior Test`
+**Validation**
 ```bash
 python scripts/backfill.py --start 2026-01-01 --end 2026-01-07
 ```
@@ -619,6 +620,21 @@ python scripts/backfill.py --start 2026-01-01 --end 2026-01-07
 **Deliverables**
 - `quality/checks.py` add two function check_not_null  check_unique
 - `unit/test_quality_checks.py` add two unit test for each function 
+**Validation**
 ```bash
 python -m pytest tests/unit/test_quality_checks.py   
 ```
+
+### W010D01 (2026-04-23) — backfill-cli-integration
+**Deliverables**
+- Integrated `backfill` into the main CLI entrypoint.
+- Added `backfill` as a supported CLI command.
+- Added `--start` and `--end` arguments for date-range backfill.
+- Wired the command flow:
+  `cli.py -> backfill.py -> pipeline.py`
+**Validation**
+```bash
+.venv/Scripts/python.exe -m de_lakehouse_pipeline.cli backfill --start 2026-04-16 --end 2026-04-16
+```
+
+下一个是week11 d02
