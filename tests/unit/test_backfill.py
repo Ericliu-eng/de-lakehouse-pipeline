@@ -2,8 +2,8 @@
 
 import pytest
 
-from scripts.backfill import parse_iso_date, validate_date_range, iter_dates
-from scripts import backfill
+from de_lakehouse_pipeline.backfill import parse_iso_date, validate_date_range, iter_dates
+from de_lakehouse_pipeline import backfill
 from datetime import date
 
 def test_parse_iso_date_returns_date_object():

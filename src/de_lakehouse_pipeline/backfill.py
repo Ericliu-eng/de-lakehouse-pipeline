@@ -4,6 +4,7 @@ import argparse
 from datetime import date, timedelta
 import json
 from pathlib import Path
+from de_lakehouse_pipeline.pipeline import run_stock_for_date
 
 CHECKPOINT_PATH = Path(".checkpoints/backfill_checkpoint.json")
 
@@ -31,6 +32,7 @@ def iter_dates(start: date, end: date):
 
 def run_backfill_for_date(target_date: date) -> None:
     print(f"Processing {target_date.isoformat()}...")
+    run_stock_for_date(target_date, symbol="AAPL")
 
 
 def run_backfill(start: date, end: date) -> None:
