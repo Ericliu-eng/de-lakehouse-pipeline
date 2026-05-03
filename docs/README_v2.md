@@ -19,7 +19,9 @@ This project serves as a foundation for progressing from
 This pipeline implements a realistic ingestion architecture:
 
 ```
-External API → Raw Landing (JSON) → Load Layer → Postgres Raw Tables → Transform / Analytics
+External API → Raw Landing(JSON) → Load Layer → Postgres Raw Tables → Transform / Analytics
+                         ↑
+                   Backfill + Checkpoint Resume
 ```
 
 Key engineering goals:
@@ -64,6 +66,7 @@ make setup
 make db-up
 make migrate
 make run-stock
+python -m de_lakehouse_pipeline.cli backfill --start 2026-04-16 --end 2026-04-16
 make db-shell
 ```
 
@@ -148,6 +151,7 @@ make migrate      # apply DB schema
 make db-up        # start Postgres container
 make test         # run all tests
 make smoke        # end-to-end smoke tests
+python -m de_lakehouse_pipeline.cli backfill --start YYYY-MM-DD --end YYYY-MM-DD #Backfill historical date ranges through the unified CLI entrypoint.
 ```
 
 ---

@@ -1,6 +1,5 @@
-
-# Proof — W09D3
-# Date: 2026-04-28
+# Proof — W011D01
+# Date: 2026-05-02
 # Repo: de-lakehouse-pipeline
 ==================================================
 step 1:
@@ -23,18 +22,7 @@ Output:
 ==================================================
 step 3:
 Command:
-    python -m de_lakehouse_pipeline.cli backfill --start 2026-04-16 --end 2026-04-16
+    make test
 Output:
-    Processing 2026-04-16...
-    INFO:de_lakehouse_pipeline.pipeline:Starting stock pipeline for 2026-04-16
-    INFO:de_lakehouse_pipeline.pipeline:Fetching stock data for symbol=AAPL
-    INFO:de_lakehouse_pipeline.pipeline:Saved raw stock data to C:\Users\liuxu\de-lakehouse-pipeline\data\raw\2026-04-23\stock.json
-    INFO:de_lakehouse_pipeline.pipeline:Loaded raw stock json from C:\Users\liuxu\de-lakehouse-pipeline\data\raw\2026-04-23\stock.json
-    INFO:de_lakehouse_pipeline.pipeline:Filtered transformed rows to 1 row(s) for 2026-04-16
-    INFO:de_lakehouse_pipeline.pipeline:No new rows to load for 2026-04-16
-==================================================
-step 4:
-Command:
-    python -m de_lakehouse_pipeline.cli backfill --start 2026-01-05 --end 2026-01-01
-Output:
-    ValueError: start date must be on or before end date
+    45 passed!
+
