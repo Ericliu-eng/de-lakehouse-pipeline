@@ -19,10 +19,10 @@ def db_conn():
 
 def seed_market_bars(conn):
     with conn.cursor() as cur:
-        cur.execute("DELETE FROM mart_symbol_volume_rank WHERE symbol IN (%s, %s)", ("TESTA", "TESTB"))
+        cur.execute("DELETE FROM mart_symbol_volume_rank WHERE trading_date = %s", ("2026-04-06",))
+        cur.execute("DELETE FROM mart_daily_symbol_summary WHERE trading_date = %s", ("2026-04-06",))
         cur.execute("DELETE FROM mart_symbol_latest_price WHERE symbol IN (%s, %s)", ("TESTA", "TESTB"))
-        cur.execute("DELETE FROM mart_daily_symbol_summary WHERE symbol IN (%s, %s)", ("TESTA", "TESTB"))
-        cur.execute("DELETE FROM market_bars WHERE symbol IN (%s, %s)", ("TESTA", "TESTB"))
+        cur.execute("DELETE FROM market_bars WHERE ts::date = %s", ("2026-04-06",))
 
         cur.execute(
             """
@@ -40,6 +40,7 @@ def seed_market_bars(conn):
                 datetime(2026, 4, 6, 11, 0, tzinfo=ZoneInfo("UTC")),
             ),
         )
+    conn.commit()
 
 def test_summary_aggregates(db_conn):
     seed_market_bars(db_conn)

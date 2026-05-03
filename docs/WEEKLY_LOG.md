@@ -637,4 +637,15 @@ python -m pytest tests/unit/test_quality_checks.py
 .venv/Scripts/python.exe -m de_lakehouse_pipeline.cli backfill --start 2026-04-16 --end 2026-04-16
 ```
 
-下一个是week11 d02
+### W011D01 (2026-05-02) — Data quality gates
+**Deliverables**
+- Added `check_freshness` function on `checks.py`
+- Added `check_range` function on `checks.py`
+- Added`test_check_range_passes_when_values_are_inside_range` func on `test_quality_checks.py`
+- Added`test_check_range_fails_when_values_are_outside_range` func on `test_quality_checks.py`
+- Added`test_check_freshness_passes_when_latest_data_is_recent` func on `test_quality_checks.py`
+- Added`test_check_freshness_fails_when_latest_data_is_too_old` func on `test_quality_checks.py`
+**Validation**
+```bash
+make test
+```
