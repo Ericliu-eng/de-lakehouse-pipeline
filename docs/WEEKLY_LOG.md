@@ -649,3 +649,15 @@ python -m pytest tests/unit/test_quality_checks.py
 ```bash
 make test
 ```
+
+### W014D01 (2026-05-19) — Add fail and edge test for test_quality_checks  
+**Deliverables**
+
+- Added`test_check_unique_fails_when_duplicates_exist()` func on `test_quality_checks.py`
+- Added`test_check_not_null_fails_when_null_rows_exist()` func on `test_quality_checks.py`
+- Added`test_check_range_raises_when_no_bounds_are_provided()` func on `test_quality_checks.py`
+**Validation**
+```bash
+make test
+```
+下一个w11 d04

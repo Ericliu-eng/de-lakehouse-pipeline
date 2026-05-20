@@ -1,5 +1,6 @@
 from de_lakehouse_pipeline.quality.checks import check_not_null, check_unique
 from de_lakehouse_pipeline.quality.checks import check_range, check_freshness
+import pytest
 
 class FakeCursor:
     def __init__(self, rows):
@@ -108,3 +109,31 @@ def test_check_freshness_fails_when_latest_data_is_too_old():
     assert result.table_name == "stock_prices"
     assert result.passed is False
     assert result.failed_rows == 1
+#fail test
+def test_check_not_null_fails_when_null_rows_exist() -> None:
+    conn = FakeConn([(3,)])
+
+    result = check_not_null(conn, "stock_prices", "close")
+
+    assert result.check_name == "not_null"
+    assert result.table_name == "stock_prices"
+    assert result.passed is False
+    assert result.failed_rows == 3
+    assert "NULL" in result.details
+def test_check_unique_fails_when_duplicates_exist() -> None:
+    conn = FakeConn([(2,)])
+
+    result = check_unique(conn, "stock_prices", "symbol")
+
+    assert result.check_name == "unique"
+    assert result.table_name == "stock_prices"
+    assert result.passed is False
+    assert result.failed_rows == 2
+    assert "duplicated" in result.details
+
+#edge test
+def test_check_range_raises_when_no_bounds_are_provided() -> None:
+    conn = FakeConn([(0,)])
+
+    with pytest.raises(ValueError, match="At least one of min_value or max_value"):
+        check_range(conn, "stock_prices", "close_price")
