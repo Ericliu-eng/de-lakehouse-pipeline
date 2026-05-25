@@ -1,5 +1,5 @@
-# Proof — W011D01
-# Date: 2026-05-02
+# Proof — W014D01
+# Date: 2026-05-019
 # Repo: de-lakehouse-pipeline
 ==================================================
 step 1:
@@ -13,10 +13,11 @@ Output:
     docker compose up -d
     [+] up 2/2
     ✔ Network de-lakehouse-pipeline_default Created                                                                                                                                0.0s
-    ✔ Container de_lakehouse_db             Created  
-step 3:
+    ✔ Container de_lakehouse_db             Created 
+==================================================
+step 2:
 Command:
     make test
 Output:
-    45 passed!
+    49 passed!
 

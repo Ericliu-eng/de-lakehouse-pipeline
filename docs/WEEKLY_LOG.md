@@ -660,4 +660,10 @@ make test
 ```bash
 make test
 ```
-下一个w11 d04
+### W014D02 (2026-05-24) — Add smoke test  for quality_checks  
+**Deliverables**
+- Added`test_quality_checks_smoke_on_market_bars`
+**Validation**
+```bash
+make test
+```

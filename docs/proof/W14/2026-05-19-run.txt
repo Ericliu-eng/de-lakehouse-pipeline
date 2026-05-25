@@ -14,15 +14,11 @@ Output:
     [+] up 2/2
     ✔ Network de-lakehouse-pipeline_default Created                                                                                                                                0.0s
     ✔ Container de_lakehouse_db             Created  
-step 2:
-Command:
-    python -m pytest tests/unit/test_backfill.py
-Output:
-    All passed!
 ==================================================
-step 3:
+step 2:
 Command:
     make test
 Output:
     48 passed!
+
 
