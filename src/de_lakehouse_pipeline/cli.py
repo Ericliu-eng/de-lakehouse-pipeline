@@ -1,6 +1,6 @@
 import argparse
 import logging
-from pathlib import Path
+
 from datetime import date
 
 from de_lakehouse_pipeline.load.db.connection import load_db_config, wait_for_db, connect
