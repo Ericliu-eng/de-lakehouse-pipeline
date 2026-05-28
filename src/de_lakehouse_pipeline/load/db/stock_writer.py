@@ -16,7 +16,11 @@ def upsert_stock_prices(conn, rows: list[tuple]) -> None:
         close = EXCLUDED.close,
         volume = EXCLUDED.volume;
     """
-
+#EXCLUDED.open = 新传进来的 open
     with conn.cursor() as cur:
+        #executemany = 
+        #       for row in rows:
+             #  cur.execute(sql, row)
+        #
         cur.executemany(sql, rows)
     conn.commit()

@@ -1,36 +1,45 @@
 # de-lakehouse-pipeline (README v2)
 
-A minimal **production-style data engineering pipeline** demonstrating:
+A minimal production-style data engineering pipeline demonstrating:
 
 * API ingestion
-* raw data landing
-* database load with idempotent upsert
-* reproducible workflows
-* SQL validation
-* CI-tested pipeline execution
+* raw JSON landing
+* incremental database load with idempotent upsert
+* backfill with checkpoint resume
+* SQL-based marts
+* reproducible workflows and CI-tested execution
 
-This project serves as a foundation for progressing from
-**Data Engineering → MLOps → ML Systems → AI Platform.**
+This project is designed as a practical foundation for growing from
+Data Engineering into MLOps, ML Systems, and AI Platform workflows.
 
 ---
 
 ## Overview
 
-This pipeline implements a realistic ingestion architecture:
+This pipeline ingests daily stock market data from Alpha Vantage, stores the
+raw payload locally, loads new records into Postgres, and builds downstream
+analytical marts from the raw table.
 
-```
-External API → Raw Landing(JSON) → Load Layer → Postgres Raw Tables → Transform / Analytics
-                         ↑
-                   Backfill + Checkpoint Resume
+Current end-to-end flow:
+
+```text
+Alpha Vantage API
+-> Raw Landing (JSON)
+-> Parse / Type Conversion
+-> Filter to target date
+-> Incremental check via pipeline_metadata watermark
+-> Upsert into Postgres market_bars
+-> Record load metadata
+-> Build marts
 ```
 
 Key engineering goals:
 
 * Reproducibility
 * Modularity
-* Safe reruns (idempotent load)
-* Database-backed workflows
-* Testable data pipelines
+* Safe reruns through idempotent load semantics
+* Incremental ingestion using watermark tracking
+* Testable, database-backed data workflows
 
 ---
 
@@ -38,23 +47,29 @@ Key engineering goals:
 
 ```mermaid
 graph TD
-    A[External Market API] --> B[Raw Landing: JSON Artifacts]
-    B --> C[Load Layer: Postgres Raw Tables]
-    C --> D[Staging Layer: Type Casting & Cleaning]
-    D --> E[Marts Layer: Analytical Data Models]
-    
-    subgraph "Marts Layer (Business Logic)"
-        E1[mart_daily_symbol_summary]
-        E2[mart_symbol_latest_price]
-        E3[mart_symbol_volume_rank]
+    A[Alpha Vantage API] --> B[Raw Landing: data/raw/YYYY-MM-DD/stock.json]
+    B --> C[Parse Daily Time Series Payload]
+    C --> D[Filter Rows For target_date]
+    D --> E[Incremental Check via pipeline_metadata]
+    E --> F[Upsert into market_bars]
+    F --> G[Write load_metadata]
+    F --> H[Update pipeline_metadata]
+    F --> I[Marts Layer]
+
+    subgraph "Analytical Marts"
+        I1[mart_daily_symbol_summary]
+        I2[mart_symbol_latest_price]
+        I3[mart_symbol_volume_rank]
     end
-    
-    E1 --> G[Downstream AI/ML Features]
+
+    I --> I1
+    I --> I2
+    I --> I3
 ```
 
 ---
 
-## Demo (2-minute local run)
+## Demo
 
 ```bash
 git clone https://github.com/Ericliu-eng/de-lakehouse-pipeline.git
@@ -64,62 +79,125 @@ cp .env.example .env
 
 make setup
 make db-up
-make migrate
-make run-stock
-python -m de_lakehouse_pipeline.cli backfill --start 2026-04-16 --end 2026-04-16
+make db-migrate
+make run
+make run-marts
+make test
+```
+
+To run a historical backfill:
+
+```bash
+python -m de_lakehouse_pipeline.cli backfill --start 2026-04-16 --end 2026-04-18
+```
+
+To inspect the database:
+
+```bash
 make db-shell
 ```
 
-Then verify:
+Example verification queries:
 
 ```sql
 SELECT COUNT(*) FROM market_bars;
 SELECT * FROM market_bars ORDER BY ts DESC LIMIT 5;
+SELECT * FROM pipeline_metadata;
+SELECT * FROM load_metadata ORDER BY recorded_at DESC LIMIT 5;
 ```
 
 ---
 
 ## Pipeline Stages
 
-### Ingest
+### 1. Ingest
 
-* Fetch market data from Alpha Vantage API
-* Persist raw responses as dated JSON artifacts
+* Fetch daily stock data from the Alpha Vantage API
+* Retry transient API failures
+* Persist the raw response as a dated JSON artifact
 
-Example:
+Example output:
 
-```
-data/raw/2026-03-16/stock.json
+```text
+data/raw/2026-05-27/stock.json
 ```
 
 ---
 
-### Load
+### 2. Parse and Normalize
 
-* Parse nested time-series payload
-* Normalize timestamps and numeric values
-* Upsert rows into Postgres
-
-Key feature:
-
-**Pipeline can be safely rerun without duplicating data.**
+* Read the landed JSON artifact
+* Parse the nested daily time-series payload
+* Convert fields into typed rows:
+  `ts, symbol, open, high, low, close, volume`
 
 ---
 
-### Transform
+### 3. Incremental Load
 
-* Future stage for staging tables
-* Schema normalization
-* Data quality enforcement
-* Feature preparation for analytics / ML
+* Filter transformed rows to the requested `target_date`
+* Read the last processed watermark from `pipeline_metadata`
+* Keep only rows newer than the stored watermark
+* Upsert rows into `market_bars`
+
+Why this matters:
+
+* reruns are safe
+* duplicate loads are avoided
+* the pipeline can resume incrementally
+
+---
+
+### 4. Metadata Tracking
+
+Each successful run writes operational metadata:
+
+* `pipeline_metadata`
+  stores source, symbol, last watermark, row count, and status
+* `load_metadata`
+  stores load date, version, and record count for the run
+
+This gives the pipeline a simple but useful observability layer.
+
+---
+
+### 5. Marts Layer
+
+After raw data is loaded, analytical SQL marts can be rebuilt:
+
+* `mart_daily_symbol_summary`
+* `mart_symbol_latest_price`
+* `mart_symbol_volume_rank`
+
+These marts provide downstream-ready analytical outputs from the raw
+`market_bars` table.
+
+---
+
+## Backfill Support
+
+The pipeline supports date-range backfill through the unified CLI entrypoint:
+
+```bash
+python -m de_lakehouse_pipeline.cli backfill --start YYYY-MM-DD --end YYYY-MM-DD
+```
+
+Backfill behavior:
+
+* iterates day by day through the requested range
+* reuses the same stock pipeline logic as daily ingestion
+* saves progress to `.checkpoints/backfill_checkpoint.json`
+* skips dates already marked completed
+
+This makes historical loading resumable after interruption.
 
 ---
 
 ## Database Schema
 
-Example raw table:
+Core raw table:
 
-```
+```text
 market_bars
 -----------
 ts timestamptz
@@ -132,26 +210,35 @@ volume bigint
 PRIMARY KEY (ts, symbol)
 ```
 
+Operational tables:
+
+* `pipeline_metadata`
+* `load_metadata`
+
 This design supports:
 
-* Time-series storage
+* time-series storage
 * deduplication via composite key
 * incremental ingestion
+* operational tracking for loads
 
 ---
 
-## Reproducible Workflows (Makefile)
+## Reproducible Workflows
 
 Common commands:
 
 ```bash
-make setup        # create venv + install deps
-make run-stock    # run stock ingestion pipeline
-make migrate      # apply DB schema
+make setup        # create venv and install deps
+make lint         # run ruff
 make db-up        # start Postgres container
-make test         # run all tests
-make smoke        # end-to-end smoke tests
-python -m de_lakehouse_pipeline.cli backfill --start YYYY-MM-DD --end YYYY-MM-DD #Backfill historical date ranges through the unified CLI entrypoint.
+make db-down      # stop Postgres container
+make db-migrate   # apply database schema
+make run          # run the daily stock pipeline
+make run-marts    # build analytical marts
+make test         # run test suite
+make smoke        # run smoke tests
+make db-shell     # open psql shell in container
 ```
 
 ---
@@ -160,63 +247,63 @@ python -m de_lakehouse_pipeline.cli backfill --start YYYY-MM-DD --end YYYY-MM-DD
 
 ### Unit Tests
 
-* SQL utility validation
-* DB config behavior
-* extraction helpers
 * transformation parsing logic
+* incremental filtering behavior
+* SQL utility and quality logic
+* database configuration helpers
 
 ### Smoke Tests
 
 * end-to-end pipeline execution
 * database connectivity
-* load verification
+* migration and load verification
+
+This layered test strategy helps protect both code behavior and data workflow reliability.
 
 ---
 
-## SQL Validation Layer
+## SQL Layer
 
-Reusable SQL patterns included:
+The project includes reusable SQL assets for both validation and analytics:
 
-* Window functions for deduplication
-* Data quality checks
-* Tested SQL execution via pytest
+* `sql/quality_checks.sql`
+* `sql/patterns_window.sql`
+* `sql/marts/*.sql`
 
-Location:
-
-```
-sql/
-```
+These SQL files support data quality checks, analytical transformations,
+and reusable warehouse patterns.
 
 ---
 
-## CI (GitHub Actions)
+## CI
 
-On every pull request:
+On pull requests, CI is intended to validate reproducibility through steps such as:
 
 * environment setup
 * lint checks
-* DB migration
+* database migration
 * smoke tests
 * full pytest suite
 
-Ensures pipeline reproducibility across environments.
+This keeps the local workflow aligned with automated verification.
 
 ---
 
-## Why this Project
+## Why This Project
 
-Demonstrates real engineering concepts:
+This project demonstrates practical engineering concepts:
 
-* ingestion architecture design
-* database load semantics
-* idempotent pipeline execution
-* test-driven data workflows
-* CI integration
+* external API ingestion
+* raw data landing
+* incremental and idempotent load design
+* operational metadata tracking
+* SQL-based mart construction
+* reproducible local and CI workflows
 
-Serves as a stepping stone toward:
+It is a compact project, but it already reflects patterns that scale toward:
 
-* MLOps systems
 * feature pipelines
-* AI platform infrastructure
+* MLOps systems
+* AI platform data foundations
 
 ---

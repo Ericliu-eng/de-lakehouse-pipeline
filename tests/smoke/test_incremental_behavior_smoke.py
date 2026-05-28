@@ -1,5 +1,6 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
+import pytest
 
 from de_lakehouse_pipeline.load.db.connection import connect, load_db_config
 from de_lakehouse_pipeline.load.db.pipeline_metadata import (
@@ -12,7 +13,7 @@ from de_lakehouse_pipeline.transform.incremental import (
     get_max_timestamp,
 )
 
-
+@pytest.mark.smoke
 def test_incremental_behavior():
     cfg = load_db_config()
 

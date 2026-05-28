@@ -1,17 +1,4 @@
 # Weekly Log
-## Template
-## Week <W> — <Topic>
-### W<WW>D<D> (<YYYY-MM-DD>)— <Title>
-**Deliverables** 
-...
-**Validation**
-...
-**Challenges**
-...
-**Fixes**
-...
-**Outcome**
-...
 
 ## Week 01 — Repo Engineering Skeleton & MVP Pipeline
 ### Iteration 1 (2026-02-19) — Repo Foundation-----------------------------
@@ -666,4 +653,12 @@ make test
 **Validation**
 ```bash
 make test
+```
+
+### W015D01 (2026-05-28) — smoke-integration-tests-end-to-end-full
+**Deliverables**
+- Added`tests/smoke/test_pipeline_smoke/py`
+**Validation**
+```bash
+make smoke
 ```

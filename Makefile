@@ -38,7 +38,7 @@ test-s:   #-V verbose  -k .. 模糊  输出 print
 run:
 	$(PY) -m de_lakehouse_pipeline.cli run_stock
 
-smoke:	#在 Python 里：-m = run modul ,in pytest -m is marker
+smoke:	#在 Python 里：-m = run modul ,in pytest -m is marker 只运行 import pytest @pytest.mark.smoke
 	$(PY) -m pytest -m smoke
 tree:
 	$(PY) tree_tool.py
@@ -65,5 +65,6 @@ db-seed:
 	$(PY) -m scripts.seed_db
 	
 db-smoke-local: db-up migrate db-smoke
+
 db-visu:
 	$(PY) -m de_lakehouse_pipeline.checkdb view_market_bars

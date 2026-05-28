@@ -2,7 +2,6 @@ from datetime import date
 
 
 def record_load(source: str, load_date: str, version: str, record_count: int):
-
     metadata_payload = {
         "source": source,
         "load_date": load_date,
@@ -11,5 +10,5 @@ def record_load(source: str, load_date: str, version: str, record_count: int):
         "recorded_at": date.today().isoformat()
         
     }
-
+    
     return metadata_payload
