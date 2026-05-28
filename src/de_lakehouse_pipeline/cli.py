@@ -8,7 +8,7 @@ from de_lakehouse_pipeline.transform.marts.mart_daily_symbol_summary import run_
 from de_lakehouse_pipeline.transform.marts.mart_symbol_latest_price import run_latest_price
 from de_lakehouse_pipeline.transform.marts.mart_symbol_volume_rank import run_symbol_volume
 from de_lakehouse_pipeline.backfill import run_backfill, parse_iso_date, validate_date_range
-from de_lakehouse_pipeline.pipeline import run_stock_for_date,run_stock
+from de_lakehouse_pipeline.pipeline import run_stock
 
 logging.basicConfig(
     level=logging.INFO,
