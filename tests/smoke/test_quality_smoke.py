@@ -1,5 +1,6 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
+import pytest
 
 from de_lakehouse_pipeline.load.db.connection import connect, load_db_config
 from de_lakehouse_pipeline.load.db.stock_writer import upsert_stock_prices
@@ -9,7 +10,7 @@ from de_lakehouse_pipeline.quality.checks import (
     check_range,
 )
 
-
+@pytest.mark.smoke
 def test_quality_checks_smoke_on_market_bars():
     cfg = load_db_config()
     symbol = "QUALITY_SMOKE"
@@ -60,7 +61,7 @@ def test_quality_checks_smoke_on_market_bars():
         finally:
             _clean_test_data(conn, symbol)
 
-
+@pytest.mark.smoke
 def _clean_test_data(conn, symbol: str) -> None:
     with conn.cursor() as cur:
         cur.execute(

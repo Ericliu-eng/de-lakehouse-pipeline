@@ -17,6 +17,7 @@ def run_sql_file(conn, path: Path) -> None:
 
 
 def list_migration_files(migrations_dir: Path):
+    #Look for all files ending in `.sql` within the `migrations_dir` folder.
     return sorted(migrations_dir.glob("*.sql"))
 
 

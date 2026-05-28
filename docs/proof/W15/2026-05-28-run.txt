@@ -1,0 +1,27 @@
+# Proof — W014D01
+# Date: 2026-05-019
+# Repo: de-lakehouse-pipeline
+==================================================
+step 1:
+Command:
+    make db-down
+    make db-up
+Output:
+    [+] down 2/2
+    ✔ Container de_lakehouse_db             Removed                                                                                                                                0.4s
+    ✔ Network de-lakehouse-pipeline_default Removed                                                                                                                                0.3s
+    docker compose up -d
+    [+] up 2/2
+    ✔ Network de-lakehouse-pipeline_default Created                                                                                                                                0.0s
+    ✔ Container de_lakehouse_db             Created 
+==================================================
+step 2:
+Command:
+    make smoke
+Output:
+    tests\smoke\test_db_smoke.py .                                                                                                                                              [ 11%]
+    tests\smoke\test_incremental_behavior_smoke.py .                                                                                                                            [ 22%]
+    tests\smoke\test_pipeline_smoke.py ....                                                                                                                                     [ 66%]
+    tests\smoke\test_quality_smoke.py .                                                                                                                                         [ 77%]
+    tests\smoke\test_sql_smoke.py ..    
+    passed!

@@ -2,7 +2,7 @@ from __future__ import annotations
 from pathlib import Path
 from de_lakehouse_pipeline.load.db.connection import load_db_config, wait_for_db, connect
 
-
+#Adding seeds serves to transform an empty database into one containing a minimum set of test data.
 def run_sql_file(conn, path: Path) -> None:
     sql = path.read_text(encoding="utf-8").strip()
     if not sql:

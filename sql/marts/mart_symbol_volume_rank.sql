@@ -1,12 +1,3 @@
--- 1. 创建排名表
-CREATE TABLE IF NOT EXISTS mart_symbol_volume_rank (
-    symbol TEXT NOT NULL,
-    trading_date DATE NOT NULL,
-    total_volume BIGINT,
-    volume_rank INTEGER,
-    -- 复合主键，确保每天每只股票只有一条排名记录
-    PRIMARY KEY (symbol, trading_date)
-);
 
 -- 2. 执行排名计算并插入
 INSERT INTO mart_symbol_volume_rank (symbol, trading_date, total_volume, volume_rank)

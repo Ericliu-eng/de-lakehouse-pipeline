@@ -8,7 +8,7 @@ from de_lakehouse_pipeline.transform.marts.mart_daily_symbol_summary import run_
 from de_lakehouse_pipeline.transform.marts.mart_symbol_latest_price import run_latest_price
 from de_lakehouse_pipeline.transform.marts.mart_symbol_volume_rank import run_symbol_volume
 from de_lakehouse_pipeline.backfill import run_backfill, parse_iso_date, validate_date_range
-from de_lakehouse_pipeline.pipeline import run_stock_for_date
+from de_lakehouse_pipeline.pipeline import run_stock_for_date,run_stock
 
 logging.basicConfig(
     level=logging.INFO,
@@ -20,20 +20,6 @@ def today_time():
     return date.today().isoformat()
 
 
-def run_stock(root: Path | None = None):
-    return run_stock_for_date(date.today(), symbol="AAPL", root=root)
-
-def run_weather(city: str) -> None:
-    #"Step 1: ingest"
-    #data = fetch_current_weather(city)
-    #file_path = save_raw_data(data,"weather")
-    #"Step 2: load"
-    #load_file = load_weather_file_to_db(file_path)
-    print()
-
-    #"Step 3: transform"
-    #infor = trans_weather(load_file)
-    #print(infor)
 
 def run_marts() -> None:
     logger.info("Starting marts pipeline")
@@ -52,8 +38,7 @@ def run_marts() -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=["run_stock", "run_weather", "run_marts", "backfill"])
-    parser.add_argument("--city", default="Berkeley,US")
+    parser.add_argument("command", choices=["run_stock", "run_marts", "backfill"])
     #backfill
     parser.add_argument("--start")
     parser.add_argument("--end")
@@ -61,8 +46,6 @@ def main() -> None:
 
     if args.command == "run_stock":
         run_stock()
-    elif args.command == "run_weather":
-        run_weather(args.city)
     elif args.command == "run_marts":
         run_marts()
     #backfill

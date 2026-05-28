@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS mart_symbol_latest_price (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- . 创建排名表
 CREATE TABLE IF NOT EXISTS mart_symbol_volume_rank (
     symbol TEXT NOT NULL,
     trading_date DATE NOT NULL,

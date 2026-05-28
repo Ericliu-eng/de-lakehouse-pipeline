@@ -1,18 +1,6 @@
 -- sql/marts/mart_daily_symbol_summary.sql
 
--- 1. 创建表逻辑保持不变
-CREATE TABLE IF NOT EXISTS mart_daily_symbol_summary (
-    symbol VARCHAR(10),
-    trading_date DATE,
-    avg_close DECIMAL(16, 4),
-    min_close DECIMAL(16, 4),
-    max_close DECIMAL(16, 4),
-    total_volume BIGINT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (symbol, trading_date)
-);
-
--- 2. 插入/更新数据 (修复后的逻辑)
+-- . 插入/更新数据 (修复后的逻辑)
 INSERT INTO mart_daily_symbol_summary (
     symbol, 
     trading_date, 

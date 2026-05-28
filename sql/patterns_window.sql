@@ -1,9 +1,6 @@
--- ========================================
--- Window Function Example
--- Rank stock rows by newest timestamp per symbol
--- ========================================
-
--- Assign a sequential number (rank) to the data for each stock symbol, ordered by time from newest to oldest.
+-- This file is for SQL pattern reference only.
+-- It is not part of the migration pipeline.
+-- Do not run this file in CI unless intentionally testing window functions.
 SELECT
     ts,
     symbol,
