@@ -10,6 +10,8 @@ from de_lakehouse_pipeline.quality.checks import (
     check_range,
 )
 
+pytestmark = pytest.mark.db
+
 @pytest.mark.smoke
 def test_quality_checks_smoke_on_market_bars():
     cfg = load_db_config()

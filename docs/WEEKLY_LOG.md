@@ -678,7 +678,7 @@ make smoke
 make orchestrate
 ```
 
-### W15D03 (2026-05-30) — observability-v1-pipeline-metrics
+### W15D03A (2026-05-30) — observability-v1-pipeline-metrics
 **Deliverables**
 - Add a lightweight metrics layer in `src/de_lakehouse_pipeline/metrics.py`
 - Define step-level metrics:
@@ -701,3 +701,28 @@ make orchestrate
 ```bash
 python orchestration/dagster_pipeline.py
 ```
+
+### W15D03B (2026-05-30) — observability-v1-pipeline-metrics
+**Deliverables**
+- Choose AWS S3 as the cloud raw storage target
+- Define raw object partition layout:
+  - `raw/<source>/symbol=<symbol>/date=<YYYY-MM-DD>/<filename>`
+  - example: `raw/alpha_vantage/symbol=AAPL/date=2026-05-30/stock.json`
+- Add cloud storage contract module
+  - `src/de_lakehouse_pipeline/ingest/cloud_storage.py`
+- Add unit tests for:
+  - S3 object key generation
+  - S3 URI generation
+  - invalid bucket/key validation
+  - JSON upload with fake S3 client
+  - optional upload env flag
+  - missing bucket failure behavior
+- Add optional S3 upload switch:
+  - `ENABLE_S3_RAW_UPLOAD=true`
+  - `S3_RAW_BUCKET=de-lakehouse-raw`
+- Integrate optional raw payload upload into the stock pipeline
+- Add `boto3` dependency
+- Add `make cloud-storage-test` command
+- Update docs:
+  - `docs/CLOUD_STORAGE.md`
+  - `README.md`

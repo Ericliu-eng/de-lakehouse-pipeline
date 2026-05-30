@@ -2,28 +2,83 @@
 
 ## Purpose
 
-This project includes a lightweight observability layer for tracking pipeline execution.
-
-The goal is to make each pipeline run easier to inspect, debug, and validate.
+This project includes a lightweight observability layer for tracking pipeline
+execution. The goal is to make each run easier to inspect, debug, and validate.
 
 ## Metrics Captured
 
-The current metrics layer records:
+The metrics layer records:
 
-- Pipeline name
-- Pipeline start time
-- Pipeline end time
-- Pipeline status
-- Step name
-- Step start time
-- Step end time
-- Step status
-- Row count, when available
-- Error message, when a step fails
+- pipeline name
+- pipeline start time
+- pipeline end time
+- pipeline status
+- pipeline duration in seconds
+- step name
+- step start time
+- step end time
+- step status
+- step duration in seconds
+- row count, when available
+- error message, when a step fails
 
 ## Current Implementation
 
-Metrics are defined in:
+Metrics and structured logging are implemented in:
 
 ```text
 src/de_lakehouse_pipeline/metrics.py
+src/de_lakehouse_pipeline/logging_utils.py
+```
+
+The local orchestrator records a `PipelineMetric` for every run and a
+`StepMetric` for each executed step.
+
+Current orchestrated steps:
+
+1. `run_stock_pipeline`
+2. `run_quality_checks`
+3. `build_marts`
+
+If a step fails, the orchestrator stops immediately, marks the pipeline as
+`failed`, and includes the failed step error message in the final summary.
+
+## Structured Logging
+
+CLI and orchestration entrypoints configure JSON logs with:
+
+- UTC timestamp
+- log level
+- logger name
+- message
+- module
+- structured fields such as `command`, `symbol`, `step_name`, `status`, and
+  `row_count`
+
+Example log shape:
+
+```json
+{
+  "level": "INFO",
+  "logger": "orchestration.dagster_pipeline",
+  "message": "Finished orchestration step",
+  "module": "dagster_pipeline",
+  "row_count": 3,
+  "status": "success",
+  "step_name": "build_marts",
+  "timestamp": "2026-05-30T10:00:00+00:00"
+}
+```
+
+## How To Run
+
+```bash
+make -f Makefile orchestrate SYMBOL=AAPL
+```
+
+For API-independent validation:
+
+```bash
+make -f Makefile unit
+make -f Makefile smoke-db
+```

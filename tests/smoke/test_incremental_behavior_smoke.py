@@ -13,8 +13,10 @@ from de_lakehouse_pipeline.transform.incremental import (
     get_max_timestamp,
 )
 
+pytestmark = pytest.mark.db
+
 @pytest.mark.smoke
-def test_incremental_behavior():
+def test_incremental_watermark_prevents_duplicate_loads():
     cfg = load_db_config()
 
     rows = [
@@ -47,7 +49,7 @@ def test_incremental_behavior():
         last_watermark = get_last_watermark(conn, source, symbol)
         first_batch = filter_new_rows(rows, last_watermark)
 
-        assert len(first_batch) == 2
+        assert first_batch == rows
 
         upsert_stock_prices(conn, first_batch)
         upsert_watermark(

@@ -1,23 +1,21 @@
--- sql/marts/mart_daily_symbol_summary.sql
-
--- . 插入/更新数据 (修复后的逻辑)
+-- Build daily symbol-level close-price summary and volume totals.
 INSERT INTO mart_daily_symbol_summary (
-    symbol, 
-    trading_date, 
-    avg_close, 
-    min_close, 
-    max_close, 
+    symbol,
+    trading_date,
+    avg_close,
+    min_close,
+    max_close,
     total_volume
 )
-SELECT 
+SELECT
     symbol,
-    ts::DATE as trading_date,  -- 关键点：强制转换为 DATE
-    AVG(close) as avg_close,
-    MIN(close) as min_close,
-    MAX(close) as max_close,
-    SUM(volume) as total_volume
-FROM market_bars 
-GROUP BY symbol, ts::DATE      -- 关键点：按照日期聚合，而不是精确时间戳
+    ts::DATE AS trading_date,
+    AVG(close) AS avg_close,
+    MIN(close) AS min_close,
+    MAX(close) AS max_close,
+    SUM(volume) AS total_volume
+FROM market_bars
+GROUP BY symbol, ts::DATE
 ON CONFLICT (symbol, trading_date) DO UPDATE SET
     avg_close = EXCLUDED.avg_close,
     min_close = EXCLUDED.min_close,

@@ -1,7 +1,7 @@
 
 def upsert_stock_prices(conn, rows: list[tuple]) -> None:
     """
-    Insert or update rows into stock_prices.
+    Insert or update stock price rows into market_bars.
     """
     sql = """
         INSERT INTO market_bars (

@@ -9,6 +9,8 @@ from de_lakehouse_pipeline.load.db.pipeline_metadata import (
     upsert_watermark,
 )
 
+pytestmark = [pytest.mark.integration, pytest.mark.db]
+
 
 @pytest.fixture
 def db_conn():

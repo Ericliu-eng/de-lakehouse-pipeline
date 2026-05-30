@@ -58,7 +58,7 @@ def test_run_backfill_skips_completed_dates(tmp_path, monkeypatch):
 
     processed = []
 
-    def fake_run_backfill_for_date(target_date):
+    def fake_run_backfill_for_date(target_date, symbol="AAPL"):
         processed.append(target_date.isoformat())
 
     monkeypatch.setattr(backfill, "run_backfill_for_date", fake_run_backfill_for_date)
@@ -72,8 +72,8 @@ def test_run_backfill_marks_successful_dates_completed(tmp_path, monkeypatch):
 
     processed = []
 
-    def fake_run_backfill_for_date(target_date):
-        processed.append(target_date.isoformat())
+    def fake_run_backfill_for_date(target_date, symbol="AAPL"):
+        processed.append((target_date.isoformat(), symbol))
 
     monkeypatch.setattr(backfill, "run_backfill_for_date", fake_run_backfill_for_date)
 
@@ -81,14 +81,29 @@ def test_run_backfill_marks_successful_dates_completed(tmp_path, monkeypatch):
 
     loaded = backfill.load_checkpoint()
 
-    assert processed == ["2026-01-01", "2026-01-02"]
+    assert processed == [("2026-01-01", "AAPL"), ("2026-01-02", "AAPL")]
     assert loaded == {"2026-01-01", "2026-01-02"}
+
+def test_run_backfill_passes_symbol_to_each_date(tmp_path, monkeypatch):
+    checkpoint_path = tmp_path / "backfill_checkpoint.json"
+    monkeypatch.setattr(backfill, "CHECKPOINT_PATH", checkpoint_path)
+
+    processed = []
+
+    def fake_run_backfill_for_date(target_date, symbol="AAPL"):
+        processed.append((target_date.isoformat(), symbol))
+
+    monkeypatch.setattr(backfill, "run_backfill_for_date", fake_run_backfill_for_date)
+
+    backfill.run_backfill(date(2026, 1, 1), date(2026, 1, 2), symbol="MSFT")
+
+    assert processed == [("2026-01-01", "MSFT"), ("2026-01-02", "MSFT")]
 
 def test_run_backfill_does_not_mark_failed_date_completed(tmp_path, monkeypatch):
     checkpoint_path = tmp_path / "backfill_checkpoint.json"
     monkeypatch.setattr(backfill, "CHECKPOINT_PATH", checkpoint_path)
 
-    def fake_run_backfill_for_date(target_date):
+    def fake_run_backfill_for_date(target_date, symbol="AAPL"):
         if target_date.isoformat() == "2026-01-02":
             raise RuntimeError("boom")
 

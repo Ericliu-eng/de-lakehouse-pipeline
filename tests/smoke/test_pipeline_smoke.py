@@ -6,7 +6,11 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from de_lakehouse_pipeline.transform.transform_stock import parse_alpha_vantage_daily
+from de_lakehouse_pipeline.transform.staging_market_bars import (
+    StagedMarketBar,
+    stage_alpha_vantage_daily,
+    staged_rows_to_db_tuples,
+)
 
 
 SAMPLE_ALPHA_VANTAGE_PAYLOAD = {
@@ -28,29 +32,26 @@ SAMPLE_ALPHA_VANTAGE_PAYLOAD = {
 
 @pytest.mark.smoke
 def test_small_sample_stock_payload_can_be_parsed() -> None:
-    rows = parse_alpha_vantage_daily(SAMPLE_ALPHA_VANTAGE_PAYLOAD)
+    rows = stage_alpha_vantage_daily(SAMPLE_ALPHA_VANTAGE_PAYLOAD)
 
     assert rows, "Parsed stock rows should not be empty"
 
     first_row = rows[0]
 
-    assert isinstance(first_row, tuple)
-    assert len(first_row) == 7
-
-    ts, symbol, open_price, high, low, close, volume = first_row
-
-    assert ts == datetime(2026, 5, 28, tzinfo=ZoneInfo("US/Eastern"))
-    assert symbol == "AAPL"
-    assert open_price == 198.1
-    assert high == 201.5
-    assert low == 197.25
-    assert close == 200.3
-    assert volume == 1234567
+    assert isinstance(first_row, StagedMarketBar)
+    assert first_row.ts == datetime(2026, 5, 28, tzinfo=ZoneInfo("US/Eastern"))
+    assert first_row.symbol == "AAPL"
+    assert first_row.open == 198.1
+    assert first_row.high == 201.5
+    assert first_row.low == 197.25
+    assert first_row.close == 200.3
+    assert first_row.volume == 1234567
 
 
 @pytest.mark.smoke
 def test_small_sample_stock_payload_returns_expected_tuple_shape() -> None:
-    rows = parse_alpha_vantage_daily(SAMPLE_ALPHA_VANTAGE_PAYLOAD)
+    staged_rows = stage_alpha_vantage_daily(SAMPLE_ALPHA_VANTAGE_PAYLOAD)
+    rows = staged_rows_to_db_tuples(staged_rows)
 
     for row in rows:
         assert isinstance(row, tuple)
@@ -64,6 +65,7 @@ def test_core_pipeline_files_exist() -> None:
         Path("src/de_lakehouse_pipeline/pipeline.py"),
         Path("src/de_lakehouse_pipeline/quality/checks.py"),
         Path("src/de_lakehouse_pipeline/load/metadata.py"),
+        Path("src/de_lakehouse_pipeline/transform/staging_market_bars.py"),
     ]
 
     missing_paths = [str(path) for path in required_paths if not path.exists()]

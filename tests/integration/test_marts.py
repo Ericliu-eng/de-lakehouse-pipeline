@@ -6,6 +6,8 @@ from de_lakehouse_pipeline.transform.marts.mart_daily_symbol_summary import run_
 from de_lakehouse_pipeline.transform.marts.mart_symbol_latest_price import run_latest_price
 from de_lakehouse_pipeline.transform.marts.mart_symbol_volume_rank import run_symbol_volume
 
+pytestmark = [pytest.mark.integration, pytest.mark.db]
+
 
 @pytest.fixture
 def db_conn():
@@ -49,15 +51,19 @@ def test_summary_aggregates(db_conn):
     with db_conn.cursor() as cur:
         cur.execute(
             """
-            SELECT total_volume
+            SELECT avg_close, min_close, max_close, total_volume
             FROM mart_daily_symbol_summary
             WHERE symbol = %s AND trading_date = %s
             """,
             ("TESTA", "2026-04-06"),
         )
-        actual_vol = cur.fetchone()[0]
+        row = cur.fetchone()
 
-    assert actual_vol == 300
+    assert row is not None
+    assert row[0] == 11.5
+    assert row[1] == 11
+    assert row[2] == 12
+    assert row[3] == 300
 
 
 def test_latest_price_is_most_recent(db_conn):
@@ -68,16 +74,19 @@ def test_latest_price_is_most_recent(db_conn):
     with db_conn.cursor() as cur:
         cur.execute(
             """
-            SELECT latest_ts
+            SELECT latest_ts, close_price, volume
             FROM mart_symbol_latest_price
             WHERE symbol = %s
             """,
             ("TESTA",),
         )
-        latest_ts = cur.fetchone()[0]
+        row = cur.fetchone()
 
     expected_ts = datetime(2026, 4, 6, 11, 0, tzinfo=ZoneInfo("UTC"))
-    assert latest_ts == expected_ts
+    assert row is not None
+    assert row[0] == expected_ts
+    assert row[1] == 12
+    assert row[2] == 200
 
 def test_volume_rank_order(db_conn):
     seed_market_bars(db_conn)
@@ -103,3 +112,49 @@ def test_volume_rank_order(db_conn):
     assert rows[1][0] == "TESTB"
     assert rows[1][1] == 120
     assert rows[0][1] >= rows[1][1]
+
+
+def test_marts_are_idempotent_on_rerun(db_conn):
+    seed_market_bars(db_conn)
+
+    run_daily_summary(db_conn)
+    run_latest_price(db_conn)
+    run_symbol_volume(db_conn)
+    run_daily_summary(db_conn)
+    run_latest_price(db_conn)
+    run_symbol_volume(db_conn)
+
+    with db_conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT COUNT(*)
+            FROM mart_daily_symbol_summary
+            WHERE trading_date = %s AND symbol IN (%s, %s)
+            """,
+            ("2026-04-06", "TESTA", "TESTB"),
+        )
+        daily_count = cur.fetchone()[0]
+
+        cur.execute(
+            """
+            SELECT COUNT(*)
+            FROM mart_symbol_latest_price
+            WHERE symbol IN (%s, %s)
+            """,
+            ("TESTA", "TESTB"),
+        )
+        latest_count = cur.fetchone()[0]
+
+        cur.execute(
+            """
+            SELECT COUNT(*)
+            FROM mart_symbol_volume_rank
+            WHERE trading_date = %s AND symbol IN (%s, %s)
+            """,
+            ("2026-04-06", "TESTA", "TESTB"),
+        )
+        rank_count = cur.fetchone()[0]
+
+    assert daily_count == 2
+    assert latest_count == 2
+    assert rank_count == 2

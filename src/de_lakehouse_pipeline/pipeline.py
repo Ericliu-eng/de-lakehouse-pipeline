@@ -6,11 +6,15 @@ from datetime import date
 
 from de_lakehouse_pipeline.ingest.market_data_client import fetch_daily_stock
 from de_lakehouse_pipeline.load.loader import load_raw_stock_json
-from de_lakehouse_pipeline.transform.transform_stock import parse_alpha_vantage_daily
+from de_lakehouse_pipeline.transform.staging_market_bars import (
+    stage_alpha_vantage_daily,
+    staged_rows_to_db_tuples,
+)
 from de_lakehouse_pipeline.load.db.stock_writer import upsert_stock_prices
 from de_lakehouse_pipeline.load.db.connection import load_db_config, wait_for_db, connect
 from de_lakehouse_pipeline.load.metadata import record_load
 from de_lakehouse_pipeline.load.db.metadata_writer import insert_load_metadata
+from de_lakehouse_pipeline.ingest.cloud_storage import upload_raw_payload_if_enabled
 from de_lakehouse_pipeline.ingest.io import save_raw_data
 from de_lakehouse_pipeline.load.db.pipeline_metadata import get_last_watermark, upsert_watermark
 from de_lakehouse_pipeline.transform.incremental import get_max_timestamp, filter_new_rows
@@ -32,15 +36,25 @@ def run_stock(symbol: str = "AAPL", root: Path | None = None) -> Path:
 
         file_path = save_raw_data(data, "stock", root)
         logger.info("Saved raw stock data to %s", file_path)
+        s3_location = upload_raw_payload_if_enabled(
+            payload=data,
+            source="alpha_vantage",
+            symbol=symbol,
+            run_date=date.today(),
+            filename="stock.json",
+        )
+        if s3_location is not None:
+            logger.info("Uploaded raw stock data to %s", s3_location.uri)
 
         raw_data = load_raw_stock_json(file_path)
         logger.info("Loaded raw stock json from %s", file_path)
 
-        db_rows = parse_alpha_vantage_daily(raw_data)
+        staged_rows = stage_alpha_vantage_daily(raw_data)
+        db_rows = staged_rows_to_db_tuples(staged_rows)
 
         rows_to_check = db_rows
         logger.info(
-            "Transformed %d row(s) from raw stock json",
+            "Staged %d row(s) from raw stock json",
             len(rows_to_check),
         )
 
@@ -103,11 +117,21 @@ def run_stock_for_date(target_date: date,symbol: str = "AAPL",root: Path | None 
 
         file_path = save_raw_data(data, "stock", root)
         logger.info("Saved raw stock data to %s", file_path)
+        s3_location = upload_raw_payload_if_enabled(
+            payload=data,
+            source="alpha_vantage",
+            symbol=symbol,
+            run_date=target_date,
+            filename="stock.json",
+        )
+        if s3_location is not None:
+            logger.info("Uploaded raw stock data to %s", s3_location.uri)
 
         raw_data = load_raw_stock_json(file_path)
         logger.info("Loaded raw stock json from %s", file_path)
 
-        db_rows = parse_alpha_vantage_daily(raw_data)
+        staged_rows = stage_alpha_vantage_daily(raw_data)
+        db_rows = staged_rows_to_db_tuples(staged_rows)
 
         target_rows = [
             row for row in db_rows

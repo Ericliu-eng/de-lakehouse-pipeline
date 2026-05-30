@@ -4,14 +4,18 @@ import argparse
 from datetime import date, timedelta
 import json
 from pathlib import Path
+from collections.abc import Iterator
+
 from de_lakehouse_pipeline.pipeline import run_stock_for_date
 
 CHECKPOINT_PATH = Path(".checkpoints/backfill_checkpoint.json")
+DEFAULT_SYMBOL = "AAPL"
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run backfill for a date range.")
     parser.add_argument("--start", required=True, help="Start date in YYYY-MM-DD")
     parser.add_argument("--end", required=True, help="End date in YYYY-MM-DD")
+    parser.add_argument("--symbol", default=DEFAULT_SYMBOL, help="Stock symbol to backfill")
     return parser.parse_args()
 
 
@@ -24,18 +28,18 @@ def validate_date_range(start_date: date, end_date: date) -> None:
         raise ValueError("start date must be on or before end date")
 
 
-def iter_dates(start: date, end: date):
+def iter_dates(start: date, end: date) -> Iterator[date]:
     current = start
     while current <= end:
         yield current
         current += timedelta(days=1)
 
-def run_backfill_for_date(target_date: date) -> None:
-    print(f"Processing {target_date.isoformat()}...")
-    run_stock_for_date(target_date, symbol="AAPL")
+def run_backfill_for_date(target_date: date, symbol: str = DEFAULT_SYMBOL) -> None:
+    print(f"Processing {target_date.isoformat()} for symbol={symbol}...")
+    run_stock_for_date(target_date, symbol=symbol)
 
 
-def run_backfill(start: date, end: date) -> None:
+def run_backfill(start: date, end: date, symbol: str = DEFAULT_SYMBOL) -> None:
     completed_dates = load_checkpoint()
 
     for target_date in iter_dates(start, end):
@@ -43,7 +47,7 @@ def run_backfill(start: date, end: date) -> None:
             print(f"Skipping {target_date.isoformat()} (already completed)")
             continue
 
-        run_backfill_for_date(target_date)
+        run_backfill_for_date(target_date, symbol=symbol)
         mark_date_completed(target_date, completed_dates)
 
 def load_checkpoint() -> set[str]:
@@ -78,7 +82,7 @@ def main() -> None:
     start = parse_iso_date(args.start)
     end = parse_iso_date(args.end)
     validate_date_range(start, end)
-    run_backfill(start, end)
+    run_backfill(start, end, symbol=args.symbol)
 
     
 if __name__ == "__main__":
