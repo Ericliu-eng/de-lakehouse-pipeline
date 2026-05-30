@@ -24,6 +24,8 @@ setup:
 lint:#.venv/Scripts/python.exe -m ruff check 
 	$(PY) -m ruff check .
 
+orchestrate:
+	$(PY) -m orchestration.dagster_pipeline 
 
 
 clean:

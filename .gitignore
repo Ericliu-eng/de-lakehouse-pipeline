@@ -33,3 +33,4 @@ venv/
 .checkpoints/
 .pytest_tmp/
 .pytest_cache/
+plan.docx
