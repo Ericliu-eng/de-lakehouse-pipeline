@@ -662,3 +662,18 @@ make test
 ```bash
 make smoke
 ```
+
+### W015D02 (2026-05-29) — orchestration-skeleton-reproducible-run
+**Deliverables**
+- Add a local orchestration skeleton for the stock pipeline `orchestration/dagster_pipeline.py`
+- Define the intended pipeline execution order:
+  - ingest raw stock data
+  - load raw data to database
+  - run transformations
+  - run quality checks
+  - build marts
+- Add or verify `make orchestrate` command
+**Validation**
+```bash
+make orchestrate
+```

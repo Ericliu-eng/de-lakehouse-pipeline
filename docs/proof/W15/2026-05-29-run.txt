@@ -1,5 +1,5 @@
-# Proof — W014D02
-# Date: 2026-05-24
+# Proof — W015D02
+# Date: 2026-05-29
 # Repo: de-lakehouse-pipeline
 ==================================================
 step 1:
@@ -17,7 +17,16 @@ Output:
 ==================================================
 step 2:
 Command:
-    make test
+    make orchestrate
 Output:
-    49 passed!
-
+    Running step: ingest_raw_stock_data
+    Running step: load_raw_data_to_database
+    Running step: run_transformations
+    Running step: run_quality_checks
+    Running step: build_marts
+    Pipeline run summary:
+    - ingest_raw_stock_data: success (2026-05-30T05:17:09.231068+00:00 -> 2026-05-30T05:17:09.231248+00:00)
+    - load_raw_data_to_database: success (2026-05-30T05:17:09.231269+00:00 -> 2026-05-30T05:17:09.231486+00:00)
+    - run_transformations: success (2026-05-30T05:17:09.231520+00:00 -> 2026-05-30T05:17:09.231656+00:00)
+    - run_quality_checks: success (2026-05-30T05:17:09.231671+00:00 -> 2026-05-30T05:17:09.231727+00:00)
+    - build_marts: success (2026-05-30T05:17:09.231740+00:00 -> 2026-05-30T05:17:09.231794+00:00)
