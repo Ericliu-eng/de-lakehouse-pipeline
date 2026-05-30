@@ -34,3 +34,4 @@ venv/
 .pytest_tmp/
 .pytest_cache/
 plan.docx
+archive
