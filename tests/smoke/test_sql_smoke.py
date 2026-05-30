@@ -4,6 +4,8 @@ import pytest
 from de_lakehouse_pipeline.load.db.connection import connect, load_db_config, wait_for_db
 from de_lakehouse_pipeline.sql_utils import project_root, _read_sql, split_sql_statements
 
+pytestmark = pytest.mark.db
+
 
 @pytest.mark.smoke
 def test_window_query_runs() -> None:

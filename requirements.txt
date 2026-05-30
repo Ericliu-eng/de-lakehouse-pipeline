@@ -3,5 +3,6 @@ ruff
 pandas
 psycopg[binary]==3.1.19
 requests
+boto3
 #读取.env 文件用的
 python-dotenv

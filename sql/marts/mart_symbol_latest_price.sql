@@ -1,6 +1,4 @@
-
-
--- . 提取每个 symbol 最新一条并 upsert
+-- Build latest price snapshot per symbol.
 WITH ranked_bars AS (
     SELECT
         symbol,

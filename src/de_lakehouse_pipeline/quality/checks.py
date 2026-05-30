@@ -92,6 +92,40 @@ def check_range(
             f"range min={min_value}, max={max_value}."
         ),
     )
+
+
+def check_foreign_key(
+    conn: Any,
+    child_table: str,
+    child_column: str,
+    parent_table: str,
+    parent_column: str,
+) -> CheckResult:
+    query = f"""
+    SELECT COUNT(*) AS failed_rows
+    FROM {child_table} AS child
+    LEFT JOIN {parent_table} AS parent
+        ON child.{child_column} = parent.{parent_column}
+    WHERE child.{child_column} IS NOT NULL
+      AND parent.{parent_column} IS NULL
+    """
+
+    with conn.cursor() as cur:
+        cur.execute(query)
+        failed_rows = cur.fetchone()[0]
+
+    return CheckResult(
+        check_name="foreign_key",
+        table_name=child_table,
+        passed=failed_rows == 0,
+        failed_rows=failed_rows,
+        details=(
+            f"{child_table}.{child_column} has {failed_rows} row(s) missing "
+            f"from {parent_table}.{parent_column}."
+        ),
+    )
+
+
 def check_freshness(
     conn: Any,
     table_name: str,
@@ -135,10 +169,10 @@ def check_freshness(
 
 def run_stock_quality_checks(conn: Any) -> list[CheckResult]:
     return [
-        check_not_null(conn, "stock_prices", "symbol"),
-        check_not_null(conn, "stock_prices", "ts"),
-        check_unique(conn, "stock_prices", "symbol, ts"),
-        check_range(conn, "stock_prices", "close_price", min_value=0),
-        check_range(conn, "stock_prices", "volume", min_value=0),
-        check_freshness(conn, "stock_prices", "ts", max_age_days=14),
+        check_not_null(conn, "market_bars", "symbol"),
+        check_not_null(conn, "market_bars", "ts"),
+        check_unique(conn, "market_bars", "symbol, ts"),
+        check_range(conn, "market_bars", "close", min_value=0),
+        check_range(conn, "market_bars", "volume", min_value=0),
+        check_freshness(conn, "market_bars", "ts", max_age_days=14)
     ]
