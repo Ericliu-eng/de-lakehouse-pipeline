@@ -1,0 +1,41 @@
+# Proof — W015D03
+# Date: 2026-05-30
+# Repo: de-lakehouse-pipeline
+==================================================
+step 1:
+Command:
+    make db-down
+    make db-up
+Output:
+    [+] down 2/2
+    ✔ Container de_lakehouse_db             Removed                                                                                                                                0.4s
+    ✔ Network de-lakehouse-pipeline_default Removed                                                                                                                                0.3s
+    docker compose up -d
+    [+] up 2/2
+    ✔ Network de-lakehouse-pipeline_default Created                                                                                                                                0.0s
+    ✔ Container de_lakehouse_db             Created 
+==================================================
+step 2:
+Command:
+    make orchestrate
+Output:
+    Running step: ingest_raw_stock_data
+    Running step: load_raw_data_to_database
+    Running step: run_transformations
+    Running step: run_quality_checks
+    Running step: build_marts
+    Running step: record_pipeline_metadata
+
+    Pipeline run summary:
+    Pipeline: market_data_lakehouse_pipeline
+    Status: success
+    Started at: 2026-05-30T09:31:42.330636+00:00
+    Finished at: 2026-05-30T09:31:42.331487+00:00
+
+    Step metrics:
+    - ingest_raw_stock_data: success rows=None error=None (2026-05-30T09:31:42.330666+00:00 -> 2026-05-30T09:31:42.330870+00:00)
+    - load_raw_data_to_database: success rows=None error=None (2026-05-30T09:31:42.330890+00:00 -> 2026-05-30T09:31:42.331028+00:00)
+    - run_transformations: success rows=None error=None (2026-05-30T09:31:42.331046+00:00 -> 2026-05-30T09:31:42.331241+00:00)
+    - run_quality_checks: success rows=None error=None (2026-05-30T09:31:42.331257+00:00 -> 2026-05-30T09:31:42.331313+00:00)
+    - build_marts: success rows=None error=None (2026-05-30T09:31:42.331336+00:00 -> 2026-05-30T09:31:42.331406+00:00)
+    - record_pipeline_metadata: success rows=None error=None (2026-05-30T09:31:42.331424+00:00 -> 2026-05-30T09:31:42.331474+00:00)

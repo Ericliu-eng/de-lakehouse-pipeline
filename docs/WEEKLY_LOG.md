@@ -677,3 +677,27 @@ make smoke
 ```bash
 make orchestrate
 ```
+
+### W15D03 (2026-05-30) — observability-v1-pipeline-metrics
+**Deliverables**
+- Add a lightweight metrics layer in `src/de_lakehouse_pipeline/metrics.py`
+- Define step-level metrics:
+  - step name
+  - status: success/failed
+  - start time
+  - end time
+  - row count if available
+  - error message if failed
+- Define pipeline-level metrics:
+  - pipeline name
+  - pipeline start time
+  - pipeline end time
+  - overall pipeline status
+  - list of step metrics
+- Update orchestration code if needed in `orchestration/dagster_pipeline.py`
+- Update operational documentation in `docs/OPS_METRICS.md`
+- Update orchestration documentation in `docs/ORCHESTRATION.md`
+**Validation**
+```bash
+python orchestration/dagster_pipeline.py
+```
