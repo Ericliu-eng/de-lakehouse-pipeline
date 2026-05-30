@@ -1,0 +1,43 @@
+# Proof — W15D03B
+# Date: 2026-05-30
+# Repo: de-lakehouse-pipeline
+# Iteration: B — aws-s3-raw-storage-contract
+==================================================
+
+step 1:
+Command:
+    make  cloud-storage-test
+Output:
+    .venv/Scripts/python.exe -m pytest tests/unit/test_cloud_storage.py -v
+    collected 12 items
+    tests/unit/test_cloud_storage.py::test_build_raw_object_key_uses_partitioned_layout PASSED
+    tests/unit/test_cloud_storage.py::test_build_s3_raw_location_returns_bucket_key_and_uri PASSED
+    tests/unit/test_cloud_storage.py::test_build_s3_raw_location_rejects_uri_as_bucket_name PASSED
+    tests/unit/test_cloud_storage.py::test_build_raw_object_key_rejects_nested_filename PASSED
+    tests/unit/test_cloud_storage.py::test_upload_json_to_s3_writes_json_payload_and_returns_location PASSED
+    tests/unit/test_cloud_storage.py::test_upload_json_to_s3_rejects_uri_as_key PASSED
+    tests/unit/test_cloud_storage.py::test_s3_raw_upload_flag_defaults_to_disabled PASSED
+    tests/unit/test_cloud_storage.py::test_s3_raw_upload_flag_accepts_true_values PASSED
+    tests/unit/test_cloud_storage.py::test_get_s3_raw_bucket_reads_environment_contract PASSED
+    tests/unit/test_cloud_storage.py::test_upload_raw_payload_if_enabled_skips_when_flag_is_off PASSED
+    tests/unit/test_cloud_storage.py::test_upload_raw_payload_if_enabled_uploads_when_flag_is_on PASSED
+    tests/unit/test_cloud_storage.py::test_upload_raw_payload_if_enabled_requires_bucket_when_flag_is_on PASSED
+    12 passed
+==================================================
+step 2:
+Command:
+    make unit
+Output:
+    collected 64 items
+    tests/unit/test_cloud_storage.py::test_build_raw_object_key_uses_partitioned_layout PASSED
+    tests/unit/test_cloud_storage.py::test_upload_raw_payload_if_enabled_uploads_when_flag_is_on PASSED
+    tests/unit/test_cloud_storage.py::test_upload_raw_payload_if_enabled_requires_bucket_when_flag_is_on PASSED
+    ...
+    64 passed
+==================================================
+Command:
+    make  lint
+Output:
+    .venv/Scripts/python.exe -m ruff check .
+    All checks passed!
+==================================================
