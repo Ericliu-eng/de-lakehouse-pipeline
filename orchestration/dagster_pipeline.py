@@ -19,65 +19,70 @@ logger = logging.getLogger(__name__)
 
 def run_step(step_name: str, fn: Callable[[], int | None]) -> StepMetric:
     started_at = utc_now()
-    row_count = None
 
     try:
         logger.info("Starting orchestration step", extra={"step_name": step_name})
         row_count = fn()
-        status = "success"
-        error_message = None
         logger.info(
             "Finished orchestration step",
-            extra={"step_name": step_name, "status": status, "row_count": row_count},
+            extra={"step_name": step_name, "status": "success", "row_count": row_count},
+        )
+
+        return StepMetric(
+            step_name=step_name,
+            status="success",
+            started_at=started_at,
+            finished_at=utc_now(),
+            row_count=row_count,
+            error_message=None,
         )
     except Exception as exc:
-        status = "failed"
-        error_message = str(exc)
         logger.exception(
             "Orchestration step failed",
-            extra={"step_name": step_name, "status": status},
+            extra={"step_name": step_name, "status": "failed"},
         )
 
-    finished_at = utc_now()
-
-    return StepMetric(
-        step_name=step_name,
-        status=status,
-        started_at=started_at,
-        finished_at=finished_at,
-        row_count=row_count,
-        error_message=error_message,
-    )
+        return StepMetric(
+            step_name=step_name,
+            status="failed",
+            started_at=started_at,
+            finished_at=utc_now(),
+            row_count=None,
+            error_message=str(exc),
+        )
 
 
 def run_orchestrated_pipeline(symbol: str = "AAPL") -> PipelineMetric:
+    pipeline_name = "market_data_lakehouse_pipeline"
     logger.info(
         "Starting orchestrated pipeline",
-        extra={"pipeline_name": "market_data_lakehouse_pipeline", "symbol": symbol},
+        extra={"pipeline_name": pipeline_name, "symbol": symbol},
     )
+
     pipeline_metric = PipelineMetric(
-        pipeline_name="market_data_lakehouse_pipeline",
+        pipeline_name=pipeline_name,
         started_at=utc_now(),
     )
 
-    steps: list[tuple[str, Callable[[], int | None]]] = [
-        ("run_stock_pipeline", lambda: _run_stock_pipeline(symbol)),
-        ("run_quality_checks", _run_quality_checks),
-        ("build_marts", _build_marts),
-    ]
+    stock_step = run_step("run_stock_pipeline", lambda: _run_stock_pipeline(symbol))
+    pipeline_metric.add_step(stock_step)
+    if stock_step.status == "failed":
+        pipeline_metric.finish(status="failed")
+        return pipeline_metric
 
-    for step_name, step_fn in steps:
-        step_metric = run_step(step_name, step_fn)
-        pipeline_metric.add_step(step_metric)
+    quality_step = run_step("run_quality_checks", _run_quality_checks)
+    pipeline_metric.add_step(quality_step)
+    if quality_step.status == "failed":
+        pipeline_metric.finish(status="failed")
+        return pipeline_metric
 
-        if step_metric.status == "failed":
-            break
+    marts_step = run_step("build_marts", _build_marts)
+    pipeline_metric.add_step(marts_step)
+    if marts_step.status == "failed":
+        pipeline_metric.finish(status="failed")
+        return pipeline_metric
 
-    failed_steps = [
-        step for step in pipeline_metric.steps if step.status == "failed"
-    ]
-    final_status = "failed" if failed_steps else "success"
-    pipeline_metric.finish(status=final_status)
+    pipeline_metric.finish(status="success")
     logger.info(
         "Finished orchestrated pipeline",
         extra={

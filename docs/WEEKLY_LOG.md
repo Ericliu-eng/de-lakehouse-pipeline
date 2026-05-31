@@ -678,51 +678,67 @@ make smoke
 make orchestrate
 ```
 
-### W15D03A (2026-05-30) — observability-v1-pipeline-metrics
+### W15D03A (2026-05-30) — lightweight orchestration metrics
 **Deliverables**
-- Add a lightweight metrics layer in `src/de_lakehouse_pipeline/metrics.py`
-- Define step-level metrics:
+- Added a lightweight metrics layer in `src/de_lakehouse_pipeline/metrics.py`
+- Defined step-level metrics:
   - step name
   - status: success/failed
   - start time
   - end time
   - row count if available
   - error message if failed
-- Define pipeline-level metrics:
+- Defined pipeline-level metrics:
   - pipeline name
   - pipeline start time
   - pipeline end time
   - overall pipeline status
   - list of step metrics
-- Update orchestration code if needed in `orchestration/dagster_pipeline.py`
-- Update operational documentation in `docs/OPS_METRICS.md`
-- Update orchestration documentation in `docs/ORCHESTRATION.md`
+- Simplified `orchestration/dagster_pipeline.py` into a clear sequential flow:
+  - run stock pipeline
+  - stop if stock pipeline fails
+  - run quality checks
+  - stop if quality checks fail
+  - build marts
+- Kept `run_step()` as the small wrapper for logging and metrics
+- Updated operational documentation in `docs/OPS_METRICS.md`
+- Updated orchestration documentation in `docs/ORCHESTRATION.md`
+
 **Validation**
 ```bash
-python orchestration/dagster_pipeline.py
+python -m pytest tests/unit/test_orchestration.py -v
 ```
 
-### W15D03B (2026-05-30) — observability-v1-pipeline-metrics
+### W15D03B (2026-05-30) — minimal S3 raw upload support
 **Deliverables**
-- Choose AWS S3 as the cloud raw storage target
-- Define raw object partition layout:
+- Chose AWS S3 as the optional cloud raw storage target
+- Defined raw object partition layout:
   - `raw/<source>/symbol=<symbol>/date=<YYYY-MM-DD>/<filename>`
   - example: `raw/alpha_vantage/symbol=AAPL/date=2026-05-30/stock.json`
-- Add cloud storage contract module
+- Added a minimal cloud storage module:
   - `src/de_lakehouse_pipeline/ingest/cloud_storage.py`
-- Add unit tests for:
-  - S3 object key generation
-  - S3 URI generation
-  - invalid bucket/key validation
-  - JSON upload with fake S3 client
-  - optional upload env flag
-  - missing bucket failure behavior
-- Add optional S3 upload switch:
-  - `ENABLE_S3_RAW_UPLOAD=true`
-  - `S3_RAW_BUCKET=de-lakehouse-raw`
-- Integrate optional raw payload upload into the stock pipeline
-- Add `boto3` dependency
-- Add `make cloud-storage-test` command
-- Update docs:
+- Kept only the basic cloud storage behavior:
+  - generate the raw S3 object key
+  - skip upload by default
+  - upload JSON when `ENABLE_S3_RAW_UPLOAD=true`
+  - require `S3_RAW_BUCKET` only when upload is enabled
+  - return the uploaded S3 URI string
+- Integrated optional raw payload upload into the stock pipeline
+- Added `boto3` dependency
+- Added `make cloud-storage-test` command
+- Updated docs:
   - `docs/CLOUD_STORAGE.md`
   - `README.md`
+
+**Validation**
+```bash
+python -m pytest tests/unit/test_cloud_storage.py -v
+python -m pytest tests/unit -v
+```
+
+### W15D03C (2026-05-30) — terraform-scaffold
+**Deliverables**
+- infra/terraform/main.tf
+- infra/terraform/variables.tf
+- infra/terraform/outputs.tf
+- infra/terraform/README.md
