@@ -12,6 +12,7 @@ from de_lakehouse_pipeline.backfill import run_backfill, parse_iso_date, validat
 from de_lakehouse_pipeline.pipeline import run_stock
 
 logger = logging.getLogger(__name__)
+
 def today_time():
     return date.today().isoformat()
 

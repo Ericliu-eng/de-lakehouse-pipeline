@@ -36,15 +36,15 @@ def run_stock(symbol: str = "AAPL", root: Path | None = None) -> Path:
 
         file_path = save_raw_data(data, "stock", root)
         logger.info("Saved raw stock data to %s", file_path)
-        s3_location = upload_raw_payload_if_enabled(
+        s3_uri = upload_raw_payload_if_enabled(
             payload=data,
             source="alpha_vantage",
             symbol=symbol,
             run_date=date.today(),
             filename="stock.json",
         )
-        if s3_location is not None:
-            logger.info("Uploaded raw stock data to %s", s3_location.uri)
+        if s3_uri is not None:
+            logger.info("Uploaded raw stock data to %s", s3_uri)
 
         raw_data = load_raw_stock_json(file_path)
         logger.info("Loaded raw stock json from %s", file_path)
@@ -117,15 +117,15 @@ def run_stock_for_date(target_date: date,symbol: str = "AAPL",root: Path | None 
 
         file_path = save_raw_data(data, "stock", root)
         logger.info("Saved raw stock data to %s", file_path)
-        s3_location = upload_raw_payload_if_enabled(
+        s3_uri = upload_raw_payload_if_enabled(
             payload=data,
             source="alpha_vantage",
             symbol=symbol,
             run_date=target_date,
             filename="stock.json",
         )
-        if s3_location is not None:
-            logger.info("Uploaded raw stock data to %s", s3_location.uri)
+        if s3_uri is not None:
+            logger.info("Uploaded raw stock data to %s", s3_uri)
 
         raw_data = load_raw_stock_json(file_path)
         logger.info("Loaded raw stock json from %s", file_path)
