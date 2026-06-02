@@ -19,7 +19,7 @@ from de_lakehouse_pipeline.transform.incremental import get_max_timestamp
 from de_lakehouse_pipeline.transform.marts.mart_daily_symbol_summary import run_daily_summary
 from de_lakehouse_pipeline.transform.marts.mart_symbol_latest_price import run_latest_price
 from de_lakehouse_pipeline.transform.marts.mart_symbol_volume_rank import run_symbol_volume
-from de_lakehouse_pipeline.transform.staging_market_bars import (
+from de_lakehouse_pipeline.transform.staging.staging_market_bars import (
     stage_alpha_vantage_daily,
     staged_rows_to_db_tuples,
 )

@@ -1,24 +1,18 @@
 # Backfill Runbook
-
 ## Purpose
-
 Backfill loads historical stock data across a date range while preserving
 resume behavior through a local checkpoint file.
 
 ## Command
 
 Run through the project CLI:
-
 ```bash
 python -m de_lakehouse_pipeline.cli backfill --start 2026-04-16 --end 2026-04-18 --symbol AAPL
 ```
-
 Or through Makefile:
-
 ```bash
 make -f Makefile backfill START=2026-04-16 END=2026-04-18 SYMBOL=AAPL
 ```
-
 `SYMBOL` defaults to `AAPL` when omitted.
 
 ## Checkpoint Path

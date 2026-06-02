@@ -6,7 +6,7 @@ from datetime import date
 
 from de_lakehouse_pipeline.ingest.market_data_client import fetch_daily_stock
 from de_lakehouse_pipeline.load.loader import load_raw_stock_json
-from de_lakehouse_pipeline.transform.staging_market_bars import (
+from de_lakehouse_pipeline.transform.staging.staging_market_bars import (
     stage_alpha_vantage_daily,
     staged_rows_to_db_tuples,
 )
@@ -14,7 +14,7 @@ from de_lakehouse_pipeline.load.db.stock_writer import upsert_stock_prices
 from de_lakehouse_pipeline.load.db.connection import load_db_config, wait_for_db, connect
 from de_lakehouse_pipeline.load.metadata import record_load
 from de_lakehouse_pipeline.load.db.metadata_writer import insert_load_metadata
-from de_lakehouse_pipeline.ingest.cloud_storage import upload_raw_payload_if_enabled
+from de_lakehouse_pipeline.ingest.cloud_stroage import upload_raw_payload_if_enabled
 from de_lakehouse_pipeline.ingest.io import save_raw_data
 from de_lakehouse_pipeline.load.db.pipeline_metadata import get_last_watermark, upsert_watermark
 from de_lakehouse_pipeline.transform.incremental import get_max_timestamp, filter_new_rows
@@ -32,10 +32,13 @@ def run_stock(symbol: str = "AAPL", root: Path | None = None) -> Path:
 
     try:
         logger.info("Fetching stock data for symbol=%s", symbol)
+        #1.Use the client to retrieve the stocks you want.
         data = fetch_daily_stock(symbol)
-
+        #2.save the raw data in local 
         file_path = save_raw_data(data, "stock", root)
+
         logger.info("Saved raw stock data to %s", file_path)
+        #3.Upload to the cloud and return a URI.
         s3_uri = upload_raw_payload_if_enabled(
             payload=data,
             source="alpha_vantage",
@@ -43,16 +46,19 @@ def run_stock(symbol: str = "AAPL", root: Path | None = None) -> Path:
             run_date=date.today(),
             filename="stock.json",
         )
+
         if s3_uri is not None:
             logger.info("Uploaded raw stock data to %s", s3_uri)
-
+        #4.load local  json in to project
         raw_data = load_raw_stock_json(file_path)
-        logger.info("Loaded raw stock json from %s", file_path)
 
+        logger.info("Loaded raw stock json from %s", file_path)
+        #5.form dict invert to tuple
         staged_rows = stage_alpha_vantage_daily(raw_data)
         db_rows = staged_rows_to_db_tuples(staged_rows)
 
         rows_to_check = db_rows
+
         logger.info(
             "Staged %d row(s) from raw stock json",
             len(rows_to_check),
@@ -66,8 +72,9 @@ def run_stock(symbol: str = "AAPL", root: Path | None = None) -> Path:
         wait_for_db(cfg, timeout_s=60)
 
         with connect(cfg) as conn:
+            #6.获取上一次 pipeline 已经处理到哪里了。
             last_ts = get_last_watermark(conn, "alpha_vantage", symbol)
-
+            # If the stock is up-to-date  insert
             new_rows = filter_new_rows(
                 rows=rows_to_check,
                 last_watermark=last_ts,
@@ -76,10 +83,11 @@ def run_stock(symbol: str = "AAPL", root: Path | None = None) -> Path:
             if not new_rows:
                 logger.info("No new rows to load for symbol=%s", symbol)
                 return file_path
-
+            #7.insert the lastest stock 
             upsert_stock_prices(conn, new_rows)
+            #get the lastest date 
             max_ts = get_max_timestamp(new_rows)
-
+            #inseet into pipeline_metadata table
             upsert_watermark(
                 conn,
                 "alpha_vantage",
@@ -95,6 +103,7 @@ def run_stock(symbol: str = "AAPL", root: Path | None = None) -> Path:
                 version=today_time(),
                 record_count=len(new_rows),
             )
+            #8.insert the metadata record into load_metadata
             insert_load_metadata(conn, metadata_payload)
 
         logger.info(

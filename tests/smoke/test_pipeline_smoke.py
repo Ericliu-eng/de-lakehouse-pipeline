@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from de_lakehouse_pipeline.transform.staging_market_bars import (
+from de_lakehouse_pipeline.transform.staging.staging_market_bars import (
     StagedMarketBar,
     stage_alpha_vantage_daily,
     staged_rows_to_db_tuples,
@@ -65,7 +65,7 @@ def test_core_pipeline_files_exist() -> None:
         Path("src/de_lakehouse_pipeline/pipeline.py"),
         Path("src/de_lakehouse_pipeline/quality/checks.py"),
         Path("src/de_lakehouse_pipeline/load/metadata.py"),
-        Path("src/de_lakehouse_pipeline/transform/staging_market_bars.py"),
+        Path("src/de_lakehouse_pipeline/transform/staging/staging_market_bars.py"),
     ]
 
     missing_paths = [str(path) for path in required_paths if not path.exists()]

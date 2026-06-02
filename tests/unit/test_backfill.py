@@ -1,5 +1,4 @@
 
-
 import pytest
 
 from de_lakehouse_pipeline.backfill import parse_iso_date, validate_date_range, iter_dates

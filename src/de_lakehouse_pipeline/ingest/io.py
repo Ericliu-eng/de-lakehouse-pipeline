@@ -9,7 +9,7 @@ def project_root() -> Path:
 def today_time():
     return date.today().isoformat()
 
-def save_raw_data(data, source, root:Path = None):
+def save_raw_data(data:dict, source:str, root:Path = None):
     if root is None:
         root  = project_root()
     today = today_time()
@@ -19,6 +19,7 @@ def save_raw_data(data, source, root:Path = None):
     file_path = raw_dir / f"{source}.json"
 
     with open(file_path, "w") as f:
+        #把 data 写进文件 f 里面。
         json.dump(data, f, indent=2)
 
     return file_path

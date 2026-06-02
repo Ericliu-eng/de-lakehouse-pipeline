@@ -6,3 +6,4 @@ CREATE TABLE IF NOT EXISTS load_metadata (
     record_count INT,
     recorded_at TIMESTAMPTZ DEFAULT NOW()
 );
+--每次加载的历史日志
