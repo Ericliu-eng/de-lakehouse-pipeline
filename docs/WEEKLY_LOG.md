@@ -805,3 +805,9 @@ python -m pytest tests/unit -v
   - `python -m pytest tests/unit/test_cloud_storage.py -v`
 - Full unit test suite passed:
   - `python -m pytest tests/unit -v`
+
+
+### W16D01 (2026-05-30) — terraform-scaffold
+**Deliverables**
+- Add one failure test for `upload_raw_payload_if_enabled`
+- Add one edge-case test for `ENABLE_S3_RAW_UPLOAD`

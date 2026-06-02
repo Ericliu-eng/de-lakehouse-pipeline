@@ -1,0 +1,29 @@
+# Proof — W015D03
+# Date: 2026-05-30
+# Repo: de-lakehouse-pipeline
+==================================================
+step 1:
+Command:
+    make db-down
+    make db-up
+Output:
+    [+] down 2/2
+    ✔ Container de_lakehouse_db             Removed                                                                                                                                0.4s
+    ✔ Network de-lakehouse-pipeline_default Removed                                                                                                                                0.3s
+    docker compose up -d
+    [+] up 2/2
+    ✔ Network de-lakehouse-pipeline_default Created                                                                                                                                0.0s
+    ✔ Container de_lakehouse_db             Created 
+==================================================
+step 2:
+Command:
+    make cloud-storage-test
+Output:
+    collected 7 items                                                                                                                                                                 
+    tests/unit/test_cloud_storage.py::test_build_raw_object_key PASSED                                                                                                          [ 14%]
+    tests/unit/test_cloud_storage.py::test_upload_disabled_returns_none PASSED                                                                                                  [ 28%]
+    tests/unit/test_cloud_storage.py::test_upload_enabled_puts_object PASSED                                                                                                    [ 42%]
+    tests/unit/test_cloud_storage.py::test_upload_failure_raises_upload_error PASSED                                                                                            [ 57%]
+    tests/unit/test_cloud_storage.py::test_upload_enabled_without_bucket_raises_config_error PASSED                                                                             [ 71%]
+    tests/unit/test_cloud_storage.py::test_upload_enabled_without_s3_client_raises_config_error PASSED                                                                          [ 85%]
+    tests/unit/test_cloud_storage.py::test_upload_flag_is_case_insensitive PASSED
