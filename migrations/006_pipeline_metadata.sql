@@ -7,3 +7,4 @@ CREATE TABLE IF NOT EXISTS pipeline_metadata (
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (source, symbol)
 );
+--pipeline_metadata = 每个 source + symbol 的当前状态

@@ -66,8 +66,10 @@ sql-utils:
 	$(PY) -m pytest tests/unit/test_sql_utils.py -v
 
 run:
-	$(PY) -m de_lakehouse_pipeline.cli run_stock
-
+	$(PY) -m de_lakehouse_pipeline.cli run_stock 
+	
+run-o:
+	$(PY) -m de_lakehouse_pipeline.cli run_stock --symbol MSFT
 run-marts:
 	$(PY) -m de_lakehouse_pipeline.cli run_marts
 
@@ -107,3 +109,5 @@ db-smoke-local: db-up migrate db-smoke
 
 db-visu:
 	$(PY) -m de_lakehouse_pipeline.checkdb view_market_bars
+
+#-v =verbose

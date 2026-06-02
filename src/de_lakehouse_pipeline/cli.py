@@ -35,6 +35,7 @@ def run_marts() -> None:
 
 def main() -> None:
     configure_logging()
+    #Python 文件可以接收命令行输入的参数。
     parser = argparse.ArgumentParser()
     parser.add_argument("command", choices=["run_stock", "run_marts", "backfill"])
     #backfill
@@ -42,10 +43,7 @@ def main() -> None:
     parser.add_argument("--end")
     parser.add_argument("--symbol", default="AAPL")
     args = parser.parse_args()
-    logger.info(
-        "CLI command received",
-        extra={"command": args.command, "symbol": args.symbol},
-    )
+    logger.info("CLI command received",extra={"command": args.command, "symbol": args.symbol})
 
     if args.command == "run_stock":
         run_stock(symbol=args.symbol)

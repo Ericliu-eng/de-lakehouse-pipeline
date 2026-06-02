@@ -60,4 +60,4 @@ jobs:
           make test
       - name: Run Integration Tests
         run: |
-          make run-marts
+          make integration

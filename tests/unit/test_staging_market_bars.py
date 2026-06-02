@@ -3,7 +3,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from de_lakehouse_pipeline.transform.staging_market_bars import (
+from de_lakehouse_pipeline.transform.staging.staging_market_bars import (
     StagedMarketBar,
     stage_alpha_vantage_daily,
     staged_rows_to_db_tuples,

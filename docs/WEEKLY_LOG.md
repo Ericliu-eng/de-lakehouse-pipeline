@@ -1,7 +1,7 @@
 # Weekly Log
 
 ## Week 01 — Repo Engineering Skeleton & MVP Pipeline
-### Iteration 1 (2026-02-19) — Repo Foundation-----------------------------
+### Iteration 1 (2026-02-19) — Repo Foundation
 **Deliverables**
 - Set up repository skeleton (src/, data/, docs/)
 - Implemented Makefile (setup / lint / test)
@@ -10,10 +10,9 @@
 **Validation**
 - `make setup`, `make lint`, `make test` all pass
 - CI pipeline green
-**Next**
-- Implement minimal ETL pipeline
 
-### Iteration 2 (2026-02-21) — MVP ETL Pipeline------------------------
+
+### Iteration 2 (2026-02-21) — MVP ETL Pipeline
 **Deliverables**
 - Implemented end-to-end ETL pipeline:
   - Extract: read `data/raw/sample.csv`
@@ -21,16 +20,10 @@
   - Load: write to `data/processed/output.csv`
 - Updated README with run instructions
 - Added execution proof under `docs/proof/`
-**Validation**
-- Pipeline runs successfully via CLI
-- Output file generated correctly
-**Challenges**
-- Module import issue (`de_lakehouse_pipeline`)
-- Fixed using module execution (`python -m`)
-**Next**
-- Add unit tests
 
-### Iteration 3 (2026-02-21) — Unit Testing----------------------------
+
+
+### Iteration 3 (2026-02-21) — Unit Testing
 **Deliverables**
 - Refactored logic into `transform(df)`
 - Added unit tests for:
@@ -39,26 +32,18 @@
   - failure cases
 **Validation**
 - `pytest` passes locally and in CI
-**Key Insight**
-- Separated business logic (transform) from orchestration (main)
-**Next**
-- Add smoke / E2E test
 
-### Iteration 4 (2026-02-21) — Smoke Test & CLI----------------------------
+
+### Iteration 4 (2026-02-21) — Smoke Test & CLI
 **Deliverables**
 - Implemented smoke (E2E) test using `tmp_path`
 - Added Makefile commands:
   - `make run`
   - `make smoke`
-**Validation**
-- One command runs pipeline end-to-end
-**Challenges**
-- Import issue due to `src/` structure
-- Refactored entry point (`run_pipeline`)
-**Next**
-- Ensure reproducibility and CI integration
 
-### Iteration 5 (2026-02-21) — CI & Reproducibility---------------------------------
+
+
+### Iteration 5 (2026-02-21) — CI & Reproducibility
 **Deliverables**
 - CI pipeline fully passing (GitHub Actions)
 - Improved README for reproducibility
@@ -69,47 +54,52 @@
   - `make test`
   - `make run`
 
-### Iteration 6 (2026-02-22) — Demo Rehearsal--------------------------------
+### Iteration 6 (2026-02-22) — Demo Rehearsal
 **Deliverables**
 - Verified full pipeline using README instructions
 - Ensured project is runnable by external users
-**Validation**
-- End-to-end pipeline runs in <2 minutes
-- No missing steps or hidden dependencies
-**Outcome**
-- Project is now reproducible, testable, and demo-ready
-
-
-# Week 01 Summary------------------------------------------------------
-
-### System Capability
-- Reproducible ETL pipeline (CLI + Makefile)
-- Deterministic data transformation layer
-- CI-validated test suite (unit + smoke)
-- Cross-platform support (Windows + Linux CI)
-
-### Engineering Guarantees
-- Reproducibility: fresh setup works via `make setup`
-- Testability: unit + E2E coverage
-- Isolation: business logic decoupled from IO
-- Automation: CI enforces correctness
-
-### Metrics
-- CI passing (GitHub Actions)
-- Runtime: <2 minutes end-to-end
-- Test coverage: basic unit + smoke coverage
-- Output correctness validated
-
-### Gaps / Next Risks
-- No persistent storage (currently file-based)
-- No logging / observability
-- No schema enforcement
-- No configuration layer (.env not fully utilized)
 
 
 
-### W02D1 (2026-02-23) — Local Postgres + Migration Setup---------------------------
 
+# Week 01 Summary — Repo Engineering Skeleton & MVP Pipeline================================
+## What I Completed
+- Created the repository structure:
+  - `src/`
+  - `data/`
+  - `docs/`
+- Added basic engineering setup:
+  - `Makefile`
+  - GitHub Actions CI
+  - README
+  - development documentation
+- Built the MVP ETL pipeline:
+  - read data from `data/raw/sample.csv`
+  - clean and filter invalid rows
+  - save output to `data/processed/output.csv`
+- Refactored the transform logic into a reusable function.
+- Added tests:
+  - unit tests
+  - edge case tests
+  - failure case tests
+  - smoke test
+- Added Makefile commands:
+  - `make setup`
+  - `make lint`
+  - `make test`
+  - `make run`
+  - `make smoke`
+- Added execution proof under `docs/proof/`.
+## Validation
+- `make setup` passed
+- `make lint` passed
+- `make test` passed
+- `pytest` passed locally and in CI
+- GitHub Actions CI pipeline passed
+
+
+
+### W02D01 (2026-02-23) — Local Postgres + Migration Setup
 **Deliverables**
 - Set up local Postgres service using docker-compose
 - Implemented DB connection module (`db.py`)
@@ -124,7 +114,6 @@
   - `make db-up`
   - `make migrate`
 - Added DB smoke test (`test_db_smoke.py`)
-
 **Validation**
 - Postgres container runs successfully via `docker compose up -d`
 - Schema and seed data applied using `make migrate`
@@ -134,22 +123,8 @@
   - Query returns expected results
 - Full test suite passes locally (`make test`)
 
-**Challenges**
-- Import issues with `src/` layout (`ModuleNotFoundError`)
-- Missing dependency (`psycopg`) during initial setup
-- CI environment lacks Postgres service, causing test failure
 
-**Fixes**
-- Added `export PYTHONPATH := src` in Makefile
-- Installed `psycopg[binary]` in requirements.txt
-- Updated DB smoke test to skip when Postgres is not available
-
-**Outcome**
-- Local data stack (Postgres + migration + seed) fully operational
-- Database layer integrated into pipeline workflow
-- Project now supports both file-based and DB-backed workflows
-
-### W02D2 (2026-02-24) Postgres Data Stack + Testing (Unit + Integration)---------
+### W02D02 (2026-02-24) Postgres Data Stack + Testing (Unit + Integration)
 **Deliverables**
 - Completed Postgres-backed data workflow:
   - Docker Compose service (`db-up`, `db-down`)
@@ -171,9 +146,6 @@
 - Added proof artifacts:
   - `docs/proof/2026-02-24_w02d2_full_run.txt`
   - `docs/proof/w02d2_w02d3_proof.txt`
-
----
-
 **Validation**
 - `make db-up` successfully starts Postgres container
 - `make migrate` applies schema and seed without errors
@@ -182,42 +154,8 @@
 - `make test` passes all tests (9/9 total)
 - Full workflow reproducible via Makefile commands
 
----
 
-**Challenges**
-- Module import issue (`ModuleNotFoundError`)
-- DB readiness timing (container not ready immediately)
-- Confusion between pipeline smoke vs DB smoke
-- Distinguishing unit tests vs integration tests
-
----
-
-**Fixes**
-- Used module execution (`python -m scripts.migrate`)
-- Set `PYTHONPATH := src` in Makefile
-- Added `wait_for_db()` to ensure DB readiness
-- Separated test layers:
-  - `unit` (no DB, fast)
-  - `db-smoke` (DB connectivity)
-  - full `test` (end-to-end)
-- Added deterministic timeout test for robustness
-
----
-
-**Outcome**
-- Established a reproducible local data stack with Postgres
-- Migration + seed + test workflow fully automated
-- Added proper testing hierarchy (unit + integration + pipeline)
-- Improved system robustness with failure-case testing
-- Repository now demonstrates real-world Data Engineering practices:
-  - reproducibility
-  - layered testing
-  - infrastructure + pipeline integration
-
----
-
-### W02D3 (2026-02-25) — DB Smoke Test + CI Alignment--------------------
-
+### W02D3 (2026-02-25) — DB Smoke Test + CI Alignment
 **Deliverables**
 - Implemented DB smoke test (`tests/test_db_smoke.py`)
 - Verified:
@@ -240,31 +178,7 @@
   - Smoke test executed without docker compose
   - CI pipeline PASSED
 
-**Challenges**
-- `PytestUnknownMarkWarning` for `smoke`
-- Confusion with SQL parameter tuple `(table_name,)`
-- Local vs CI DB startup difference
-- CI failure due to `docker compose` dependency
-
-**Fixes**
-- Added marker config in `pytest.ini`
-- Fixed SQL parameter format `(table_name,)`
-- Removed `db-up` from `db-smoke` in CI
-- Clarified execution model:
-  - Local → manual DB setup
-  - CI → service container
-
-**Outcome**
-- Established stable DB smoke testing workflow
-- CI-compatible testing achieved
-- Clear separation of concerns:
-  - Infrastructure vs testing
-- Ready for next steps:
-  - W02D4 (data load into Postgres)
-  - W02D5 (pipeline integration)
-
-### W02D4 (2026-02-26) — CI Integration + End-to-End Reproducibility
-
+### W02D04 (2026-02-26) — CI Integration + End-to-End Reproducibility
 **Deliverables**
 - Integrated Postgres workflow into CI (GitHub Actions)
 - Standardized execution via Makefile (`setup`, `migrate`, `db-smoke`, `test`)
@@ -272,7 +186,6 @@
 - Improved README with clear Quickstart + DB workflow
 - Added reproducible proof under `docs/proof/w02/2026-02-26-run.txt`
 - Verified full pipeline runs from scratch (local)
-
 **Validation**
 - `make setup` successfully creates venv and installs dependencies
 - `make db-up` starts Postgres container
@@ -282,30 +195,7 @@
 - `make db-smoke` verifies DB connectivity + schema + seed
 - CI pipeline runs: setup → lint → migrate → db-smoke → test
 
-**Challenges**
-- `ModuleNotFoundError: de_lakehouse_pipeline` when running migrate
-- PYTHONPATH inconsistencies between Windows, Makefile, and CI
-- Conflict between local Docker workflow and CI Postgres service
-- Ambiguity between pipeline smoke tests vs DB smoke tests
-
-**Fixes**
-- Introduced `pyproject.toml` and installed project with `pip install -e .`
-- Removed reliance on fragile `PYTHONPATH`
-- Split DB smoke targets: `db-smoke` (CI-safe) vs `db-smoke-local`
-- Updated CI to rely only on Makefile commands
-- Clarified README commands and DB workflow
-
-**Outcome**
-- Fully reproducible pipeline from clean environment
-- Stable Postgres integration (local + CI)
-- All tests passing (unit + pipeline + DB)
-- Project upgraded to “production-style” reproducibility standard
-- Repository is now runnable, testable, and CI-validated end-to-end
-
-
-
-### W02D5 (2026-02-28) — Establish SQL Patterns, Data Quality Checks, and Initial SQL Tests
-
+### W02D05 (2026-02-28) — Establish SQL Patterns, Data Quality Checks, and Initial SQL Tests
 **Deliverables**
 - Created/updated `docs/DATA_MODEL.md` describing the current schema and table fields.
 - Added migration file `migrations/002_tables.sql` to support schema evolution (added `updated_at` column).
@@ -319,7 +209,6 @@
   - `docs/erd.png`.
 - Recorded reproducibility proof:
   - `docs/proof/2026-02-28-run.txt`.
-
 **Validation**
 - Ran migrations successfully:
   - `make migrate`
@@ -330,57 +219,52 @@
   - Smoke tests confirmed SQL queries run without errors.
 - Confirmed CI workflow compatibility with migration + SQL checks.
 
-**Challenges**
-- SQL examples were initially mixed inside migration files, which is not best practice.
-- SQL tests originally executed only a single statement from the SQL file.
-- Duplicate-check query produced multiple rows, which conflicted with test expectations.
+# Week 02 Summary — Local Postgres + SQL Foundation ========================================
+## What I Completed
+- Set up local Postgres using Docker Compose.
+- Added database workflow:
+  - `db.py`
+  - environment-based DB config
+  - DB connection handling
+  - DB readiness check with `wait_for_db`
+- Added migration and seed workflow:
+  - `scripts/init_db.sql`
+  - `scripts/seed.sql`
+  - `scripts/migrate.py`
+  - `migrations/002_tables.sql`
+- Updated Makefile commands:
+  - `make db-up`
+  - `make db-down`
+  - `make migrate`
+  - `make db-smoke`
+  - `make unit`
+  - `make test`
+- Added DB testing:
+  - DB smoke test
+  - DB unit tests
+  - SQL query tests
+- Integrated Postgres into GitHub Actions CI.
+- Fixed Python import issues using editable install:
+  - `pip install -e .`
+- Added SQL foundation:
+  - `docs/DATA_MODEL.md`
+  - `sql/patterns_window.sql`
+  - `sql/quality_checks.sql`
+  - `docs/erd.png`
+- Added proof logs under:
+  - `docs/proof/`
+## Validation
+- `make db-up` passed
+- `make migrate` passed
+- `make db-smoke` passed
+- `make unit` passed
+- `make test` passed
+- `make lint` passed
+- CI pipeline passed
 
-**Fixes**
-- Separated repository responsibilities:
-  - `migrations/` for schema evolution only.
-  - `sql/` for reusable query patterns and validation logic.
-- Updated SQL tests to execute statements sequentially and safely.
-- Modified duplicate detection query to return a summarized result compatible with tests.
-
-**Outcome**
-- Established the initial **SQL foundation layer** for the pipeline.
-- Introduced reusable SQL patterns and automated validation queries.
-- Integrated SQL checks into the testing workflow.
-- Strengthened reproducibility through proof logs and documentation updates.
-- Project now includes a structured SQL layer supporting future data quality and transformation logic.
-
-# Week 02 Summary---------------------------------------------------------------------------------------
-
-### System Capability
-- Postgres-backed storage layer
-- Versioned database migrations
-- Seed workflow for deterministic test data
-- Layered testing (unit + DB smoke + pipeline)
-- Reproducible DB workflow via Makefile
-- CI pipeline with Postgres service
-
-### Engineering Guarantees
-- Reproducibility: full stack runs from clean environment
-- Determinism: migrations + seed ensure consistent DB state
-- Testability: DB unit tests + integration smoke tests
-- Automation: CI validates migrations and DB connectivity
-
-### Metrics
-- CI passing (GitHub Actions with Postgres service)
-- Migration runtime: <10s
-- Full pipeline runtime: <2 minutes
-- Tests: unit + DB smoke + pipeline tests passing
-
-### Gaps / Next Risks
-- SQL modeling layer still minimal
-- Data quality checks not yet enforced
-- Observability/logging still missing
-- No query performance optimization yet
-- ERD and data model documentation still evolving
 
 
 ### W03D01 (2026-03-04) — SQL Validation and Testing
-
 **Deliverables**
 - Executed SQL queries in `sql/patterns_window.sql`
 - Verified deduplication logic using window functions
@@ -389,7 +273,6 @@
   - `make lint`
   - `make smoke`
 - Recorded proof in 
-
 **Validation**
 - SQL queries executed successfully in local Postgres
 - Lint checks passed
@@ -399,9 +282,7 @@
   - `docs/proof/2026-03-04-run.txt`
 
 
-
 ### W03D02 (2026-03-05) — SQL Utility Unit Tests
-
 **Deliverables**
 - Implemented SQL utility function tests for `split_sql_statements`
 - Added unit test file: `tests/test_sql_utils.py`
@@ -410,10 +291,7 @@
   - `test_split_sql_statements_removes_empty_fragments`
   - `test_split_sql_statements_strips_whitespace`
   - `test_split_sql_statements_empty_or_whitespace_input`
-- Verified correct SQL statement splitting logic
-- Recorded proof of successful test execution
-
-**Validation**
+**Validaton**
 - Ran lint check:
   - `make lint`
   - Result: All checks passed
@@ -424,20 +302,15 @@
   - `docs/proof/2026-03-05-run.txt`
 
 
-### W03D3 (2026-03-06) — Data Model Alignment & ERD
-
+### W03D03 (2026-03-06) — Data Model Alignment & ERD
 **Deliverables**
 - Updated `docs/DATA_MODEL.md` to align with the current `users` table schema
 - Added a simple ERD for the `users` table to visualize structure and relationships
 - Ensured documentation reflects the latest schema fields (`id`, `name`, `created_at`, `updated_at`)
 - Added proof record under `docs/proof/`
-
 **Validation**
 - Ran `make lint`
 - Ran `make test`
-- Verified documentation matches the current schema implementation
-- Confirmed repository checks passed locally
-
 
 ### W03D4 (2026-03-07) — SQL Validation + Pipeline Smoke Test
 **Deliverables**
@@ -456,7 +329,7 @@ python -m src.de_lakehouse_pipeline.cli run_weather
 python -m src.de_lakehouse_pipeline.cli run_daily
 ```
 
-### W03D5 (2026-03-08) — Extraction Layer Core Logic
+### W03D05 (2026-03-08) — Extraction Layer Core Logic
 **Deliverables**
 - Implemented API ingestion for external data sources
 - Integrated stock data ingestion via `alpha_vantage_client.py`
@@ -466,7 +339,6 @@ python -m src.de_lakehouse_pipeline.cli run_daily
   - `run_weather`
 - Implemented raw data landing using `save_raw_data()` with date-based folders
 - Saved API responses as JSON files for downstream pipeline stages
-
 **Validation**
 - Successfully executed CLI commands locally
 - Verified raw data files were created
@@ -474,10 +346,39 @@ python -m src.de_lakehouse_pipeline.cli run_daily
   - `make lint`
   - `make test`
 
+# Week 03 Summary — Data Model + External API Ingestion=======================================
+## What I Completed
+- Updated `docs/DATA_MODEL.md` to match the current `users` table schema.
+- Added a simple ERD for the `users` table.
+- Documented the latest schema fields:
+  - `id`
+  - `name`
+  - `created_at`
+  - `updated_at`
+- Ran local pipeline validation.
+- Verified CLI pipeline commands for:
+  - Weather API ingestion
+  - Stock API ingestion
+- Implemented external API ingestion logic:
+  - `alpha_vantage_client.py`
+  - `weather_client.py`
+- Added CLI commands:
+  - `run_daily`
+  - `run_weather`
+- Implemented raw data landing with `save_raw_data()`.
+- Saved API responses as JSON files for later pipeline stages.
+- Added proof records under:
+  - `docs/proof/`
+## Validation
+- `make lint` passed
+- `make test` passed
+- `make db-up` ran successfully
+- Weather ingestion CLI ran successfully
+- Stock ingestion CLI ran successfully
+- Raw JSON files were created locally
 
-# Week 04 — Extraction Layer
----
-### W04D01(2026-03-9) — Extraction Unit Tests
+
+## W04D01(2026-03-9) — Extraction Unit Tests
 **Deliverables**
 - Implemented unit tests for `save_raw_data`
 - Implemented edge tests for `fetch_current_weather`
@@ -485,8 +386,8 @@ python -m src.de_lakehouse_pipeline.cli run_daily
 **Validation**
 - Ran `make lint`
 - Ran `pytest tests/test_extraction.py`
-- All tests passed locally
-### W04D02(2026-03-10) — Pipeline Smoke Test
+
+## W04D02(2026-03-10) — Pipeline Smoke Test
 ---
 **Deliverables**
 - Implemented `test_pipeline_smoke`
@@ -496,7 +397,7 @@ python -m src.de_lakehouse_pipeline.cli run_daily
 pytest output:
 18 passed in X.XXs
 
-### W04D03(2026-03-11) — Load Layer Scaffold for Weather Pipeline
+## W04D03(2026-03-11) — Load Layer Scaffold for Weather Pipeline
 ---
 **Deliverables**
 - Implemented `test_pipeline_smoke`
@@ -506,10 +407,9 @@ pytest output:
 - Implemented simple weather transform output for end-to-end validation.
 - Created proof artifact under `docs/proof/`.
 **Validation**
-- Successfully ran:
+- Successfully ran
 
 ### W04D03 (2026-03-12) — Introduced Database Load Layer for Market Data
----
 **Deliverables**
 - Created `market_bars` Postgres table with composite primary key `(ts, symbol)` for time-series storage.
 - Implemented Alpha Vantage daily parser to convert nested API payload into relational row tuples.
@@ -522,8 +422,46 @@ make migrate
 make run
 ```
 
-### W005D01(2026-03-18) — Iimplement basic metadata tracking for stock load pipeline
----
+# Week 04 Summary — Extraction Tests + Load Layer===========================================
+## What I Completed
+- Added unit tests for extraction logic:
+  - `save_raw_data`
+  - `fetch_current_weather`
+  - missing API key error handling
+- Added pipeline smoke test:
+  - `test_pipeline_smoke`
+  - used `tmp_path` to isolate test data
+  - verified raw file output path:
+    - `raw/<date>/stock.json`
+- Connected the weather CLI pipeline flow:
+  - ingest
+  - save raw
+  - load
+  - metadata
+  - transform
+- Added simple weather transform output for end-to-end validation.
+- Created the first Postgres load layer for market data:
+  - created `market_bars` table
+  - added composite primary key:
+    - `(ts, symbol)`
+- Implemented Alpha Vantage daily parser:
+  - converted nested API response into relational rows
+- Connected stock pipeline flow:
+  - ingest
+  - raw landing
+  - parse
+  - load into Postgres
+- Added proof artifacts under:
+  - `docs/proof/`
+## Validation
+- `make lint` passed
+- `pytest tests/test_extraction.py` passed
+- Pipeline smoke test passed
+- `make db-up` ran successfully
+- `make migrate` ran successfully
+- `make run` executed the market data pipeline
+
+## W005D01(2026-03-18) — Iimplement basic metadata tracking for stock load pipeline
 **Deliverables**
 - Implemented `metadata.py`,Used to generate a record of the current data loading operation.
 - Implemented `metadata_writer.py` to insert load metadata records generated by `metadata.py` into the database.
@@ -535,8 +473,7 @@ make migrate
 make run
 ```
 
-### W005D02(2026-03-22) — Iimplement basic metadata tracking for stock load pipeline
----
+## W005D02(2026-03-22) — Iimplement basic metadata tracking for stock load pipeline
 **Deliverables**
 - Implemented `test_market_data_client.py` include 6 unit test
 - Implemented `test_loader.py` to test load layer ,include 1unit test
@@ -546,8 +483,7 @@ Pipeline execution:
 make test
 ```
 
-### W006D01(2026-03-23) — Implement basic metadata tracking for stock load pipeline
----
+## W006D01(2026-03-23) — Implement basic metadata tracking for stock load pipeline
 **Deliverables**
 - Implemented `mart_daily_symbol_summary.py`
 - Implemented `mart_symbol_latest_price.py` 
@@ -563,7 +499,7 @@ Pipeline execution:
     python -m de_lakehouse_pipeline.transform.marts.mart_symbol_volume_rank run
 ```
 
-### W006D02(2026-03-24) — Marts Layer Quality & Integration
+## W006D02(2026-03-24) — Marts Layer Quality & Integration
 **Deliverables**
 - Implemented `test_marts.py`
 **Validation**
@@ -584,8 +520,40 @@ Pipeline execution:
 make run
 make test
 ```
+# Week 06 Summary — Marts Layer + Incremental Processing====================================
+## What I Completed
+- Implemented marts Python modules:
+  - `mart_daily_symbol_summary.py`
+  - `mart_symbol_latest_price.py`
+  - `mart_symbol_volume_rank.py`
+- Implemented marts SQL files:
+  - `mart_daily_symbol_summary.sql`
+  - `mart_symbol_latest_price.sql`
+  - `mart_symbol_volume_rank.sql`
+- Added marts integration testing:
+  - `test_marts.py`
+- Added incremental processing logic:
+  - `filter_new_rows`
+  - `get_max_timestamp`
+- Added pipeline metadata tracking:
+  - `get_last_watermark`
+  - `upsert_watermark`
+- Added incremental unit tests:
+  - watermark is `None`
+  - only keeps newer rows
+  - returns empty when no new data
+  - max timestamp empty case
+## Validation
+- Marts ran successfully with:
+  - `python -m de_lakehouse_pipeline.transform.marts.mart_daily_symbol_summary run`
+  - `python -m de_lakehouse_pipeline.transform.marts.mart_symbol_latest_price run`
+  - `python -m de_lakehouse_pipeline.transform.marts.mart_symbol_volume_rank run`
+- `make run-marts` passed
+- `make run` passed
+- `make test` passed
 
-### W009D01(2026-04-15) — backfill-range-backfill-resume
+
+## W009D01(2026-04-15) — backfill-range-backfill-resume
 **Deliverables**
 - `scripts/backfill.py`
 - `tests/test_backfill.py`
@@ -594,7 +562,8 @@ make test
 ```bash
 python scripts/backfill.py --start 2026-01-01 --end 2026-01-07
 ```
-### W009D02(2026-04-16) — backfill-range-resume-from-checkpoint-runbook
+
+## W009D02(2026-04-16) — backfill-range-resume-from-checkpoint-runbook
 **Deliverables**
 - `scripts/backfill.py -Add simple checkpoint/resume behavior`
 - `tests/test_backfill.py -Add simple checkpoint/resume behavior Test`
@@ -603,7 +572,7 @@ python scripts/backfill.py --start 2026-01-01 --end 2026-01-07
 python scripts/backfill.py --start 2026-01-01 --end 2026-01-07
 ```
 
-### W009D03(2026-04-19) — backfill-range-resume-from-checkpoint-runbook
+## W009D03(2026-04-19) — backfill-range-resume-from-checkpoint-runbook
 **Deliverables**
 - `quality/checks.py` add two function check_not_null  check_unique
 - `unit/test_quality_checks.py` add two unit test for each function 
@@ -612,7 +581,30 @@ python scripts/backfill.py --start 2026-01-01 --end 2026-01-07
 python -m pytest tests/unit/test_quality_checks.py   
 ```
 
-### W010D01 (2026-04-23) — backfill-cli-integration
+# Week 09 Summary — Backfill + Quality Checks===============================================
+## What I Completed
+- Implemented backfill script:
+  - `scripts/backfill.py`
+- Added backfill tests:
+  - `tests/test_backfill.py`
+- Added backfill documentation:
+  - `docs/BACKFILL.md`
+- Added checkpoint/resume behavior to the backfill workflow.
+- Updated backfill tests to cover checkpoint/resume behavior.
+- Added basic quality check functions:
+  - `check_not_null`
+  - `check_unique`
+- Added unit tests for quality checks:
+  - not-null check test
+  - unique check test
+## Validation
+- Backfill command ran successfully:
+  - `python scripts/backfill.py --start 2026-01-01 --end 2026-01-07`
+- Quality check unit tests passed:
+  - `python -m pytest tests/unit/test_quality_checks.py`
+
+
+## W010D01 (2026-04-23) — backfill-cli-integration
 **Deliverables**
 - Integrated `backfill` into the main CLI entrypoint.
 - Added `backfill` as a supported CLI command.
@@ -624,7 +616,7 @@ python -m pytest tests/unit/test_quality_checks.py
 .venv/Scripts/python.exe -m de_lakehouse_pipeline.cli backfill --start 2026-04-16 --end 2026-04-16
 ```
 
-### W011D01 (2026-05-02) — Data quality gates
+## W011D01 (2026-05-02) — Data quality gates
 **Deliverables**
 - Added `check_freshness` function on `checks.py`
 - Added `check_range` function on `checks.py`
@@ -637,25 +629,24 @@ python -m pytest tests/unit/test_quality_checks.py
 make test
 ```
 
-### W014D01 (2026-05-19) — Add fail and edge test for test_quality_checks  
+## W14D01 (2026-05-19) — Fail and Edge Tests for Quality Checks
 **Deliverables**
-
-- Added`test_check_unique_fails_when_duplicates_exist()` func on `test_quality_checks.py`
-- Added`test_check_not_null_fails_when_null_rows_exist()` func on `test_quality_checks.py`
-- Added`test_check_range_raises_when_no_bounds_are_provided()` func on `test_quality_checks.py`
+- Added `test_check_unique_fails_when_duplicates_exist()` in `test_quality_checks.py`
+- Added `test_check_not_null_fails_when_null_rows_exist()` in `test_quality_checks.py`
+- Added `test_check_range_raises_when_no_bounds_are_provided()` in `test_quality_checks.py`
 **Validation**
 ```bash
 make test
 ```
-### W014D02 (2026-05-24) — Add smoke test  for quality_checks  
+## W14D02 (2026-05-24) — Quality Checks Smoke Test
 **Deliverables**
-- Added`test_quality_checks_smoke_on_market_bars`
+- Added `test_quality_checks_smoke_on_market_bars`
 **Validation**
 ```bash
 make test
 ```
 
-### W015D01 (2026-05-28) — smoke-integration-tests-end-to-end-full
+## W015D01 (2026-05-28) — smoke-integration-tests-end-to-end-full
 **Deliverables**
 - Added`tests/smoke/test_pipeline_smoke/py`
 **Validation**
@@ -742,3 +733,75 @@ python -m pytest tests/unit -v
 - infra/terraform/variables.tf
 - infra/terraform/outputs.tf
 - infra/terraform/README.md
+
+# Week 15 Summary — Smoke Tests + Orchestration + Metrics + Cloud Storage + Terraform===========
+## What I Completed
+- Added end-to-end smoke integration test:
+  - `tests/smoke/test_pipeline_smoke.py`
+- Added local orchestration skeleton:
+  - `orchestration/dagster_pipeline.py`
+- Defined the intended pipeline execution order:
+  - ingest raw stock data
+  - load raw data to database
+  - run transformations
+  - run quality checks
+  - build marts
+- Added or verified orchestration command:
+  - `make orchestrate`
+- Added lightweight orchestration metrics:
+  - `src/de_lakehouse_pipeline/metrics.py`
+- Added step-level metrics:
+  - step name
+  - status: success / failed
+  - start time
+  - end time
+  - row count if available
+  - error message if failed
+- Added pipeline-level metrics:
+  - pipeline name
+  - pipeline start time
+  - pipeline end time
+  - overall pipeline status
+  - list of step metrics
+- Simplified orchestration flow in:
+  - `orchestration/dagster_pipeline.py`
+- Kept `run_step()` as the small wrapper for logging and metrics.
+- Updated operational documentation:
+  - `docs/OPS_METRICS.md`
+- Updated orchestration documentation:
+  - `docs/ORCHESTRATION.md`
+- Added minimal S3 raw upload support:
+  - `src/de_lakehouse_pipeline/ingest/cloud_storage.py`
+- Chose AWS S3 as the optional cloud raw storage target.
+- Defined raw object partition layout:
+  - `raw/<source>/symbol=<symbol>/date=<YYYY-MM-DD>/<filename>`
+  - example: `raw/alpha_vantage/symbol=AAPL/date=2026-05-30/stock.json`
+- Implemented basic cloud storage behavior:
+  - generate the raw S3 object key
+  - skip upload by default
+  - upload JSON when `ENABLE_S3_RAW_UPLOAD=true`
+  - require `S3_RAW_BUCKET` only when upload is enabled
+  - return the uploaded S3 URI string
+- Integrated optional raw payload upload into the stock pipeline.
+- Added `boto3` dependency.
+- Added cloud storage test command:
+  - `make cloud-storage-test`
+- Updated cloud storage documentation:
+  - `docs/CLOUD_STORAGE.md`
+  - `README.md`
+- Added Terraform scaffold:
+  - `infra/terraform/main.tf`
+  - `infra/terraform/variables.tf`
+  - `infra/terraform/outputs.tf`
+  - `infra/terraform/README.md`
+## Validation
+- Smoke integration test ran successfully:
+  - `make smoke`
+- Local orchestration command ran successfully:
+  - `make orchestrate`
+- Orchestration unit tests passed:
+  - `python -m pytest tests/unit/test_orchestration.py -v`
+- Cloud storage unit tests passed:
+  - `python -m pytest tests/unit/test_cloud_storage.py -v`
+- Full unit test suite passed:
+  - `python -m pytest tests/unit -v`

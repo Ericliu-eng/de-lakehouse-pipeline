@@ -17,7 +17,9 @@ class StagedMarketBar:
 
 
 def stage_alpha_vantage_daily(payload: dict) -> list[StagedMarketBar]:
+    # dict.get(key, default)
     meta = payload.get("Meta Data", {})
+
     symbol = _normalize_symbol(meta.get("2. Symbol"))
     tz_name = meta.get("5. Time Zone", "US/Eastern")
     series = payload.get("Time Series (Daily)", {})

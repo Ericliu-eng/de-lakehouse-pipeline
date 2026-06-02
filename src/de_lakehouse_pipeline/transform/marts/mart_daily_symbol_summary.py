@@ -34,5 +34,8 @@ def run_daily_summary(conn=None):
         raise
 
 
-if __name__ == "__main__":
+def main() -> None:
     run_daily_summary()
+
+if __name__ == "__main__":
+    main()
