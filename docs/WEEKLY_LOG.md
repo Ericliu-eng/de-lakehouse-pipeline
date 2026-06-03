@@ -807,7 +807,15 @@ python -m pytest tests/unit -v
   - `python -m pytest tests/unit -v`
 
 
-### W16D01 (2026-05-30) — terraform-scaffold
+### W16D01 (2026-06-01) — terraform-scaffold
 **Deliverables**
 - Add one failure test for `upload_raw_payload_if_enabled`
 - Add one edge-case test for `ENABLE_S3_RAW_UPLOAD`
+
+
+### W16D02 (2026-06-02) - Cloud storage smoke test
+**Deliverables**
+- Added lightweight cloud storage smoke test for S3 raw upload path.
+- Verified cloud storage unit and smoke tests.
+- Confirmed CI already runs the cloud storage unit test path.
+
