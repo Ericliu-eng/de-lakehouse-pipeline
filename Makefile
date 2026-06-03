@@ -46,7 +46,7 @@ unit:
 	$(PY) -m pytest tests/unit -v
 
 smoke:
-	$(PY) -m pytest tests/smoke/test_pipeline_smoke.py -v
+	$(PY) -m pytest tests/smoke -v
 
 smoke-db:
 	$(PY) -m pytest tests/smoke -m "smoke and db" -v
@@ -54,7 +54,7 @@ smoke-db:
 integration:
 	$(PY) -m pytest tests/integration -v
 
-test: unit smoke
+test: unit smoke integration
 
 test-all:
 	$(PY) -m pytest tests -v
