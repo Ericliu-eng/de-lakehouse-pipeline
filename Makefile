@@ -54,7 +54,7 @@ smoke-db:
 integration:
 	$(PY) -m pytest tests/integration -v
 
-test: unit smoke
+test: unit smoke integration
 
 test-all:
 	$(PY) -m pytest tests -v
