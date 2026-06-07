@@ -819,3 +819,18 @@ python -m pytest tests/unit -v
 - Verified cloud storage unit and smoke tests.
 - Confirmed CI already runs the cloud storage unit test path.
 
+
+### W16D03 (2026-06-06) - Terraform AWS apply and clean destroy
+**Deliverables**
+- Configured AWS credentials locally and confirmed Terraform can connect to AWS.
+- Ran `terraform init` successfully and installed the AWS provider.
+- Ran `terraform plan` successfully with `raw_bucket_name=eric-lakehouse-raw-dev-20260601`.
+- Ran `terraform apply` and created 2 AWS resources:
+  - `aws_s3_bucket.raw`
+  - `aws_iam_policy.raw_writer`
+- Verified Terraform outputs:
+  - `raw_bucket_name`
+  - `raw_bucket_arn`
+  - `raw_writer_policy_arn`
+- Ran `terraform destroy` and removed both AWS resources cleanly.
+- Confirmed Week 16 Terraform workflow works end-to-end: `plan -> apply -> outputs -> destroy`.

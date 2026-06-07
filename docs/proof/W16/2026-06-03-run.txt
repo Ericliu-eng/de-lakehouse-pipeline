@@ -1,0 +1,27 @@
+# Proof — W016D03
+# Date: 2026-06-06
+# Repo: de-lakehouse-pipeline
+==================================================
+
+Commands:
+    cd C:\Users\liuxu\de-lakehouse-pipeline\infra\terraform
+    terraform init
+    terraform plan -var="raw_bucket_name=eric-lakehouse-raw-dev-20260601"
+    terraform apply -var="raw_bucket_name=eric-lakehouse-raw-dev-20260601"
+    terraform destroy -var="raw_bucket_name=eric-lakehouse-raw-dev-20260601"
+
+Terraform apply result:
+- aws_s3_bucket.raw created successfully.
+- aws_iam_policy.raw_writer created successfully.
+- Apply complete: Resources: 2 added, 0 changed, 0 destroyed.
+
+Outputs:
+- raw_bucket_name = eric-lakehouse-raw-dev-20260601
+- raw_bucket_arn = arn:aws:s3:::eric-lakehouse-raw-dev-20260601
+- raw_writer_policy_arn = arn:aws:iam::571741814140:policy/eric-lakehouse-raw-dev-20260601-raw-writer
+
+Terraform destroy result:
+- aws_iam_policy.raw_writer destroyed successfully.
+- aws_s3_bucket.raw destroyed successfully.
+- Destroy complete: Resources: 2 destroyed.
+

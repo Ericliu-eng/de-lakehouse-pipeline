@@ -6,3 +6,7 @@ requests
 boto3
 #读取.env 文件用的
 python-dotenv
+
+#visualization
+pandas
+streamlit

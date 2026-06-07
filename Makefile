@@ -84,6 +84,14 @@ cloud-storage-test:
 
 tree:
 	$(PY) tree_tool.py
+	
+terraform-check:
+	cd infra/terraform && terraform fmt -check && terraform plan -var="raw_bucket_name=eric-lakehouse-raw-dev-20260601"
+
+price-dashboard:
+	$(PY) -m streamlit run scripts/price_dashboard.py
+	
+#database ---
 
 db-shell:
 	docker exec -it de_lakehouse_db psql -U lakehouse -d lakehouse
