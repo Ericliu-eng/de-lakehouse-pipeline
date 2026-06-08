@@ -834,3 +834,17 @@ python -m pytest tests/unit -v
   - `raw_writer_policy_arn`
 - Ran `terraform destroy` and removed both AWS resources cleanly.
 - Confirmed Week 16 Terraform workflow works end-to-end: `plan -> apply -> outputs -> destroy`.
+
+
+### W16D04 (2026-06-07) Reliability drill flow
+**Deliverables**
+- Added reliability drill documentation in `docs/FAILURE_DRILLS.md`.
+- Added retryable API status code behavior for API failure handling.
+- Treated `429`, `500`, `502`, `503`, and `504` as retryable API errors.
+- Treated `400` as a non-retryable API error.
+- Added schema validation for required stock row fields.
+- Added DB write safety logic so watermark updates only after successful load.
+- Added unit tests for reliability drill logic.
+- Added a smoke test for the reliability drill path.
+- Updated verification commands and proof output for W18.
+

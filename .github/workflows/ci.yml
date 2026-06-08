@@ -61,3 +61,7 @@ jobs:
       - name: Run Integration Tests
         run: |
           make integration
+          
+      - name: Terraform validate
+        run: |
+          make terraform-validate

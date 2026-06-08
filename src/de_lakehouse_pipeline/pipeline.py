@@ -14,7 +14,7 @@ from de_lakehouse_pipeline.load.db.stock_writer import upsert_stock_prices
 from de_lakehouse_pipeline.load.db.connection import load_db_config, wait_for_db, connect
 from de_lakehouse_pipeline.load.metadata import record_load
 from de_lakehouse_pipeline.load.db.metadata_writer import insert_load_metadata
-from de_lakehouse_pipeline.ingest.cloud_stroage import upload_raw_payload_if_enabled
+from de_lakehouse_pipeline.ingest.cloud_storage import upload_raw_payload_if_enabled
 from de_lakehouse_pipeline.ingest.io import save_raw_data
 from de_lakehouse_pipeline.load.db.pipeline_metadata import get_last_watermark, upsert_watermark
 from de_lakehouse_pipeline.transform.incremental import get_max_timestamp, filter_new_rows

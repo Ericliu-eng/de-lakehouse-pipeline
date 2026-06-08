@@ -1,6 +1,6 @@
 from datetime import date
 
-from de_lakehouse_pipeline.ingest.cloud_stroage import upload_raw_payload_if_enabled
+from de_lakehouse_pipeline.ingest.cloud_storage import upload_raw_payload_if_enabled
 
 
 class FakeS3Client:

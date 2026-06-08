@@ -1,5 +1,5 @@
 from datetime import date
-from de_lakehouse_pipeline.ingest.cloud_stroage import (
+from de_lakehouse_pipeline.ingest.cloud_storage import (
     build_raw_object_key,
     upload_raw_payload_if_enabled,
     CloudStorageConfigError,

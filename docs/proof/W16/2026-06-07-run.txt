@@ -1,0 +1,61 @@
+# Proof — W016D04
+# Date: 2026-06-07
+# Repo: de-lakehouse-pipeline
+# Scope: Reliability drills for API retry, schema validation, DB write safety, unit tests, smoke tests, and verification docs
+==================================================
+
+
+step 1:
+Command:
+    .venv/Scripts/python.exe -m pytest tests/unit/test_failure_drills.py -v
+Output:
+    collected 7 items
+    tests/unit/test_failure_drills.py::test_api_429_is_retryable PASSED
+    tests/unit/test_failure_drills.py::test_api_500_is_retryable PASSED
+    tests/unit/test_failure_drills.py::test_api_400_is_not_retryable PASSED
+    tests/unit/test_failure_drills.py::test_valid_stock_row_schema_passes PASSED
+    tests/unit/test_failure_drills.py::test_missing_required_stock_field_fails PASSED
+    tests/unit/test_failure_drills.py::test_watermark_should_not_update_when_load_fails PASSED
+    tests/unit/test_failure_drills.py::test_watermark_should_update_when_load_succeeds PASSED
+    PASSED!
+==================================================
+
+step 2:
+Command:
+    .venv/Scripts/python.exe -m pytest tests/smoke/test_failure_drills_smoke.py -v
+Output:
+    collected 1 item
+
+    tests/smoke/test_failure_drills_smoke.py::test_reliability_drill_smoke_path PASSED
+
+    PASSED!
+
+==================================================
+
+step 3:
+Command:
+    make test
+Output:
+    all tests passed
+
+==================================================
+
+step 4:
+Command:
+    make smoke
+Output:
+    smoke tests passed
+
+==================================================
+
+step 5:
+Command:
+    cd infra/terraform
+    terraform fmt
+    terraform plan
+    cd ../..
+Output:
+    Terraform files formatted successfully.
+    Terraform plan completed or output recorded for reproducibility.
+
+==================================================

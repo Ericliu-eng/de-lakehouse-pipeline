@@ -9,6 +9,7 @@ load_dotenv()
 
 BASE_URL = "https://www.alphavantage.co/query"
 
+RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
 def get_api_key()  -> str:
     api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
@@ -53,3 +54,7 @@ def fetch_daily_stock(symbol: str = "AAPL") -> dict:
     api_key = get_api_key()
     params = build_params(symbol, api_key)
     return fetch_json_with_retry(params)
+
+def is_retryable_status_code(status_code: int) -> bool:
+    """Return True if an HTTP status code should be retried."""
+    return status_code in RETRYABLE_STATUS_CODES
