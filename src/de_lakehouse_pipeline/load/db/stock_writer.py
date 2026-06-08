@@ -24,3 +24,8 @@ def upsert_stock_prices(conn, rows: list[tuple]) -> None:
         #
         cur.executemany(sql, rows)
     conn.commit()
+
+
+def should_update_watermark_after_load(load_success: bool) -> bool:
+    """Watermark should only move forward after a successful load."""
+    return load_success

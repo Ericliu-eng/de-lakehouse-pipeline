@@ -834,3 +834,63 @@ python -m pytest tests/unit -v
   - `raw_writer_policy_arn`
 - Ran `terraform destroy` and removed both AWS resources cleanly.
 - Confirmed Week 16 Terraform workflow works end-to-end: `plan -> apply -> outputs -> destroy`.
+
+
+### W16D04 (2026-06-07) Reliability drill flow
+**Deliverables**
+- Added reliability drill documentation in `docs/FAILURE_DRILLS.md`.
+- Added retryable API status code behavior for API failure handling.
+- Treated `429`, `500`, `502`, `503`, and `504` as retryable API errors.
+- Treated `400` as a non-retryable API error.
+- Added schema validation for required stock row fields.
+- Added DB write safety logic so watermark updates only after successful load.
+- Added unit tests for reliability drill logic.
+- Added a smoke test for the reliability drill path.
+
+
+# Week 16 Summary — Cloud Storage Tests + Terraform AWS Workflow + Reliability Drills
+## What I Completed
+### 1. Cloud Storage Reliability Tests
+- Added failure test coverage for `upload_raw_payload_if_enabled`.
+- Added edge-case test coverage for `ENABLE_S3_RAW_UPLOAD`.
+- Verified that S3 upload behavior is safe by default:
+  - upload is skipped unless explicitly enabled
+  - `S3_RAW_BUCKET` is only required when upload is enabled
+  - failure cases are tested
+### 2. Cloud Storage Smoke Test
+- Added a lightweight cloud storage smoke test for the S3 raw upload path.
+- Verified both cloud storage unit tests and smoke tests.
+- Confirmed CI already runs the cloud storage unit test path.
+### 3. Terraform AWS End-to-End Workflow
+- Configured AWS credentials locally.
+- Confirmed Terraform can connect to AWS.
+- Ran Terraform workflow successfully:
+- Created and verified 2 AWS resources during `terraform apply`:
+  - `aws_s3_bucket.raw`
+  - `aws_iam_policy.raw_writer`
+- Ran `terraform destroy` and removed all AWS resources cleanly.
+### 4. Reliability Drill Flow
+- Added reliability drill documentation:
+  - `docs/FAILURE_DRILLS.md`
+- Added retryable API error behavior:
+  - retryable: `429`, `500`, `502`, `503`, `504`
+  - non-retryable: `400`
+- Added schema validation for required stock row fields.
+- Added DB write safety logic:
+  - watermark updates only after successful load
+  - failed loads should not advance pipeline state
+- Added unit tests for reliability drill logic.
+- Added smoke test coverage for the reliability drill path.
+- Updated verification commands and proof output for Week 16 reliability work.
+
+## Validation
+```bash
+python -m pytest tests/unit/test_cloud_storage.py -v
+python -m pytest tests/unit -v
+make smoke
+make orchestrate
+terraform init
+terraform plan
+terraform apply
+terraform destroy
+```
