@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>{{ title }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background: #f6f7f9;
+      color: #111827;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .header {
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .metric {
+      font-size: 32px;
+      font-weight: 700;
+      margin: 8px 0;
+    }
+
+    .label {
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    code {
+      background: #f3f4f6;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    @media (max-width: 700px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <section class="header">
+      <h1>DE Lakehouse Dashboard</h1>
+      <p>
+        Minimal serving dashboard for querying curated pipeline outputs.
+      </p>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <div class="label">Symbol</div>
+        <div class="metric">{{ latest_price.symbol }}</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Latest Close</div>
+        <div class="metric">${{ latest_price.close }}</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Source</div>
+        <div class="metric">{{ latest_price.source }}</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Latest Price Record</h2>
+      <p><strong>Timestamp:</strong> {{ latest_price.ts }}</p>
+      <p><strong>API endpoint:</strong> <code>GET /latest-price</code></p>
+      <p><strong>Health check:</strong> <code>GET /health</code></p>
+    </section>
+  </main>
+</body>
+</html>
