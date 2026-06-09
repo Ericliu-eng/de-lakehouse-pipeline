@@ -894,3 +894,21 @@ terraform plan
 terraform apply
 terraform destroy
 ```
+
+
+### W17D01 Dashboard / Serving: Minimal Visualization and Query API
+**Deliverables**
+- Added `serve/api.py` with:
+  - `health()`
+  - `latest_price()`
+  - `dashboard()`
+- Added `serve/templates/dashboard.html`
+- Added unit tests for `serve/api.py`, including:
+  - `test_health`
+  - `test_latest_price`
+  - `test_dashboard_returns_html`
+- Added smoke tests for the serving/dashboard path, including:
+  - `test_health_endpoint_returns_ok`
+  - `test_latest_price_endpoint_returns_expected_shape`
+  - `test_dashboard_app_file_exists`
+  - `test_dashboard_app_contains_expected_title`
