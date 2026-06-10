@@ -41,3 +41,5 @@ infra/terraform/.terraform/
 infra/terraform/terraform.tfstate
 infra/terraform/terraform.tfstate.backup
 infra/terraform/*.tfplan
+
+INTERVIEW_DE.md

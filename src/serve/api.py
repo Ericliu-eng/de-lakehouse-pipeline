@@ -11,6 +11,7 @@ from typing import Any
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from de_lakehouse_pipeline.load.db.connection import connect, load_db_config
 """
 导入 Uvicorn 服务器。
 它负责：
@@ -31,16 +32,42 @@ app = FastAPI(title="DE Lakehouse Serving API")
 def health() -> dict[str, str]:
     return {"status": "ok"}
 
+def featch_latest_price() -> dict[str,Any]:
+    sql = """SELECT symbol, latest_ts, close_price, volume
+                FROM mart_symbol_latest_price
+                ORDER BY latest_ts DESC
+                LIMIT 1;"""
+    with connect(load_db_config()) as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql)
+            row = cur.fetchone()
+    return {
+        "symbol": row[0],
+        "latest_ts": row[1],
+        "close_price": row[2],
+        "volume": row[3],
+    }
 
 @app.get("/latest-price")
 def latest_price() -> dict[str, Any]:
-    return {
-        "symbol": "AAPL",
-        "ts": "2026-06-22T00:00:00Z",
-        "close": 195.00,
-        "source": "mock",
-    }
+    row = featch_latest_price()
+            
+    if row is None:
+        return {
+            "symbol": None,
+            "ts": None,
+            "close": None,
+            "volume": None,
+            "source": "database",
+        }
 
+    return {
+        "symbol": row["symbol"],
+        "latest_ts": row["latest_ts"],
+        "close_price": row["close_price"],
+        "volume": row["volume"],
+        "source": "database",
+    }
 
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request) -> HTMLResponse:
