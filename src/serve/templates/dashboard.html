@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <title>{{ title }}</title>
@@ -78,7 +79,7 @@
 
       <div class="card">
         <div class="label">Latest Close</div>
-        <div class="metric">${{ latest_price.close }}</div>
+        <div class="metric">${{ latest_price.close_price }}</div>
       </div>
 
       <div class="card">
@@ -89,10 +90,11 @@
 
     <section class="card">
       <h2>Latest Price Record</h2>
-      <p><strong>Timestamp:</strong> {{ latest_price.ts }}</p>
+      <p><strong>Timestamp:</strong> {{ latest_price.latest_ts }}</p>
       <p><strong>API endpoint:</strong> <code>GET /latest-price</code></p>
       <p><strong>Health check:</strong> <code>GET /health</code></p>
     </section>
   </main>
 </body>
+
 </html>
