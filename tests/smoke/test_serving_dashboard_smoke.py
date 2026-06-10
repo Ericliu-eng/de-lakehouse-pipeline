@@ -27,19 +27,22 @@ def test_latest_price_endpoint_returns_expected_shape() -> None:
     assert response.status_code == 200
 
     data = response.json()
-    """"symbol": "AAPL",
-        "ts": "2026-06-22T00:00:00Z",
-        "close": 195.00,
-        "source": "mock",
+    
+    """"
+            "symbol": None,
+            "latest_ts": None,
+            "close": None,
+            "volume": None,
+            "source": "database",
     """
     assert "symbol" in data
-    assert "ts" in data
-    assert "close" in data
+    assert "latest_ts" in data
+    assert "close_price" in data
     assert "source" in data
 
     assert isinstance(data["symbol"], str)
-    assert isinstance(data["ts"], str)
-    assert isinstance(data["close"], int | float)
+    assert isinstance(data["latest_ts"], str)
+    assert isinstance(data["close_price"], str)
     assert isinstance(data["source"], str)
 
 @pytest.mark.smoke
