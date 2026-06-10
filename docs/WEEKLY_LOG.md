@@ -912,3 +912,17 @@ terraform destroy
   - `test_latest_price_endpoint_returns_expected_shape`
   - `test_dashboard_app_file_exists`
   - `test_dashboard_app_contains_expected_title`
+
+
+### W17D02   Architecture Docs and Database-Backed Serving API
+**Deliverables**
+- Added `docs/ARCHITECTURE.md` to document the end-to-end system flow:
+  - Alpha Vantage ingestion
+  - raw JSON landing
+  - staging transform
+  - Postgres warehouse tables
+  - incremental watermark tracking
+  - data quality checks
+  - analytical marts
+  - FastAPI serving/dashboard
+- Added `docs/RUNBOOK.md` with local run commands, validation commands, database inspection queries, troubleshooting steps, and proof checklist.
