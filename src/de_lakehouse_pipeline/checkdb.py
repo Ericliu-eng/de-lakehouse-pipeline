@@ -11,7 +11,7 @@ def view_market_bars():
         df = pd.read_sql(
         """
         SELECT *
-        FROM stg_market_bars
+        FROM market_bars
         """,
         conn
     )

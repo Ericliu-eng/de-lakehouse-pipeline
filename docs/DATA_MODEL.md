@@ -19,6 +19,7 @@ One row per `(ts, symbol)`.
 - `low`: low price
 - `close`: closing price
 - `volume`: traded volume
+- `source`: upstream source name for this market bar row; defaults to alpha_vantage
 
 ### Quality Rules
 - `ts` must not be null

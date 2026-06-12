@@ -926,3 +926,12 @@ terraform destroy
   - analytical marts
   - FastAPI serving/dashboard
 - Added `docs/RUNBOOK.md` with local run commands, validation commands, database inspection queries, troubleshooting steps, and proof checklist.
+
+
+### W17D03   Schema Evolution: market_bars source
+- Added `source` column to `market_bars`.
+- Used default value `alpha_vantage` so existing rows and old inserts remain compatible.
+- Updated staging logic so each staged market bar carries a source value.
+- Updated database load logic so `source` is written explicitly.
+- Updated unit tests for the new tuple shape.
+- Updated `docs/DATA_MODEL.md` to document the new field.
