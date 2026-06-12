@@ -55,7 +55,7 @@ def test_small_sample_stock_payload_returns_expected_tuple_shape() -> None:
 
     for row in rows:
         assert isinstance(row, tuple)
-        assert len(row) == 7
+        assert len(row) == 8
 
 
 @pytest.mark.smoke
