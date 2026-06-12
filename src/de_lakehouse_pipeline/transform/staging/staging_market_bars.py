@@ -14,6 +14,7 @@ class StagedMarketBar:
     low: float
     close: float
     volume: int
+    source: str = "alpha_vantage"
 
 
 def stage_alpha_vantage_daily(payload: dict) -> list[StagedMarketBar]:
@@ -53,6 +54,7 @@ def to_db_tuple(row: StagedMarketBar) -> tuple:
         row.low,
         row.close,
         row.volume,
+        row.source
     )
 
 

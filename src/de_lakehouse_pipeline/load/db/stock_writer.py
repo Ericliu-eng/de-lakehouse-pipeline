@@ -5,16 +5,17 @@ def upsert_stock_prices(conn, rows: list[tuple]) -> None:
     """
     sql = """
         INSERT INTO market_bars (
-            ts, symbol, open, high, low, close, volume
+            ts, symbol, open, high, low, close, volume,source
         )
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT (ts, symbol)
         DO UPDATE SET 
         open = EXCLUDED.open,
         high = EXCLUDED.high,
         low = EXCLUDED.low,
         close = EXCLUDED.close,
-        volume = EXCLUDED.volume;
+        volume = EXCLUDED.volume,
+        source= EXCLUDED.source
     """
 #EXCLUDED.open = 新传进来的 open
     with conn.cursor() as cur:

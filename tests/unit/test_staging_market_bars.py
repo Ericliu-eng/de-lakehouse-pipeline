@@ -40,6 +40,7 @@ def test_stage_alpha_vantage_daily_returns_typed_market_bar() -> None:
             low=197.25,
             close=200.3,
             volume=1234567,
+            source= "alpha_vantage"
         )
     ]
 
@@ -65,7 +66,7 @@ def test_to_db_tuple_preserves_market_bars_column_order() -> None:
         high=201.5,
         low=197.25,
         close=200.3,
-        volume=1234567,
+        volume=1234567
     )
 
     assert to_db_tuple(row) == (
@@ -76,6 +77,7 @@ def test_to_db_tuple_preserves_market_bars_column_order() -> None:
         197.25,
         200.3,
         1234567,
+        "alpha_vantage"
     )
 
 
