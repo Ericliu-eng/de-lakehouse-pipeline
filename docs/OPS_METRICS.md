@@ -82,3 +82,30 @@ For API-independent validation:
 make -f Makefile unit
 make -f Makefile smoke-db
 ```
+
+## SLA Reporting
+
+The SLA report summarizes operational health for pipeline runs:
+
+- data freshness: minutes between the latest available source data and check time
+- pipeline latency: seconds between pipeline start and finish
+- failure rate: failed runs divided by total runs
+
+Default thresholds:
+
+- freshness: 1440 minutes
+- latency: 300 seconds
+- failure rate: 0.05
+
+Failure classification:
+
+- retryable: timeout, rate_limit, connection, temporary, server_error
+- non-retryable: schema, validation, auth, not_found, bad_request
+
+Validation commands:
+
+```bash
+pytest tests/unit/test_metrics.py
+pytest tests/smoke/test_metrics_sla_smoke.py
+make lint
+make test

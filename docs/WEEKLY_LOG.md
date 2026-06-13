@@ -929,9 +929,23 @@ terraform destroy
 
 
 ### W17D03   Schema Evolution: market_bars source
+**Deliverables**
 - Added `source` column to `market_bars`.
 - Used default value `alpha_vantage` so existing rows and old inserts remain compatible.
 - Updated staging logic so each staged market bar carries a source value.
 - Updated database load logic so `source` is written explicitly.
 - Updated unit tests for the new tuple shape.
 - Updated `docs/DATA_MODEL.md` to document the new field.
+
+
+## W17D04 - Metrics and SLA Reporting
+**Deliverables**
+- Added SLA reporting structure for operational health checks.
+- Added configuration for freshness, latency, and failure-rate thresholds.
+- Added freshness calculation based on latest data timestamp and check time.
+- Added pipeline latency calculation using existing metric duration logic.
+- Added failure-rate calculation.
+- Added retryable vs. non-retryable failure classification.
+- Added unit tests for normal, breach, and edge-case behavior.
+- Added or prepared smoke validation for building a full SLA report payload.
+- Documented how to validate the SLA reporting path.
