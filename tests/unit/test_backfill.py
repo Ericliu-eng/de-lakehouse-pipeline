@@ -51,7 +51,10 @@ def test_save_and_load_checkpoint_round_trip(tmp_path, monkeypatch):
 
 def test_run_backfill_skips_completed_dates(tmp_path, monkeypatch):
     checkpoint_path = tmp_path / "backfill_checkpoint.json"
+
     monkeypatch.setattr(backfill, "CHECKPOINT_PATH", checkpoint_path)
+
+    monkeypatch.setattr(backfill, "load_completed_market_dates", lambda symbol: set())
 
     backfill.save_checkpoint({"2026-01-01"})
 
@@ -65,6 +68,8 @@ def test_run_backfill_skips_completed_dates(tmp_path, monkeypatch):
     backfill.run_backfill(date(2026, 1, 1), date(2026, 1, 2))
 
     assert processed == ["2026-01-02"]
+
+
 def test_run_backfill_marks_successful_dates_completed(tmp_path, monkeypatch):
     checkpoint_path = tmp_path / "backfill_checkpoint.json"
     monkeypatch.setattr(backfill, "CHECKPOINT_PATH", checkpoint_path)
@@ -74,7 +79,11 @@ def test_run_backfill_marks_successful_dates_completed(tmp_path, monkeypatch):
     def fake_run_backfill_for_date(target_date, symbol="AAPL"):
         processed.append((target_date.isoformat(), symbol))
 
+    def fake_load_completed_market_dates(symbol):
+        return {date_value for date_value, _ in processed}
+
     monkeypatch.setattr(backfill, "run_backfill_for_date", fake_run_backfill_for_date)
+    monkeypatch.setattr(backfill, "load_completed_market_dates", fake_load_completed_market_dates)
 
     backfill.run_backfill(date(2026, 1, 1), date(2026, 1, 2))
 
@@ -82,6 +91,8 @@ def test_run_backfill_marks_successful_dates_completed(tmp_path, monkeypatch):
 
     assert processed == [("2026-01-01", "AAPL"), ("2026-01-02", "AAPL")]
     assert loaded == {"2026-01-01", "2026-01-02"}
+
+    
 
 def test_run_backfill_passes_symbol_to_each_date(tmp_path, monkeypatch):
     checkpoint_path = tmp_path / "backfill_checkpoint.json"
@@ -102,11 +113,19 @@ def test_run_backfill_does_not_mark_failed_date_completed(tmp_path, monkeypatch)
     checkpoint_path = tmp_path / "backfill_checkpoint.json"
     monkeypatch.setattr(backfill, "CHECKPOINT_PATH", checkpoint_path)
 
+    completed_in_db = set()
+
     def fake_run_backfill_for_date(target_date, symbol="AAPL"):
         if target_date.isoformat() == "2026-01-02":
             raise RuntimeError("boom")
 
+        completed_in_db.add(target_date.isoformat())
+
+    def fake_load_completed_market_dates(symbol):
+        return completed_in_db
+
     monkeypatch.setattr(backfill, "run_backfill_for_date", fake_run_backfill_for_date)
+    monkeypatch.setattr(backfill, "load_completed_market_dates", fake_load_completed_market_dates)
 
     try:
         backfill.run_backfill(date(2026, 1, 1), date(2026, 1, 2))

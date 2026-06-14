@@ -251,3 +251,19 @@ Stop the local database when finished:
 ```bash
 make db-down
 ```
+
+## Metrics and SLA
+
+This pipeline tracks three production-style reliability metrics:
+
+1. Data Freshness
+   - Measures how old the latest available data is.
+   - Example SLA: latest market data should be available within 24 hours.
+
+2. Pipeline Latency
+   - Measures how long the pipeline takes from ingestion to transformed output.
+   - Example SLA: daily run should finish within 5 minutes.
+
+3. Failure Rate
+   - Measures failed pipeline runs divided by total runs.
+   - Example SLA: failure rate should stay below 5%.

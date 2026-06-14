@@ -7,6 +7,7 @@ from pathlib import Path
 from collections.abc import Iterator
 
 from de_lakehouse_pipeline.pipeline import run_stock_for_date
+from de_lakehouse_pipeline.load.db.stock_reader import load_completed_market_dates
 
 CHECKPOINT_PATH = Path(".checkpoints/backfill_checkpoint.json")
 DEFAULT_SYMBOL = "AAPL"
@@ -39,8 +40,17 @@ def run_backfill_for_date(target_date: date, symbol: str = DEFAULT_SYMBOL) -> No
     run_stock_for_date(target_date, symbol=symbol)
 
 
+def sync_checkpoint_from_db(symbol: str) -> set[str]:
+    checkpoint_dates = load_checkpoint()
+    db_dates = load_completed_market_dates(symbol)
+    #union / 并集 / 合并去重
+    completed_dates = checkpoint_dates | db_dates
+    save_checkpoint(completed_dates)
+
+    return completed_dates
+    
 def run_backfill(start: date, end: date, symbol: str = DEFAULT_SYMBOL) -> None:
-    completed_dates = load_checkpoint()
+    completed_dates = sync_checkpoint_from_db(symbol)
 
     for target_date in iter_dates(start, end):
         if is_date_completed(target_date, completed_dates):
@@ -48,7 +58,17 @@ def run_backfill(start: date, end: date, symbol: str = DEFAULT_SYMBOL) -> None:
             continue
 
         run_backfill_for_date(target_date, symbol=symbol)
-        mark_date_completed(target_date, completed_dates)
+
+        db_dates = load_completed_market_dates(symbol)
+        if target_date.isoformat() in db_dates:
+            mark_date_completed(target_date, completed_dates)
+        else:
+            print(
+                f"Not marking {target_date.isoformat()} completed "
+                f"because no DB row exists for symbol={symbol}"
+            )
+
+
 
 def load_checkpoint() -> set[str]:
     if not CHECKPOINT_PATH.exists():
@@ -76,6 +96,8 @@ def is_date_completed(target_date: date, completed_dates: set[str]) -> bool:
 def mark_date_completed(target_date: date, completed_dates: set[str]) -> None:
     completed_dates.add(target_date.isoformat())
     save_checkpoint(completed_dates)
+
+
 
 def main() -> None:
     args = parse_args()
