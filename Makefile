@@ -76,6 +76,9 @@ run-marts:
 backfill:
 	$(PY) -m de_lakehouse_pipeline.cli backfill --start $(START) --end $(END) --symbol $(SYMBOL)
 
+dagster-dev:
+	$(PY) -m dagster dev -m orchestration.definitions
+
 orchestrate:
 	$(PY) -m orchestration.dagster_pipeline --symbol $(SYMBOL)
 

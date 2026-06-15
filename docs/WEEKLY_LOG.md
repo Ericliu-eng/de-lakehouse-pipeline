@@ -949,3 +949,12 @@ terraform destroy
 - Added unit tests for normal, breach, and edge-case behavior.
 - Added or prepared smoke validation for building a full SLA report payload.
 - Documented how to validate the SLA reporting path.
+
+## W17D05 - Dagster Orchestration Pipeline
+**Deliverables**
+- Added Dagster definitions for the stock lakehouse pipeline.
+- Added `ingest_stock` op to run the existing stock ingestion logic.
+- Added `run_quality_checks` op to validate loaded market data before mart builds.
+- Added `build_marts` op to refresh downstream mart tables.
+- Connected the workflow in Dagster as `ingest_stock -> run_quality_checks -> build_marts`.
+- Added a daily Dagster schedule for the stock lakehouse job.

@@ -10,8 +10,8 @@ def run_latest_price(conn=None):
     sql_file_path = root / "sql/marts/mart_symbol_latest_price.sql"
 
     if not sql_file_path.exists():
-        logger.error(f"SQL file not found at {sql_file_path}")
-        return
+        raise FileNotFoundError(f"SQL file not found at {sql_file_path}")
+        
 
     logger.info("Updating Latest Price Mart...")
     sql = sql_file_path.read_text(encoding="utf-8").strip()
