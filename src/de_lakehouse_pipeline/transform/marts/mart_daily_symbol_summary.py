@@ -10,8 +10,7 @@ def run_daily_summary(conn=None):
     sql_file_path = root / "sql/marts/mart_daily_symbol_summary.sql"
 
     if not sql_file_path.exists():
-        logger.error(f"SQL file not found at {sql_file_path}")
-        return
+        raise FileNotFoundError(f"SQL file not found at {sql_file_path}")
 
     sql = sql_file_path.read_text(encoding="utf-8").strip()
     logger.info("Starting Mart 1: mart_daily_symbol_summary transformation...")
