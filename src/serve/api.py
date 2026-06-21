@@ -32,7 +32,7 @@ app = FastAPI(title="DE Lakehouse Serving API")
 def health() -> dict[str, str]:
     return {"status": "ok"}
 
-def featch_latest_price() -> dict[str,Any]:
+def featch_latest_price() -> dict[str, Any] | None:
     sql = """SELECT symbol, latest_ts, close_price, volume
                 FROM mart_symbol_latest_price
                 ORDER BY latest_ts DESC
@@ -41,6 +41,10 @@ def featch_latest_price() -> dict[str,Any]:
         with conn.cursor() as cur:
             cur.execute(sql)
             row = cur.fetchone()
+
+    if row is None:
+        return None
+
     return {
         "symbol": row[0],
         "latest_ts": row[1],
@@ -55,8 +59,8 @@ def latest_price() -> dict[str, Any]:
     if row is None:
         return {
             "symbol": None,
-            "ts": None,
-            "close": None,
+            "latest_ts": None,
+            "close_price": None,
             "volume": None,
             "source": "database",
         }
