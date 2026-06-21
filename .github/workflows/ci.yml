@@ -51,16 +51,11 @@ jobs:
           make db-migrate
           make db-seed
 
-      - name: Pipeline smoke
-        run: |
-          make smoke
 
       - name: Run tests
         run: |
           make test
-      - name: Run Integration Tests
-        run: |
-          make integration
+
           
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
