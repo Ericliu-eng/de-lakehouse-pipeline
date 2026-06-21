@@ -1,5 +1,10 @@
 # Tell make: these names are targets, not files.
-.PHONY: help setup lint clean unit smoke smoke-db integration test test-all test-s run run-marts backfill orchestrate cloud-storage-test tree db-up db-down db-migrate migrate db-seed db-smoke db-smoke-local db-shell db-visu sql-utils proof
+.PHONY: help setup lint clean
+.PHONY: unit smoke smoke-db integration test test-all test-s
+.PHONY: run run-marts backfill dagster-dev orchestrate price-dashboard
+.PHONY: cloud-storage-test terraform-check terraform-validate tree
+.PHONY: db-up db-down db-migrate migrate db-seed
+.PHONY: db-smoke db-smoke-local db-shell db-visu sql-utils
 
 .DEFAULT_GOAL := help
 
@@ -35,19 +40,24 @@ setup:
 	$(PY) -m pip install --upgrade pip
 	$(PY) -m pip install -r requirements.txt
 	$(PY) -m pip install -e .
+# Install the project in editable mode; pip reads pyproject.toml from "."
 
 lint:
 	$(PY) -m ruff check .
 
 clean:
+ifeq ($(OS),Windows_NT)
+	powershell -Command "Remove-Item -Recurse -Force '$(VENV)'"
+else
 	rm -rf $(VENV)
+endif
 
 unit:
 	$(PY) -m pytest tests/unit -v
-
+#no database
 smoke:
-	$(PY) -m pytest tests/smoke -v
-
+	$(PY) -m pytest tests/smoke -m "smoke and not db" -v
+#need database
 smoke-db:
 	$(PY) -m pytest tests/smoke -m "smoke and db" -v
 
@@ -65,11 +75,10 @@ test-s:
 sql-utils:
 	$(PY) -m pytest tests/unit/test_sql_utils.py -v
 
+
 run:
-	$(PY) -m de_lakehouse_pipeline.cli run_stock 
-	
-run-o:
-	$(PY) -m de_lakehouse_pipeline.cli run_stock --symbol MSFT
+	$(PY) -m de_lakehouse_pipeline.cli run_stock --symbol  $(SYMBOL)
+
 run-marts:
 	$(PY) -m de_lakehouse_pipeline.cli run_marts
 
@@ -88,8 +97,10 @@ cloud-storage-test:
 tree:
 	$(PY) tree_tool.py
 	
+
+TF_BUCKET ?= eric-lakehouse-raw-dev-20260601
 terraform-check:
-	cd infra/terraform && terraform fmt -check && terraform plan -var="raw_bucket_name=eric-lakehouse-raw-dev-20260601"
+	cd infra/terraform && terraform fmt -check && terraform plan -var="raw_bucket_name=$(TF_BUCKET)"
 
 price-dashboard:
 	$(PY) -m streamlit run scripts/price_dashboard.py
@@ -102,6 +113,7 @@ terraform-validate:
 db-shell:
 	docker exec -it de_lakehouse_db psql -U lakehouse -d lakehouse
 
+#up -->start the docker-compose.yml services  , -d -->background
 db-up:
 	docker compose up -d
 

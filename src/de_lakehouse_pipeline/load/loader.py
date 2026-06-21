@@ -2,8 +2,6 @@ import json
 from pathlib import Path
 
 
-def project_root():
-    return Path(__file__).resolve().parents[3]
 
 def load_raw_stock_json(file_path:Path = None) -> dict:
     if file_path is None:
