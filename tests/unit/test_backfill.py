@@ -97,6 +97,7 @@ def test_run_backfill_marks_successful_dates_completed(tmp_path, monkeypatch):
 def test_run_backfill_passes_symbol_to_each_date(tmp_path, monkeypatch):
     checkpoint_path = tmp_path / "backfill_checkpoint.json"
     monkeypatch.setattr(backfill, "CHECKPOINT_PATH", checkpoint_path)
+    monkeypatch.setattr(backfill, "load_completed_market_dates", lambda symbol: set())
 
     processed = []
 
