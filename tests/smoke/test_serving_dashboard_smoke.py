@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
+import src.serve.api as api
 from src.serve.api import app
 
 client = TestClient(app)
@@ -21,20 +22,23 @@ def test_health_endpoint_returns_ok() -> None:
     assert response.json() == {"status": "ok"}
 
 @pytest.mark.smoke
-def test_latest_price_endpoint_returns_expected_shape() -> None:
+def test_latest_price_endpoint_returns_expected_shape(monkeypatch) -> None:
+    def mock_latest_price():
+        return {
+            "symbol": "AAPL",
+            "latest_ts": "2026-06-22T00:00:00Z",
+            "close_price": 195.0,
+            "volume": 1000000,
+        }
+
+    monkeypatch.setattr(api, "featch_latest_price", mock_latest_price)
+
     response = client.get("/latest-price")
 
     assert response.status_code == 200
 
     data = response.json()
     
-    """"
-            "symbol": None,
-            "latest_ts": None,
-            "close": None,
-            "volume": None,
-            "source": "database",
-    """
     assert "symbol" in data
     assert "latest_ts" in data
     assert "close_price" in data
@@ -42,7 +46,7 @@ def test_latest_price_endpoint_returns_expected_shape() -> None:
 
     assert isinstance(data["symbol"], str)
     assert isinstance(data["latest_ts"], str)
-    assert isinstance(data["close_price"], str)
+    assert isinstance(data["close_price"], float)
     assert isinstance(data["source"], str)
 
 @pytest.mark.smoke
