@@ -35,7 +35,7 @@ def run_stock(symbol: str = "AAPL", root: Path | None = None) -> Path:
         #1.Use the client to retrieve the stocks you want.
         data = fetch_daily_stock(symbol)
         #2.save the raw data in local 
-        file_path = save_raw_data(data, "stock", root)
+        file_path = save_raw_data(data,"stock", root)
 
         logger.info("Saved raw stock data to %s", file_path)
         #3.Upload to the cloud and return a URI.
@@ -124,7 +124,7 @@ def run_stock_for_date(target_date: date,symbol: str = "AAPL",root: Path | None 
         logger.info("Fetching stock data for symbol=%s", symbol)
         data = fetch_daily_stock(symbol)
 
-        file_path = save_raw_data(data, "stock", root)
+        file_path = save_raw_data(data, "stock", root,target_date)
         logger.info("Saved raw stock data to %s", file_path)
         s3_uri = upload_raw_payload_if_enabled(
             payload=data,
@@ -160,22 +160,31 @@ def run_stock_for_date(target_date: date,symbol: str = "AAPL",root: Path | None 
         wait_for_db(cfg, timeout_s=60)
 
         with connect(cfg) as conn:
-            last_ts = get_last_watermark(conn, "alpha_vantage", symbol)
+            last_ts = get_last_watermark(
+                conn,
+                "alpha_vantage",
+                symbol,
+            )
 
-            new_rows = filter_new_rows(rows=target_rows, last_watermark=last_ts)
-            if not new_rows:
-                logger.info("No new rows to load for %s", target_date.isoformat())
-                return file_path
+            # 回填目标日期，不使用 watermark 过滤
+            rows_to_upsert = target_rows
 
-            upsert_stock_prices(conn, new_rows)
-            max_ts = get_max_timestamp(new_rows)
+            upsert_stock_prices(conn, rows_to_upsert)
+
+            max_ts = get_max_timestamp(rows_to_upsert)
+
+            # 防止历史回填导致 watermark 倒退
+            if last_ts is None:
+                watermark_to_save = max_ts
+            else:
+                watermark_to_save = max(last_ts, max_ts)
 
             upsert_watermark(
                 conn,
                 "alpha_vantage",
                 symbol,
-                last_watermark=max_ts,
-                last_row_count=len(new_rows),
+                last_watermark=watermark_to_save,
+                last_row_count=len(rows_to_upsert),
                 status="success",
             )
 
@@ -183,7 +192,7 @@ def run_stock_for_date(target_date: date,symbol: str = "AAPL",root: Path | None 
                 source="alpha_vantage",
                 load_date=today_time(),
                 version=today_time(),
-                record_count=len(new_rows),
+                record_count=len(rows_to_upsert),
             )
             insert_load_metadata(conn, metadata_payload)
 

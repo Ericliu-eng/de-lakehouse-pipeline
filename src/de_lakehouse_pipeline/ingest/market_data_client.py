@@ -25,7 +25,6 @@ def build_params(symbol: str, api_key: str) -> dict:
     }
 
 def fetch_json_with_retry(params: dict, max_retries: int = 3) -> dict:
-
     for attempt in range(max_retries + 1):
         try:
             response = requests.get(BASE_URL, params=params, timeout=20)
