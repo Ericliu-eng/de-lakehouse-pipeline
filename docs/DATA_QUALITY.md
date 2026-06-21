@@ -1,6 +1,12 @@
-# Data Quality Gates v1
+# Data Quality Gates
 
-## Current implementation
+## Overview
+
+The pipeline applies reusable SQL quality checks before rebuilding analytical
+marts. Any failed stock quality check stops orchestration, preventing invalid
+warehouse data from being published downstream.
+
+## Available Checks
 
 - `check_not_null(conn, table_name, column_name)`
 - `check_unique(conn, table_name, column_name)`
@@ -9,23 +15,38 @@
 - `check_freshness(conn, table_name, timestamp_column, max_age_days)`
 - `run_stock_quality_checks(conn)`
 
-## Stock quality rules
+## Market-Bar Quality Gate
 
-For the `market_bars` table, the quality gate validates:
+For `market_bars`, the gate verifies:
 
-- `symbol` is not NULL
-- `ts` is not NULL
+- `symbol` is not null
+- `ts` is not null
 - `(symbol, ts)` is unique
-- `close >= 0`
-- `volume >= 0`
-- latest `ts` is no more than 14 days old
+- `close` is non-negative
+- `volume` is non-negative
+- the latest `ts` is no more than 14 days old
 
-The project also includes a reusable foreign-key quality check. It is not part
-of `run_stock_quality_checks` yet because the current `market_bars` model does
-not have a parent dimension table.
+The reusable foreign-key check is not part of this gate because the current
+market-bar model has no parent dimension table.
 
 ## Validation
 
+Run unit checks:
+
 ```bash
-.venv/Scripts/python.exe -m pytest tests/unit/test_quality_checks.py -v
-make test
+make unit
+```
+
+Run database-backed quality validation:
+
+```bash
+make db-up
+make db-migrate
+make smoke-db
+```
+
+For end-to-end execution through the quality gate, run:
+
+```bash
+make orchestrate SYMBOL=AAPL
+```

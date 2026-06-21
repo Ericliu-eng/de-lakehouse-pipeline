@@ -1,111 +1,66 @@
 # Operational Metrics
 
-## Purpose
+## Overview
 
-This project includes a lightweight observability layer for tracking pipeline
-execution. The goal is to make each run easier to inspect, debug, and validate.
+The project provides lightweight observability for local pipeline runs through
+execution metrics, structured JSON logs, and SLA evaluation helpers.
 
-## Metrics Captured
-
-The metrics layer records:
-
-- pipeline name
-- pipeline start time
-- pipeline end time
-- pipeline status
-- pipeline duration in seconds
-- step name
-- step start time
-- step end time
-- step status
-- step duration in seconds
-- row count, when available
-- error message, when a step fails
-
-## Current Implementation
-
-Metrics and structured logging are implemented in:
+Implementation:
 
 ```text
 src/de_lakehouse_pipeline/metrics.py
 src/de_lakehouse_pipeline/logging_utils.py
 ```
 
-The local orchestrator records a `PipelineMetric` for every run and a
-`StepMetric` for each executed step.
+## Captured Metrics
 
-Current orchestrated steps:
+Each local orchestration run records:
 
-1. `run_stock_pipeline`
-2. `run_quality_checks`
-3. `build_marts`
+- pipeline and step names
+- UTC start and finish timestamps
+- success or failure status
+- duration in seconds
+- row count when available
+- error details on failure
 
-If a step fails, the orchestrator stops immediately, marks the pipeline as
-`failed`, and includes the failed step error message in the final summary.
+The orchestrator stops after a failed step and emits the final run summary as
+JSON. Structured logs also include operational context such as `symbol`,
+`step_name`, `status`, and `row_count`.
 
-## Structured Logging
+## SLA Evaluation
 
-CLI and orchestration entrypoints configure JSON logs with:
+| Signal | Definition | Default target |
+| --- | --- | --- |
+| Data freshness | Age of the latest source record | 1,440 minutes |
+| Pipeline latency | Time from pipeline start to finish | 300 seconds |
+| Failure rate | Failed runs divided by total runs | 5% |
 
-- UTC timestamp
-- log level
-- logger name
-- message
-- module
-- structured fields such as `command`, `symbol`, `step_name`, `status`, and
-  `row_count`
+Missing freshness or latency values fail evaluation. These thresholds are local
+engineering targets, not measured production SLA claims.
 
-Example log shape:
+Failures can also be classified as `retryable`, `non_retryable`, or `unknown`
+for future retry and alerting policies.
 
-```json
-{
-  "level": "INFO",
-  "logger": "orchestration.dagster_pipeline",
-  "message": "Finished orchestration step",
-  "module": "dagster_pipeline",
-  "row_count": 3,
-  "status": "success",
-  "step_name": "build_marts",
-  "timestamp": "2026-05-30T10:00:00+00:00"
-}
-```
-
-## How To Run
+## Run and Validate
 
 ```bash
-make -f Makefile orchestrate SYMBOL=AAPL
+make orchestrate SYMBOL=AAPL
+make unit
+make smoke
 ```
 
-For API-independent validation:
+Database-backed validation requires PostgreSQL:
 
 ```bash
-make -f Makefile unit
-make -f Makefile smoke-db
+make db-up
+make db-migrate
+make smoke-db
 ```
 
-## SLA Reporting
+## Current Limitations
 
-The SLA report summarizes operational health for pipeline runs:
-
-- data freshness: minutes between the latest available source data and check time
-- pipeline latency: seconds between pipeline start and finish
-- failure rate: failed runs divided by total runs
-
-Default thresholds:
-
-- freshness: 1440 minutes
-- latency: 300 seconds
-- failure rate: 0.05
-
-Failure classification:
-
-- retryable: timeout, rate_limit, connection, temporary, server_error
-- non-retryable: schema, validation, auth, not_found, bad_request
-
-Validation commands:
-
-```bash
-pytest tests/unit/test_metrics.py
-pytest tests/smoke/test_metrics_sla_smoke.py
-make lint
-make test
+- Metrics are emitted as logs and JSON but are not persisted.
+- SLA evaluation is not automatically attached to every pipeline run.
+- Failure classification does not yet trigger retry policies.
+- External monitoring, dashboards, and alerting are not configured.
+- Some steps do not return an accurate processed-row count.

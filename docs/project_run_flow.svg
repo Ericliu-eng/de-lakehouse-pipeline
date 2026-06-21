@@ -1,166 +1,207 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1040" viewBox="0 0 1600 1040" role="img" aria-labelledby="title desc">
-  <title id="title">de-lakehouse-pipeline project run flow</title>
-  <desc id="desc">Visual flow of commands, ingestion, transformation, incremental loading, marts, tests, and database tables.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Market Data Lakehouse end-to-end execution flow</title>
+  <desc id="desc">English architecture flow showing environment setup, incremental ingestion, quality gates, analytical marts, serving, testing, backfills, and operational evidence.</desc>
+
   <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#071426"/>
+      <stop offset="100%" stop-color="#102a43"/>
+    </linearGradient>
+    <linearGradient id="headerAccent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="55%" stop-color="#22d3a6"/>
+      <stop offset="100%" stop-color="#a3e635"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#020617" flood-opacity="0.22"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981"/>
+    </marker>
     <style>
-      .bg { fill: #f7f8fb; }
-      .lane { fill: #ffffff; stroke: #d7dde8; stroke-width: 2; }
-      .lane-title { font: 700 25px "Microsoft YaHei", "Segoe UI", Arial, sans-serif; fill: #243044; }
-      .box { stroke-width: 2.5; rx: 14; ry: 14; }
-      .box-title { font: 700 21px "Microsoft YaHei", "Segoe UI", Arial, sans-serif; fill: #142033; }
-      .box-text { font: 16px "Microsoft YaHei", "Segoe UI", Arial, sans-serif; fill: #2d3b53; }
-      .small { font: 14px "Microsoft YaHei", "Segoe UI", Arial, sans-serif; fill: #4a5870; }
-      .mono { font: 15px Consolas, "Courier New", monospace; fill: #263244; }
-      .arrow { fill: none; stroke: #4c617d; stroke-width: 3; marker-end: url(#arrow); }
-      .arrow-soft { fill: none; stroke: #7b8fa9; stroke-width: 2.5; stroke-dasharray: 8 7; marker-end: url(#arrow-soft); }
-      .note { fill: #fff9e8; stroke: #f1c86b; stroke-width: 2; rx: 12; ry: 12; }
-      .note-title { font: 700 18px "Microsoft YaHei", "Segoe UI", Arial, sans-serif; fill: #6b4a00; }
-      .note-text { font: 15px "Microsoft YaHei", "Segoe UI", Arial, sans-serif; fill: #634b12; }
-      .cmd { fill: #eef7ff; stroke: #75aadb; }
-      .extract { fill: #eefaf4; stroke: #65b788; }
-      .raw { fill: #fff6ed; stroke: #df9a58; }
-      .transform { fill: #f1f0ff; stroke: #8d83d5; }
-      .load { fill: #eef9fa; stroke: #5fb7bf; }
-      .db { fill: #f4f7fb; stroke: #788aa4; }
-      .mart { fill: #f5fbe9; stroke: #91b851; }
-      .qa { fill: #fff0f4; stroke: #db7b95; }
+      .title { font: 800 38px "Segoe UI", Arial, sans-serif; fill: #f8fafc; letter-spacing: -0.5px; }
+      .subtitle { font: 17px "Segoe UI", Arial, sans-serif; fill: #b8c7d9; }
+      .lane { fill: #f8fafc; stroke: #dbe5ef; stroke-width: 1.5; rx: 18; }
+      .lane-label { font: 700 14px "Segoe UI", Arial, sans-serif; fill: #0f766e; letter-spacing: 1.8px; }
+      .lane-title { font: 750 23px "Segoe UI", Arial, sans-serif; fill: #122033; }
+      .box { stroke-width: 2; rx: 14; filter: url(#shadow); }
+      .box-title { font: 700 18px "Segoe UI", Arial, sans-serif; fill: #102033; }
+      .box-text { font: 14px "Segoe UI", Arial, sans-serif; fill: #475569; }
+      .box-mono { font: 13px Consolas, "Courier New", monospace; fill: #334155; }
+      .step { font: 800 13px "Segoe UI", Arial, sans-serif; fill: #ffffff; }
+      .arrow { fill: none; stroke: #64748b; stroke-width: 3; marker-end: url(#arrow); }
+      .arrow-green { fill: none; stroke: #10b981; stroke-width: 3; marker-end: url(#arrowGreen); }
+      .arrow-dash { fill: none; stroke: #94a3b8; stroke-width: 2.5; stroke-dasharray: 7 7; marker-end: url(#arrow); }
+      .command { fill: #eff6ff; stroke: #60a5fa; }
+      .source { fill: #ecfeff; stroke: #22b8cf; }
+      .raw { fill: #fff7ed; stroke: #fb923c; }
+      .process { fill: #f5f3ff; stroke: #8b5cf6; }
+      .state { fill: #f0fdfa; stroke: #14b8a6; }
+      .database { fill: #f1f5f9; stroke: #64748b; }
+      .quality { fill: #fff1f2; stroke: #fb7185; }
+      .delivery { fill: #f7fee7; stroke: #84cc16; }
+      .ops { fill: #ffffff; stroke: #cbd5e1; }
+      .chip { fill: #e2e8f0; rx: 8; }
+      .chip-text { font: 700 12px "Segoe UI", Arial, sans-serif; fill: #334155; }
+      .footer-title { font: 700 15px "Segoe UI", Arial, sans-serif; fill: #dffbf2; }
+      .footer-text { font: 14px "Segoe UI", Arial, sans-serif; fill: #c8d6e5; }
     </style>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#4c617d"/>
-    </marker>
-    <marker id="arrow-soft" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#7b8fa9"/>
-    </marker>
   </defs>
 
-  <rect class="bg" x="0" y="0" width="1600" height="1040"/>
+  <rect width="1600" height="1000" fill="url(#background)"/>
+  <rect x="0" y="0" width="1600" height="7" fill="url(#headerAccent)"/>
 
-  <text x="70" y="70" style="font: 800 38px 'Microsoft YaHei','Segoe UI',Arial,sans-serif; fill:#152033;">de-lakehouse-pipeline 详细运行流程</text>
-  <text x="70" y="108" style="font: 18px 'Microsoft YaHei','Segoe UI',Arial,sans-serif; fill:#526174;">从本地命令开始，到 API 抓取、raw 落盘、转换、增量入库、数据集市、质量验证与可视化。</text>
+  <text id="titleText" class="title" x="64" y="64">Market Data Lakehouse - End-to-End Execution Flow</text>
+  <text class="subtitle" x="64" y="96">Reproducible setup, incremental ingestion, quality-gated transformation, and curated delivery</text>
+  <rect x="1300" y="42" width="236" height="43" rx="21" fill="#123b53" stroke="#38bdf8" stroke-width="1.5"/>
+  <circle cx="1330" cy="63.5" r="7" fill="#22d3a6"/>
+  <text x="1348" y="69" style="font:700 14px 'Segoe UI',Arial,sans-serif;fill:#e0f2fe;letter-spacing:.6px;">PRODUCTION-STYLE</text>
 
-  <rect class="lane" x="55" y="145" width="1490" height="150"/>
-  <text class="lane-title" x="80" y="186">1. 环境与数据库准备</text>
-  <rect class="box cmd" x="80" y="210" width="220" height="58"/>
-  <text class="box-title" x="105" y="246">make setup</text>
-  <rect class="box cmd" x="345" y="210" width="220" height="58"/>
-  <text class="box-title" x="370" y="246">make db-up</text>
-  <rect class="box cmd" x="610" y="210" width="240" height="58"/>
-  <text class="box-title" x="635" y="246">make db-migrate</text>
-  <rect class="box db" x="900" y="198" width="575" height="82"/>
-  <text class="box-title" x="925" y="230">Postgres schema</text>
-  <text class="box-text" x="925" y="258">market_bars, load_metadata, pipeline_metadata, marts tables</text>
-  <path class="arrow" d="M300 239 H345"/>
-  <path class="arrow" d="M565 239 H610"/>
-  <path class="arrow" d="M850 239 H900"/>
+  <!-- Lane 1: bootstrap -->
+  <rect class="lane" x="48" y="126" width="1504" height="146"/>
+  <text class="lane-label" x="76" y="158">01 / BOOTSTRAP</text>
+  <text class="lane-title" x="76" y="190">Reproducible Local Environment</text>
 
-  <rect class="lane" x="55" y="325" width="1490" height="430"/>
-  <text class="lane-title" x="80" y="366">2. 主链路：make run / cli run_stock</text>
+  <rect class="box command" x="380" y="158" width="238" height="78"/>
+  <circle cx="404" cy="181" r="14" fill="#3b82f6"/><text class="step" x="400" y="186">1</text>
+  <text class="box-title" x="426" y="187">Create Environment</text>
+  <text class="box-mono" x="404" y="216">make setup</text>
 
-  <rect class="box cmd" x="80" y="395" width="220" height="90"/>
-  <text class="box-title" x="105" y="428">入口命令</text>
-  <text class="mono" x="105" y="456">make run</text>
-  <text class="small" x="105" y="476">python -m ...cli run_stock</text>
+  <rect class="box command" x="684" y="158" width="238" height="78"/>
+  <circle cx="708" cy="181" r="14" fill="#3b82f6"/><text class="step" x="704" y="186">2</text>
+  <text class="box-title" x="730" y="187">Start PostgreSQL</text>
+  <text class="box-mono" x="708" y="216">make db-up</text>
 
-  <rect class="box cmd" x="350" y="395" width="250" height="90"/>
-  <text class="box-title" x="375" y="428">CLI 调度</text>
-  <text class="box-text" x="375" y="456">run_stock()</text>
-  <text class="small" x="375" y="476">默认 symbol=AAPL, date=today</text>
+  <rect class="box database" x="988" y="158" width="298" height="78"/>
+  <circle cx="1012" cy="181" r="14" fill="#475569"/><text class="step" x="1008" y="186">3</text>
+  <text class="box-title" x="1034" y="187">Apply Versioned Schema</text>
+  <text class="box-mono" x="1012" y="216">make db-migrate</text>
 
-  <rect class="box extract" x="650" y="395" width="255" height="90"/>
-  <text class="box-title" x="675" y="428">Extract</text>
-  <text class="box-text" x="675" y="456">fetch_daily_stock()</text>
-  <text class="small" x="675" y="476">Alpha Vantage API + retry</text>
+  <path class="arrow" d="M618 197 H684"/>
+  <path class="arrow" d="M922 197 H988"/>
 
-  <rect class="box raw" x="955" y="395" width="260" height="90"/>
-  <text class="box-title" x="980" y="428">Raw 落盘</text>
-  <text class="box-text" x="980" y="456">save_raw_data()</text>
-  <text class="mono" x="980" y="476">data/raw/YYYY-MM-DD/stock.json</text>
+  <!-- Lane 2: ingestion -->
+  <rect class="lane" x="48" y="292" width="1504" height="330"/>
+  <text class="lane-label" x="76" y="324">02 / INCREMENTAL INGESTION</text>
+  <text class="lane-title" x="76" y="356">Auditable Source-to-Warehouse Pipeline</text>
+  <rect x="1261" y="313" width="251" height="31" class="chip"/>
+  <text class="chip-text" x="1280" y="334">ENTRY POINT / make run SYMBOL=AAPL</text>
 
-  <rect class="box raw" x="1265" y="395" width="230" height="90"/>
-  <text class="box-title" x="1290" y="428">Load raw</text>
-  <text class="box-text" x="1290" y="456">load_raw_stock_json()</text>
-  <text class="small" x="1290" y="476">读取 JSON payload</text>
+  <rect class="box command" x="78" y="390" width="196" height="102"/>
+  <text class="box-title" x="100" y="420">CLI Entry Point</text>
+  <text class="box-mono" x="100" y="448">run_stock()</text>
+  <text class="box-text" x="100" y="473">Symbol-aware execution</text>
 
-  <path class="arrow" d="M300 440 H350"/>
-  <path class="arrow" d="M600 440 H650"/>
-  <path class="arrow" d="M905 440 H955"/>
-  <path class="arrow" d="M1215 440 H1265"/>
+  <rect class="box source" x="316" y="390" width="196" height="102"/>
+  <text class="box-title" x="338" y="420">Extract</text>
+  <text class="box-mono" x="338" y="448">Alpha Vantage API</text>
+  <text class="box-text" x="338" y="473">Retry transient failures</text>
 
-  <rect class="box transform" x="80" y="555" width="270" height="92"/>
-  <text class="box-title" x="105" y="588">Transform</text>
-  <text class="box-text" x="105" y="616">parse_alpha_vantage_daily()</text>
-  <text class="small" x="105" y="636">生成 ts, symbol, OHLC, volume</text>
+  <rect class="box raw" x="554" y="390" width="196" height="102"/>
+  <text class="box-title" x="576" y="420">Preserve Raw</text>
+  <text class="box-mono" x="576" y="448">data/raw/YYYY-MM-DD</text>
+  <text class="box-text" x="576" y="473">Immutable JSON evidence</text>
 
-  <rect class="box transform" x="405" y="555" width="260" height="92"/>
-  <text class="box-title" x="430" y="588">日期过滤</text>
-  <text class="box-text" x="430" y="616">只保留 target_date</text>
-  <text class="small" x="430" y="636">没有当天数据则正常结束</text>
+  <rect class="box process" x="792" y="390" width="196" height="102"/>
+  <text class="box-title" x="814" y="420">Normalize</text>
+  <text class="box-mono" x="814" y="448">parse + validate</text>
+  <text class="box-text" x="814" y="473">Typed market-bar rows</text>
 
-  <rect class="box load" x="720" y="555" width="270" height="92"/>
-  <text class="box-title" x="745" y="588">连接数据库</text>
-  <text class="box-text" x="745" y="616">load_db_config() / wait_for_db()</text>
-  <text class="small" x="745" y="636">connect(Postgres)</text>
+  <rect class="box state" x="1030" y="390" width="208" height="102"/>
+  <text class="box-title" x="1052" y="420">Incremental Filter</text>
+  <text class="box-mono" x="1052" y="448">get_last_watermark()</text>
+  <text class="box-text" x="1052" y="473">Keep only newer records</text>
 
-  <rect class="box load" x="1045" y="555" width="280" height="92"/>
-  <text class="box-title" x="1070" y="588">增量控制</text>
-  <text class="box-text" x="1070" y="616">get_last_watermark()</text>
-  <text class="small" x="1070" y="636">filter_new_rows() 去掉旧数据</text>
+  <rect class="box database" x="1280" y="390" width="194" height="102"/>
+  <text class="box-title" x="1302" y="420">Transactional Load</text>
+  <text class="box-mono" x="1302" y="448">upsert + commit</text>
+  <text class="box-text" x="1302" y="473">Atomic state transition</text>
 
-  <path class="arrow" d="M1380 485 C1380 525 240 520 215 555"/>
-  <path class="arrow" d="M350 601 H405"/>
-  <path class="arrow" d="M665 601 H720"/>
-  <path class="arrow" d="M990 601 H1045"/>
+  <path class="arrow" d="M274 441 H316"/>
+  <path class="arrow" d="M512 441 H554"/>
+  <path class="arrow" d="M750 441 H792"/>
+  <path class="arrow" d="M988 441 H1030"/>
+  <path class="arrow" d="M1238 441 H1280"/>
 
-  <rect class="box db" x="95" y="700" width="305" height="92"/>
-  <text class="box-title" x="120" y="733">事实表 upsert</text>
-  <text class="box-text" x="120" y="761">upsert_stock_prices()</text>
-  <text class="mono" x="120" y="781">market_bars(ts, symbol)</text>
+  <rect class="box database" x="450" y="531" width="220" height="63"/>
+  <text class="box-title" x="472" y="557">market_bars</text>
+  <text class="box-text" x="472" y="579">Normalized fact table</text>
 
-  <rect class="box db" x="470" y="700" width="300" height="92"/>
-  <text class="box-title" x="495" y="733">Watermark 更新</text>
-  <text class="box-text" x="495" y="761">upsert_watermark()</text>
-  <text class="mono" x="495" y="781">pipeline_metadata</text>
+  <rect class="box state" x="716" y="531" width="244" height="63"/>
+  <text class="box-title" x="738" y="557">pipeline_metadata</text>
+  <text class="box-text" x="738" y="579">Watermark and run state</text>
 
-  <rect class="box db" x="840" y="700" width="300" height="92"/>
-  <text class="box-title" x="865" y="733">Load metadata</text>
-  <text class="box-text" x="865" y="761">record_load()</text>
-  <text class="mono" x="865" y="781">load_metadata</text>
+  <rect class="box database" x="1006" y="531" width="220" height="63"/>
+  <text class="box-title" x="1028" y="557">load_metadata</text>
+  <text class="box-text" x="1028" y="579">Operational audit trail</text>
 
-  <rect class="box load" x="1210" y="700" width="250" height="92"/>
-  <text class="box-title" x="1235" y="733">提交事务</text>
-  <text class="box-text" x="1235" y="761">conn.commit()</text>
-  <text class="small" x="1235" y="781">主链路成功结束</text>
+  <path class="arrow-dash" d="M1377 492 C1377 516 1200 516 1116 531"/>
+  <path class="arrow-dash" d="M1377 492 C1377 520 900 510 838 531"/>
+  <path class="arrow-dash" d="M1377 492 C1377 527 650 508 560 531"/>
 
-  <path class="arrow" d="M1185 647 C1185 680 260 666 248 700"/>
-  <path class="arrow" d="M400 746 H470"/>
-  <path class="arrow" d="M770 746 H840"/>
-  <path class="arrow" d="M1140 746 H1210"/>
+  <!-- Lane 3: quality and delivery -->
+  <rect class="lane" x="48" y="642" width="1504" height="176"/>
+  <text class="lane-label" x="76" y="674">03 / QUALITY-GATED DELIVERY</text>
+  <text class="lane-title" x="76" y="706">Trusted Curated</text>
+  <text class="lane-title" x="76" y="734">Data Products</text>
 
-  <rect class="lane" x="55" y="785" width="1490" height="155"/>
-  <text class="lane-title" x="80" y="826">3. 数据集市、回填、验证与查看</text>
+  <rect class="box command" x="342" y="676" width="220" height="102"/>
+  <text class="box-title" x="364" y="706">Orchestration</text>
+  <text class="box-mono" x="364" y="734">make orchestrate</text>
+  <text class="box-text" x="364" y="759">Step metrics + fail fast</text>
 
-  <rect class="box mart" x="80" y="850" width="305" height="72"/>
-  <text class="box-title" x="105" y="880">make run-marts</text>
-  <text class="small" x="105" y="905">daily summary → latest price → volume rank</text>
+  <rect class="box quality" x="608" y="676" width="220" height="102"/>
+  <text class="box-title" x="630" y="706">Quality Gate</text>
+  <text class="box-mono" x="630" y="734">nulls + uniqueness</text>
+  <text class="box-text" x="630" y="759">Block invalid publication</text>
 
-  <rect class="box cmd" x="435" y="850" width="300" height="72"/>
-  <text class="box-title" x="460" y="880">cli backfill --start --end</text>
-  <text class="small" x="460" y="905">按日期循环调用 run_stock_for_date()</text>
+  <rect class="box delivery" x="874" y="676" width="220" height="102"/>
+  <text class="box-title" x="896" y="706">Analytical Marts</text>
+  <text class="box-mono" x="896" y="734">make run-marts</text>
+  <text class="box-text" x="896" y="759">Query-ready outputs</text>
 
-  <rect class="box qa" x="785" y="850" width="300" height="72"/>
-  <text class="box-title" x="810" y="880">make test / smoke</text>
-  <text class="small" x="810" y="905">unit, integration, smoke, SQL checks</text>
+  <rect class="box delivery" x="1140" y="676" width="220" height="102"/>
+  <text class="box-title" x="1162" y="706">API + Dashboard</text>
+  <text class="box-mono" x="1162" y="734">FastAPI / Uvicorn</text>
+  <text class="box-text" x="1162" y="759">Curated serving layer</text>
 
-  <rect class="box mart" x="1135" y="850" width="340" height="72"/>
-  <text class="box-title" x="1160" y="880">make db-visu</text>
-  <text class="small" x="1160" y="905">Tk + pandastable 查看 mart_symbol_latest_price</text>
+  <path class="arrow-green" d="M562 727 H608"/>
+  <path class="arrow-green" d="M828 727 H874"/>
+  <path class="arrow-green" d="M1094 727 H1140"/>
 
-  <path class="arrow-soft" d="M247 792 C247 820 232 828 232 850"/>
-  <path class="arrow-soft" d="M585 850 C585 810 190 810 190 485"/>
-  <path class="arrow-soft" d="M990 792 C990 824 935 826 935 850"/>
-  <path class="arrow-soft" d="M1335 792 C1335 824 1305 826 1305 850"/>
+  <!-- Lane 4: operational capabilities -->
+  <rect class="lane" x="48" y="838" width="1504" height="112"/>
+  <text class="lane-label" x="76" y="870">04 / OPERATIONAL CONTROLS</text>
 
-  <rect class="note" x="70" y="965" width="1460" height="48"/>
-  <text class="note-title" x="95" y="995">关键思想：</text>
-  <text class="note-text" x="190" y="995">raw JSON 保留原始证据；watermark 保证重复运行不会重复加载；marts 把明细行情整理成面向查询/展示的结果表；测试与 smoke 验证保证链路可复现。</text>
+  <rect class="box ops" x="300" y="858" width="262" height="67"/>
+  <text class="box-title" x="322" y="885">Safe Backfills</text>
+  <text class="box-mono" x="322" y="909">make backfill START=... END=...</text>
+
+  <rect class="box ops" x="606" y="858" width="238" height="67"/>
+  <text class="box-title" x="628" y="885">Automated Validation</text>
+  <text class="box-mono" x="628" y="909">make lint + make test</text>
+
+  <rect class="box ops" x="888" y="858" width="238" height="67"/>
+  <text class="box-title" x="910" y="885">Reliability Signals</text>
+  <text class="box-text" x="910" y="909">Freshness / latency / failures</text>
+
+  <rect class="box ops" x="1170" y="858" width="238" height="67"/>
+  <text class="box-title" x="1192" y="885">Reviewable Evidence</text>
+  <text class="box-mono" x="1192" y="909">docs/proof/&lt;milestone&gt;/</text>
+
+  <!-- Footer -->
+  <circle cx="72" cy="977" r="5" fill="#22d3a6"/>
+  <text class="footer-title" x="88" y="982">Engineering guarantees:</text>
+  <text class="footer-text" x="260" y="982">idempotent reruns</text>
+  <circle cx="394" cy="977" r="3" fill="#64748b"/>
+  <text class="footer-text" x="408" y="982">raw-data auditability</text>
+  <circle cx="566" cy="977" r="3" fill="#64748b"/>
+  <text class="footer-text" x="580" y="982">watermark safety</text>
+  <circle cx="708" cy="977" r="3" fill="#64748b"/>
+  <text class="footer-text" x="722" y="982">quality-gated marts</text>
+  <circle cx="894" cy="977" r="3" fill="#64748b"/>
+  <text class="footer-text" x="908" y="982">reproducible commands</text>
 </svg>

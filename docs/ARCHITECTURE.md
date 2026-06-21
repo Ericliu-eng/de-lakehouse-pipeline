@@ -1,181 +1,104 @@
 # Architecture
 
-## Purpose
+## Overview
 
-`de-lakehouse-pipeline` is a production-style data engineering pipeline for
-stock market data. It ingests raw Alpha Vantage payloads, stores raw data,
-loads normalized rows into Postgres, builds analytical marts, validates data
-quality, and exposes curated results through a small serving API and dashboard.
+`de-lakehouse-pipeline` is a production-style market-data pipeline that
+preserves raw Alpha Vantage payloads, incrementally loads normalized facts,
+applies data-quality gates, builds analytical marts, and serves curated data.
 
-## High-Level Flow
+## End-to-End Flow
 
 ```text
 Alpha Vantage API
-  -> Raw JSON landing
-  -> Staging transform
-  -> Postgres market_bars
-  -> Incremental watermark
-  -> Data quality checks
-  -> Analytical marts
-  -> Serving API / dashboard
+  -> Raw JSON Landing
+  -> Typed Staging
+  -> Watermark Read and Incremental Filter
+  -> PostgreSQL Warehouse
+  -> Data Quality Gate
+  -> Analytical Marts
+  -> FastAPI / Dashboard
 ```
 
-## Main Components
+The orchestrated path stops after a failed step, so marts are not rebuilt after
+a quality failure.
 
-### Ingestion
+## Component Catalog
 
-The ingestion layer fetches daily stock data from Alpha Vantage and saves the
-raw response as JSON. The project also supports optional S3 upload for cloud
-raw storage.
-
-Key files:
-
-- `src/de_lakehouse_pipeline/ingest/market_data_client.py`
-- `src/de_lakehouse_pipeline/ingest/io.py`
-- `src/de_lakehouse_pipeline/ingest/cloud_storage.py`
-
-### Staging
-
-The staging layer converts raw Alpha Vantage JSON into typed market bar rows
-with a consistent column order for database loading.
-
-Key files:
-
-- `src/de_lakehouse_pipeline/transform/staging/staging_market_bars.py`
-
-### Load
-
-The load layer writes staged rows into Postgres. The main fact table is
-`market_bars`, keyed by `(ts, symbol)`. Writes are idempotent so reruns do not
-create duplicate records.
-
-Key files:
-
-- `src/de_lakehouse_pipeline/load/loader.py`
-- `src/de_lakehouse_pipeline/load/db/stock_writer.py`
-- `migrations/003_stock_prices.sql`
-
-### Incremental Processing
-
-The pipeline tracks the latest processed timestamp in `pipeline_metadata`. On
-each run, it filters out rows that have already been processed for the same
-source and symbol.
-
-Key files:
-
-- `src/de_lakehouse_pipeline/transform/incremental.py`
-- `src/de_lakehouse_pipeline/load/db/pipeline_metadata.py`
-- `docs/INCREMENTAL.md`
-
-### Data Quality
-
-The quality layer checks core data guarantees before downstream use. Current
-checks include not-null, uniqueness, numeric range, foreign key helper logic,
-and freshness.
-
-Key files:
-
-- `src/de_lakehouse_pipeline/quality/checks.py`
-- `sql/quality_checks.sql`
-- `docs/DATA_QUALITY.md`
-
-### Analytical Marts
-
-The marts layer creates curated tables for downstream querying and dashboard
-use.
-
-Current marts:
-
-- `mart_daily_symbol_summary`
-- `mart_symbol_latest_price`
-- `mart_symbol_volume_rank`
-
-Key files:
-
-- `sql/marts/`
-- `src/de_lakehouse_pipeline/transform/marts/`
-- `docs/DATA_MODEL.md`
-- `docs/DEMO_QUERIES.md`
-
-### Serving
-
-The serving layer exposes curated data through FastAPI and a minimal dashboard.
-The `/latest-price` endpoint reads from Postgres and returns the latest
-available price record.
-
-Key files:
-
-- `src/serve/api.py`
-- `src/serve/templates/dashboard.html`
-
-## Orchestration
-
-The local orchestrator runs the pipeline in a fixed order:
-
-1. Run stock ingestion and load.
-2. Run data quality checks.
-3. Build analytical marts.
-
-Key files:
-
-- `orchestration/dagster_pipeline.py`
-- `docs/ORCHESTRATION.md`
+| Component | Responsibility | Main implementation |
+| --- | --- | --- |
+| Ingestion | Fetch source data and preserve raw JSON | `src/de_lakehouse_pipeline/ingest/` |
+| Staging | Convert source JSON into typed market-bar rows | `transform/staging/staging_market_bars.py` |
+| Incremental processing | Read watermarks and select newer rows | `transform/incremental.py` |
+| Warehouse loading | Upsert facts and operational metadata | `load/db/` |
+| Data quality | Validate nulls, uniqueness, ranges, and freshness | `quality/checks.py` |
+| Analytical marts | Build query-ready summary and snapshot tables | `transform/marts/`, `sql/marts/` |
+| Orchestration | Run ingestion, quality, and marts in dependency order | `orchestration/` |
+| Serving | Expose curated outputs through FastAPI and HTML | `src/serve/` |
 
 ## Storage Layers
 
 | Layer | Purpose | Example |
 | --- | --- | --- |
-| Raw | Preserve original source payloads | `data/raw/.../stock.json` |
-| Staging | Convert raw payloads into typed rows | Python staging functions |
-| Warehouse | Store normalized facts and metadata | Postgres `market_bars`, `pipeline_metadata` |
-| Marts | Store curated query-ready outputs | `mart_symbol_latest_price` |
-| Serving | Expose selected outputs | FastAPI `/latest-price`, `/dashboard` |
+| Raw | Preserve source evidence for replay and debugging | `data/raw/.../stock.json` |
+| Staging | Normalize payloads into typed in-memory rows | `StagedMarketBar` |
+| Warehouse | Store facts and incremental state | `market_bars`, `pipeline_metadata` |
+| Marts | Store curated analytical outputs | `mart_symbol_latest_price` |
+| Serving | Provide consumer-facing access | `/latest-price`, `/dashboard` |
 
-## Validation Strategy
+The warehouse schema is managed through versioned migrations, including
+`migrations/003_market_bars.sql` and metadata/mart migrations.
 
-The project uses layered validation:
+## Data Model and Processing
 
-- Unit tests for individual functions.
-- Smoke tests for lightweight end-to-end paths.
-- DB-backed integration tests for marts and metadata behavior.
-- Ruff linting for code quality.
-- GitHub Actions CI for repeatable validation.
+`market_bars` is keyed by `(ts, symbol)`. Routine loads combine primary-key
+upserts with a watermark per `(source, symbol)` to support idempotent reruns.
+Backfills bypass routine filtering but prevent the watermark from moving
+backward.
 
-Common commands:
+The current marts are:
 
-```bash
-make lint
-make unit
-make smoke
-make integration
-make test
-```
+- `mart_daily_symbol_summary`
+- `mart_symbol_latest_price`
+- `mart_symbol_volume_rank`
 
-## Local Demo Path
+See `docs/DATA_MODEL.md` and `docs/INCREMENTAL.md` for details.
 
-A typical local run is:
+## Quality and Orchestration
 
-```bash
-make db-up
-make db-migrate
-make run
-make run-marts
-python -m src.serve.api
-```
+The stock quality gate checks required keys, business-key uniqueness,
+non-negative close and volume values, and freshness. A reusable foreign-key
+check exists but is not part of the current stock gate.
 
-Then open:
+Two local orchestration modes are available:
 
-```text
-http://127.0.0.1:8000/health
-http://127.0.0.1:8000/latest-price
-http://127.0.0.1:8000/dashboard
-```
+- `orchestration/dagster_pipeline.py`: deterministic CLI runner with JSON
+  metrics.
+- `orchestration/definitions.py`: Dagster job, local UI, and schedule
+  definition.
 
-## Design Principles
+See `docs/DATA_QUALITY.md` and `docs/ORCHESTRATION.md`.
 
-- Keep raw data separate from transformed data.
-- Make database writes idempotent.
-- Use watermarks for safe incremental processing.
-- Run data quality checks before serving curated outputs.
-- Keep local development reproducible through Makefile commands.
-- Keep serving focused on marts and curated data, not raw source payloads.
+## Serving Boundary
+
+FastAPI reads from curated marts rather than raw payloads or staging objects.
+This keeps consumer queries separate from ingestion internals and provides a
+stable serving contract.
+
+## Cloud Boundary
+
+The repository includes an S3 raw-object layout, upload adapter, and Terraform
+scaffold for an S3 bucket and least-privilege IAM policy. Runtime S3 client
+creation and IAM role attachment are not yet integrated into the main pipeline.
+See `docs/CLOUD_STORAGE.md`.
+
+## Design Decisions
+
+- Preserve raw source data before transformation.
+- Separate raw, warehouse, mart, and serving concerns.
+- Use primary keys, upserts, and watermarks for idempotency.
+- Block mart publication when orchestrated quality checks fail.
+- Serve curated tables instead of source-specific payloads.
+- Keep local execution reproducible through Make targets.
+
+Operational commands and troubleshooting live in `docs/RUNBOOK.md`; validation
+evidence belongs under `docs/proof/`.

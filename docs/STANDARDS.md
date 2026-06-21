@@ -2,9 +2,7 @@
 
 ## Branch Naming
 - Use lowercase + hyphen  
-- Example: `w01/d1-repo-skeleton-ci-makefile`
-
----
+- Example: `Type/d1-repo-skeleton-ci-makefile`
 
 ## Commit Convention
 We follow Conventional Commits:
@@ -23,18 +21,16 @@ feat: add postgres migration pipeline
 fix: handle missing values in transform  
 test: add db smoke test  
 
----
-
 ## PR Checklist
 - CI is green (or explain why not)
 - Include how to validate
 - Include proof under `docs/proof/`
 
----
-
 ## Reproducible Commands
 All commands must be runnable from a fresh environment:
 
-- `make setup`
-- `make lint`
-- `make test`
+`make setup`      
+`make lint`  
+`make test`
+`make check` 
+`make help`

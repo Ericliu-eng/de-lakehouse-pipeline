@@ -1,70 +1,77 @@
 # Incremental Loading
 
-## Purpose
+## Overview
 
-The stock pipeline uses incremental loading so repeated runs are safe and do
-not duplicate already processed market bars.
+The stock pipeline uses watermark-based incremental loading so routine reruns
+process only newer market bars without creating duplicates.
 
-## Watermark Table
+## Incremental State
 
-Incremental state is stored in `pipeline_metadata`.
+State is stored in `pipeline_metadata`, keyed by `(source, symbol)`.
 
-The table is keyed by `(source, symbol)` and records:
+| Column | Purpose |
+| --- | --- |
+| `last_watermark` | Latest successfully processed market timestamp |
+| `last_row_count` | Rows processed in the latest successful load |
+| `status` | Latest persisted load status |
+| `updated_at` | Metadata update timestamp |
 
-- `last_watermark`: latest processed market timestamp
-- `last_row_count`: number of rows written in the last successful load
-- `status`: latest load status
-- `updated_at`: metadata update timestamp
+## Load Flow
 
-## Algorithm
+```text
+Fetch API payload
+  -> Preserve raw JSON
+  -> Transform typed rows
+  -> Read watermark
+  -> Filter newer rows
+  -> Upsert market_bars
+  -> Update watermark and load metadata
+```
 
-For each stock pipeline run:
+The watermark advances only after the market-bar upsert succeeds. If the same
+payload runs again, no rows pass the watermark filter and the fact-table row
+count remains stable.
 
-1. Fetch and land the raw Alpha Vantage payload.
-2. Stage raw records into typed market-bar rows.
-3. Read the latest watermark for `(source, symbol)`.
-4. Keep only rows whose timestamp is greater than the watermark.
-5. Upsert the new rows into `market_bars`.
-6. Update the watermark to the max timestamp from the new rows.
-7. Record load metadata.
+## Idempotency Controls
 
-## Idempotency Guarantees
+- Watermark filtering skips timestamps processed by routine runs.
+- `market_bars` uses `(ts, symbol)` as its primary key.
+- Database writes use upsert semantics rather than append-only inserts.
 
-The pipeline is safe to rerun because:
+An empty incremental run exits without changing the watermark or writing a new
+load metadata record.
 
-- watermark filtering skips rows older than or equal to the last processed
-  timestamp
-- `market_bars` uses `(ts, symbol)` as its primary key
-- writes use upsert semantics instead of append-only inserts
+## Backfill and Late Data
 
-Together, these rules prevent duplicate market-bar rows during normal reruns.
+Backfills bypass routine watermark filtering so historical rows can be inserted
+or corrected:
 
-## Rerun Behavior
+```bash
+make backfill START=2026-04-16 END=2026-04-18 SYMBOL=AAPL
+```
 
-On the first run for a symbol, the watermark is missing, so all staged rows are
-eligible for loading.
-
-On a later run with the same data, every row is older than or equal to the
-stored watermark, so no rows are loaded and the existing row count stays stable.
-
-## Known Limitations
-
-- The current watermark strategy is timestamp-based, so very late-arriving
-  corrections with timestamps older than the watermark are skipped.
-- The current implementation tracks one watermark per `(source, symbol)`.
-- The loader does not yet record failed watermark updates as failed pipeline
-  metadata events.
+Rows still use primary-key upserts. The stored watermark becomes the greater of
+the existing watermark and the maximum backfilled timestamp, preventing state
+from moving backward. Checkpoints support safe resume behavior; see
+`docs/BACKFILL.md`.
 
 ## Validation
 
-Run unit tests:
-
 ```bash
-make -f Makefile unit
+make unit
+make db-up
+make db-migrate
+make smoke-db
 ```
 
-Run DB-backed smoke validation:
+The incremental smoke test verifies duplicate prevention and stable watermark
+behavior on repeated timestamps.
 
-```bash
-make -f Makefile smoke-db
-```
+## Known Limitations
+
+- Empty and failed runs are not persisted as pipeline metadata events.
+- Fact rows, watermark state, and load metadata are not yet committed as one
+  atomic transaction.
+- Routine loads cannot detect corrections older than the watermark; use an
+  explicit backfill.
+- One watermark is maintained for each `(source, symbol)` pair.

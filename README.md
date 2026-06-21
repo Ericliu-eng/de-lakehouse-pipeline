@@ -1,203 +1,152 @@
 # de-lakehouse-pipeline
 
-A production-style data engineering lakehouse pipeline for Alpha Vantage market
-data. It ingests raw stock payloads, lands them locally or optionally in S3,
-loads new rows into Postgres, builds SQL marts, and validates the workflow with
-tests, orchestration metrics, and reliability drills.
+A production-style market-data pipeline that moves Alpha Vantage payloads from
+raw JSON to an incremental PostgreSQL warehouse, quality-gated analytical marts,
+and a small FastAPI serving layer.
 
-This project is designed as a practical foundation for growing from Data
-Engineering into MLOps, ML Systems, and AI Platform workflows.
-
----
-
-## What It Does
-
-* Fetches daily stock market data from the Alpha Vantage API
-* Stores raw JSON payloads locally, with optional AWS S3 upload
-* Stages and normalizes market data into typed `market_bars` rows
-* Loads data incrementally into Postgres with idempotent upsert semantics
-* Tracks load metadata and watermarks for safe reruns
-* Builds analytical SQL marts for summary, latest-price, and volume-rank views
-* Supports data quality checks, resumable backfills, and local orchestration
-
----
+The project focuses on practical data-engineering concerns: idempotency,
+watermarks, backfills, data quality, orchestration, observability, testing, and
+reproducible local development.
 
 ## Architecture
 
-```mermaid
-graph TD
-    A[Alpha Vantage API] --> B[Raw Landing: data/raw/YYYY-MM-DD/stock.json]
-    B --> C[Stage Typed market_bars Rows]
-    C --> D[Convert to DB Tuple Shape]
-    D --> E[Filter Rows For target_date]
-    E --> F[Incremental Check via pipeline_metadata]
-    F --> G[Upsert into market_bars]
-    G --> H[Write load_metadata]
-    G --> I[Update pipeline_metadata]
-    G --> Q[Run Data Quality Gates]
-    Q --> J[Marts Layer]
-    J --> K[Emit Metrics and Structured Logs]
+![Market data lakehouse execution flow](docs/project_run_flow.svg)
 
-    subgraph "Analytical Marts"
-        I1[mart_daily_symbol_summary]
-        I2[mart_symbol_latest_price]
-        I3[mart_symbol_volume_rank]
-    end
-
-    J --> I1
-    J --> I2
-    J --> I3
+```text
+Alpha Vantage
+  -> Raw JSON
+  -> Typed Staging
+  -> Watermark Filter
+  -> PostgreSQL Warehouse
+  -> Data Quality Gate
+  -> Analytical Marts
+  -> FastAPI / Dashboard
 ```
 
-Detailed flow diagram: `docs/project_run_flow.svg`
+See [Architecture](docs/ARCHITECTURE.md) for component boundaries and design
+decisions.
 
----
+## Engineering Highlights
+
+| Capability | Implementation |
+| --- | --- |
+| Incremental loading | Watermark per `(source, symbol)` in `pipeline_metadata` |
+| Idempotent writes | Primary-key upserts on `(ts, symbol)` |
+| Raw-data auditability | Source payloads preserved before transformation |
+| Data quality | Null, uniqueness, range, and freshness gates before marts |
+| Backfill recovery | Inclusive date ranges with checkpoint-based resume |
+| Orchestration | Deterministic CLI runner plus a local Dagster job and schedule |
+| Serving | FastAPI endpoints and dashboard backed by curated marts |
+| Validation | Ruff, pytest, PostgreSQL integration tests, and GitHub Actions |
+
+## Technology
+
+Python · PostgreSQL · Docker · Dagster · FastAPI · SQL · Terraform · AWS S3
+scaffold · pytest · Ruff · GitHub Actions
 
 ## Quickstart
+
+Clone the repository and install dependencies:
 
 ```bash
 git clone https://github.com/Ericliu-eng/de-lakehouse-pipeline.git
 cd de-lakehouse-pipeline
-
-cp .env.example .env
-
 make setup
+```
+
+Start PostgreSQL, apply migrations, and run the complete local validation:
+
+```bash
 make db-up
 make db-migrate
-make run
-make run-marts
 make test
 ```
 
-Inspect the database:
+`make test` includes unit, smoke, and database-backed integration tests. See
+[Development Setup](docs/DEV_SETUP.md) for PowerShell and Bash environment
+configuration.
 
-```bash
-make db-shell
-```
+## Live Pipeline Demo
 
----
-
-## Common Commands
-
-```bash
-make setup        # create venv and install deps
-make lint         # run ruff
-make db-up        # start Postgres container
-make db-down      # stop Postgres container
-make db-migrate   # apply database schema
-make run          # run the default daily stock pipeline
-make run-marts    # build analytical marts
-make smoke        # run lightweight smoke tests
-make smoke-db     # run DB-backed smoke tests
-make integration  # run DB-backed integration tests
-make test         # run unit, smoke, and integration tests
-make db-shell     # open psql shell in container
-```
-
-Run a specific symbol:
-
-```bash
-python -m de_lakehouse_pipeline.cli run_stock --symbol MSFT
-```
-
-Run a historical backfill:
-
-```bash
-python -m de_lakehouse_pipeline.cli backfill --start 2026-04-16 --end 2026-04-18 --symbol AAPL
-```
-
-Run the orchestrated local pipeline:
+Add `ALPHA_VANTAGE_API_KEY` to `.env`, then run the quality-gated workflow:
 
 ```bash
 make orchestrate SYMBOL=AAPL
 ```
 
----
-
-## Key Features
-
-* **Incremental loading:** reads the last processed watermark from
-  `pipeline_metadata` and loads only newer rows.
-* **Idempotent writes:** upserts into `market_bars` using the `(ts, symbol)`
-  grain.
-* **Data quality gates:** validates not-null constraints, uniqueness, numeric
-  ranges, and freshness.
-* **SQL marts:** builds `mart_daily_symbol_summary`,
-  `mart_symbol_latest_price`, and `mart_symbol_volume_rank`.
-* **Cloud-ready raw landing:** supports optional S3 upload and Terraform
-  validation.
-* **Reliability drills:** covers retryable API failures, schema validation,
-  backfills, and DB write safety.
-
----
-
-## Cloud And Terraform
-
-S3 upload is disabled by default. To enable it for a run:
+Start the serving layer:
 
 ```bash
-ENABLE_S3_RAW_UPLOAD=true
-S3_RAW_BUCKET=de-lakehouse-raw
-python -m de_lakehouse_pipeline.cli run_stock --symbol AAPL
+python -m src.serve.api
 ```
 
-Validate the local S3 storage contract without AWS credentials:
+Open:
+
+- Health: <http://127.0.0.1:8000/health>
+- Latest price: <http://127.0.0.1:8000/latest-price>
+- Dashboard: <http://127.0.0.1:8000/dashboard>
+
+The successful workflow produces normalized `market_bars`, incremental and
+load metadata, and three analytical marts:
+
+- `mart_daily_symbol_summary`
+- `mart_symbol_latest_price`
+- `mart_symbol_volume_rank`
+
+## Common Operations
 
 ```bash
-make cloud-storage-test
-make terraform-validate
+make run SYMBOL=MSFT
+make run-marts
+make backfill START=2026-04-16 END=2026-04-18 SYMBOL=AAPL
+make dagster-dev
+make db-shell
+make db-down
 ```
 
----
+See the [Local Operations Runbook](docs/RUNBOOK.md) for validation, inspection,
+and troubleshooting.
 
-## Validation
+## Validation and CI
 
-The test suite is layered so quick local checks and DB-backed checks can run
-separately:
-
-```bash
-make unit
-make smoke
-make smoke-db
-make integration
-make test
-```
-
-Because `make test` includes integration tests, start Postgres and run
-migrations before using it in a fresh local environment.
-
-CI validates the main workflow with dependency setup, linting, DB migration,
-smoke tests, pytest, integration tests, and Terraform validation.
-
----
-
-## Docs
-
-| Topic | Doc |
+| Command | Purpose |
 | --- | --- |
-| Setup and standards | `docs/DEV_SETUP.md`, `docs/STANDARDS.md` |
-| Data model and SQL | `docs/DATA_MODEL.md`, `docs/DEMO_QUERIES.md` |
-| Incremental loading | `docs/INCREMENTAL.md` |
-| Backfill | `docs/BACKFILL.md` |
-| Data quality | `docs/DATA_QUALITY.md` |
-| Cloud and cost notes | `docs/CLOUD_STORAGE.md`, `docs/CLOUD_RUN.md`, `docs/COST_NOTES.md` |
-| Orchestration and metrics | `docs/ORCHESTRATION.md`, `docs/OPS_METRICS.md` |
-| Reliability drills | `docs/FAILURE_DRILLS.md` |
-| Terraform | `infra/terraform/README.md` |
-| Weekly progress | `docs/WEEKLY_LOG.md` |
+| `make lint` | Run Ruff static analysis |
+| `make unit` | Run unit tests without PostgreSQL |
+| `make smoke` | Run lightweight smoke tests |
+| `make smoke-db` | Run database-backed smoke tests |
+| `make integration` | Validate marts and metadata behavior |
+| `make test` | Run the default local suite |
+| `make terraform-validate` | Validate the Terraform scaffold |
 
----
+GitHub Actions provisions PostgreSQL, installs dependencies, runs migrations,
+executes lint and tests, and validates Terraform on pushes to `main` and pull
+requests.
 
-## Project Value
+## Current Scope
 
-This project demonstrates practical data engineering patterns:
+- Dagster job and schedule definitions run locally and are not production
+  deployed.
+- Metrics are emitted as JSON and structured logs but are not persisted to an
+  observability platform.
+- The S3 object layout, upload adapter, bucket, and least-privilege IAM policy
+  scaffold exist; runtime client and workload identity wiring are incomplete.
+- Failure drills document verified safeguards separately from remaining
+  engineering gaps.
 
-* external API ingestion and raw data landing
-* database-backed incremental processing
-* reproducible local and CI workflows
-* SQL modeling and data quality checks
-* orchestration, observability, and reliability testing
-* cloud-oriented storage and infrastructure foundations
+These boundaries are documented explicitly rather than presented as production
+capabilities.
 
-It is compact, but it reflects patterns that scale toward feature pipelines,
-MLOps systems, and AI platform data foundations.
+## Documentation
+
+| Topic | Document |
+| --- | --- |
+| Architecture | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| Setup and operations | [docs/DEV_SETUP.md](docs/DEV_SETUP.md), [docs/RUNBOOK.md](docs/RUNBOOK.md) |
+| Data model and queries | [docs/DATA_MODEL.md](docs/DATA_MODEL.md), [docs/DEMO_QUERIES.md](docs/DEMO_QUERIES.md) |
+| Incremental loading and backfill | [docs/INCREMENTAL.md](docs/INCREMENTAL.md), [docs/BACKFILL.md](docs/BACKFILL.md) |
+| Data quality | [docs/DATA_QUALITY.md](docs/DATA_QUALITY.md) |
+| Orchestration and metrics | [docs/ORCHESTRATION.md](docs/ORCHESTRATION.md), [docs/OPS_METRICS.md](docs/OPS_METRICS.md) |
+| Reliability | [docs/FAILURE_DRILLS.md](docs/FAILURE_DRILLS.md) |
+| Cloud storage | [docs/CLOUD_STORAGE.md](docs/CLOUD_STORAGE.md), [infra/terraform/README.md](infra/terraform/README.md) |
+| Contribution standards | [docs/STANDARDS.md](docs/STANDARDS.md) |

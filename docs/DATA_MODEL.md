@@ -1,119 +1,71 @@
 # Data Model
 
-## Table: market_bars
+## Lineage
 
-### Business Purpose
-Stores normalized stock market bars parsed from Alpha Vantage raw payloads.
+```text
+market_bars
+  |-> mart_daily_symbol_summary
+  |     `-> mart_symbol_volume_rank
+  `-> mart_symbol_latest_price
 
-### Grain
-One row per `(ts, symbol)`.
+pipeline_metadata  -> incremental state
+load_metadata      -> load audit history
+```
 
-### Primary Key
-`(ts, symbol)`
+All marts are physical PostgreSQL tables refreshed with upsert semantics.
 
-### Columns
+## Model Catalog
+
+| Object | Purpose | Grain | Primary key |
+| --- | --- | --- | --- |
+| `market_bars` | Normalized Alpha Vantage market bars | One row per timestamp and symbol | `(ts, symbol)` |
+| `pipeline_metadata` | Incremental state by source and symbol | One row per source and symbol | `(source, symbol)` |
+| `load_metadata` | Load-level audit history | One row per load event | `id` |
+| `mart_daily_symbol_summary` | Daily close-price statistics and volume | One row per symbol and trading date | `(symbol, trading_date)` |
+| `mart_symbol_latest_price` | Latest price snapshot | One row per symbol | `symbol` |
+| `mart_symbol_volume_rank` | Daily symbol ranking by total volume | One row per symbol and trading date | `(symbol, trading_date)` |
+
+## Warehouse Tables
+
+### `market_bars`
+
 - `ts`: timezone-aware market timestamp
-- `symbol`: stock ticker symbol
-- `open`: opening price
-- `high`: high price
-- `low`: low price
-- `close`: closing price
+- `symbol`: normalized ticker symbol
+- `open`, `high`, `low`, `close`: market prices
 - `volume`: traded volume
-- `source`: upstream source name for this market bar row; defaults to alpha_vantage
+- `source`: upstream source, defaulting to `alpha_vantage`
 
-### Quality Rules
-- `ts` must not be null
-- `symbol` must not be null
-- `(ts, symbol)` must be unique
-- `close >= 0`
-- `volume >= 0`
+Quality rules require non-null keys, unique `(ts, symbol)`, non-negative close
+price and volume, and data no more than 14 days old.
 
-## Table: pipeline_metadata
+### `pipeline_metadata`
 
-### Business Purpose
-Tracks incremental processing state for each source and symbol.
+- `source`, `symbol`: incremental-state key
+- `last_watermark`: latest processed market timestamp
+- `last_row_count`: rows processed in the latest successful load
+- `status`: latest persisted load status
+- `updated_at`: state update timestamp
 
-### Grain
-One row per `(source, symbol)`.
+### `load_metadata`
 
-### Primary Key
-`(source, symbol)`
-
-### Columns
-- `source`: upstream source name
-- `symbol`: stock ticker symbol
-- `last_watermark`: latest processed timestamp
-- `last_row_count`: number of rows processed in the last successful load
-- `status`: latest pipeline status
-- `updated_at`: metadata update timestamp
-
-## Table: load_metadata
-
-### Business Purpose
-Records load-level metadata for observability and auditability.
-
-### Grain
-One row per load event.
-
-### Columns
-- `id`: load metadata identifier
-- `source`: upstream source name
-- `load_date`: date of the load
+- `id`: load event identifier
+- `source`: upstream source
+- `load_date`: load date
 - `version`: source or run version
-- `record_count`: number of records loaded
-- `recorded_at`: metadata insert timestamp
+- `record_count`: processed record count
+- `recorded_at`: audit insert timestamp
 
-## Mart: mart_daily_symbol_summary
+## Analytical Marts
 
-### Business Question
-What are each symbol's daily close-price summary statistics and total volume?
+| Mart | Columns | Business use |
+| --- | --- | --- |
+| `mart_daily_symbol_summary` | `symbol`, `trading_date`, `avg_close`, `min_close`, `max_close`, `total_volume`, `created_at` | Compare daily price ranges and volume |
+| `mart_symbol_latest_price` | `symbol`, `latest_ts`, `close_price`, `volume`, `updated_at` | Serve the latest symbol snapshot |
+| `mart_symbol_volume_rank` | `symbol`, `trading_date`, `total_volume`, `volume_rank` | Find daily volume leaders |
 
-### Grain
-One row per `(symbol, trading_date)`.
+`mart_symbol_volume_rank` uses `DENSE_RANK()` within each trading date.
+`created_at` on the daily summary records initial row creation and is not
+updated during an upsert.
 
-### Primary Key
-`(symbol, trading_date)`
-
-### Columns
-- `symbol`
-- `trading_date`
-- `avg_close`
-- `min_close`
-- `max_close`
-- `total_volume`
-- `created_at`
-
-## Mart: mart_symbol_latest_price
-
-### Business Question
-What is the latest close price and volume for each symbol?
-
-### Grain
-One row per `symbol`.
-
-### Primary Key
-`symbol`
-
-### Columns
-- `symbol`
-- `latest_ts`
-- `close_price`
-- `volume`
-- `updated_at`
-
-## Mart: mart_symbol_volume_rank
-
-### Business Question
-Which symbols had the highest total trading volume on each trading date?
-
-### Grain
-One row per `(symbol, trading_date)`.
-
-### Primary Key
-`(symbol, trading_date)`
-
-### Columns
-- `symbol`
-- `trading_date`
-- `total_volume`
-- `volume_rank`
+See `docs/DATA_QUALITY.md` for quality gates and `docs/DEMO_QUERIES.md` for
+example analytical queries.

@@ -1,29 +1,43 @@
 # Backfill Runbook
+
 ## Purpose
-Backfill loads historical stock data across a date range while preserving
-resume behavior through a local checkpoint file.
+
+Backfill processes an inclusive historical date range and records completed
+dates in a local checkpoint so interrupted runs can resume.
 
 ## Command
 
-Run through the project CLI:
+```bash
+make backfill START=2026-04-16 END=2026-04-18 SYMBOL=AAPL
+```
+
+`SYMBOL` defaults to `AAPL`. The equivalent CLI command is:
+
 ```bash
 python -m de_lakehouse_pipeline.cli backfill --start 2026-04-16 --end 2026-04-18 --symbol AAPL
 ```
-Or through Makefile:
-```bash
-make -f Makefile backfill START=2026-04-16 END=2026-04-18 SYMBOL=AAPL
-```
-`SYMBOL` defaults to `AAPL` when omitted.
 
-## Checkpoint Path
+PostgreSQL must be running and migrated, and live execution requires
+`ALPHA_VANTAGE_API_KEY`.
 
-Backfill progress is stored in:
+## Execution Flow
 
-```text
-.checkpoints/backfill_checkpoint.json
-```
+For each date in the requested range, the backfill:
 
-The checkpoint stores completed dates:
+1. Combines locally checkpointed dates with dates already present in PostgreSQL
+   for the selected symbol.
+2. Skips dates already marked as completed.
+3. Fetches the Alpha Vantage daily payload and selects the target date.
+4. Upserts matching rows into `market_bars` without the routine watermark
+   filter.
+5. Keeps the greater of the existing and backfilled timestamps as the
+   watermark, preventing state from moving backward.
+6. Marks the date complete only when PostgreSQL contains a row for that symbol
+   and date.
+
+## Checkpoint and Resume
+
+Progress is stored in `.checkpoints/backfill_checkpoint.json`:
 
 ```json
 {
@@ -34,55 +48,36 @@ The checkpoint stores completed dates:
 }
 ```
 
-## Resume Behavior
+If processing raises an exception, the failed date is not checkpointed. A
+later run skips completed dates and retries the first incomplete date.
 
-When a backfill starts, it reads the checkpoint and skips dates that are already
-marked completed.
-
-A date is marked completed only after that date's pipeline run finishes
-successfully.
-
-## Failure Behavior
-
-If a date fails, the exception is raised and that date is not added to the
-checkpoint.
-
-On the next run, earlier completed dates are skipped and the failed date is
-retried.
-
-## Rerunning a Date
-
-To force a date to rerun, remove that date from
-`.checkpoints/backfill_checkpoint.json`, then run the same backfill command
-again.
-
-Because the load path uses watermark filtering and upserts into `market_bars`,
-normal reruns remain safe.
+Deleting a date from the file alone does not force a rerun when that date still
+exists in PostgreSQL, because checkpoint state is reconciled from the database
+at startup. There is currently no explicit `--force` option.
 
 ## Validation
 
-Run unit tests:
+Run automated backfill tests:
 
 ```bash
-make -f Makefile unit
+make unit
 ```
 
-Run a one-day backfill:
+Run a live one-day backfill:
 
 ```bash
-make -f Makefile backfill START=2026-04-16 END=2026-04-16 SYMBOL=AAPL
+make db-up
+make db-migrate
+make backfill START=2026-04-16 END=2026-04-16 SYMBOL=AAPL
 ```
 
-Inspect checkpoint state:
-
-```bash
-type .checkpoints\backfill_checkpoint.json
-```
+Inspect the checkpoint with `Get-Content` in PowerShell or `cat` in Bash.
 
 ## Known Limitations
 
-- The checkpoint currently tracks completed dates only, not per-symbol
-  completion state.
-- The live backfill path requires an Alpha Vantage API key.
-- Historical corrections older than the pipeline watermark may be skipped by
-  the incremental load strategy.
+- The checkpoint stores completed dates globally rather than per symbol.
+- Each target date triggers a separate Alpha Vantage request.
+- Historical availability is limited to dates returned by the API payload.
+- Weekend or unavailable dates are not marked complete because no database row
+  is created.
+- Completed dates cannot currently be rerun with a `--force` option.

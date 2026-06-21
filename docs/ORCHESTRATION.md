@@ -1,92 +1,70 @@
 # Orchestration
 
-## Purpose
+## Overview
 
-The local orchestration layer provides a reproducible command that executes the
-main stock pipeline, validates data quality, and rebuilds marts in a fixed
-order.
+The project provides two local orchestration modes:
 
-The implementation lives in:
+1. A lightweight CLI runner for repeatable execution and JSON metrics.
+2. A Dagster job for dependency-aware execution, scheduling, and UI visibility.
+
+Both modes run the same quality-gated workflow:
 
 ```text
-orchestration/dagster_pipeline.py
+Stock Ingestion -> Data Quality Gate -> Analytical Marts
 ```
 
-Despite the filename, this is currently a lightweight local orchestrator rather
-than a Dagster runtime deployment.
-
-## Execution Order
-
-`make -f Makefile orchestrate SYMBOL=AAPL` runs:
+## Execution Flow
 
 1. `run_stock_pipeline`
-   - fetches Alpha Vantage data
-   - lands raw JSON
-   - stages typed market-bar rows
-   - performs incremental filtering
-   - upserts new rows into `market_bars`
-   - updates load and pipeline metadata
+   - fetches and preserves the raw payload
+   - transforms and incrementally loads market bars
+   - updates pipeline and load metadata
 2. `run_quality_checks`
-   - runs the stock quality gate against `market_bars`
-   - fails the orchestration run if any check fails
+   - validates warehouse data
+   - stops the workflow when any check fails
 3. `build_marts`
-   - rebuilds analytical marts in dependency order
-   - `mart_daily_symbol_summary`
-   - `mart_symbol_latest_price`
-   - `mart_symbol_volume_rank`
+   - builds daily summary, latest price, and volume-rank marts
 
-If a step fails, later steps are not executed and the pipeline status is
-reported as `failed`.
+Later steps are skipped after a failure, preventing invalid data from being
+published to analytical marts.
 
-## Command
+## Lightweight Runner
 
-```bash
-make -f Makefile orchestrate SYMBOL=AAPL
-```
-
-Or directly:
+Implementation: `orchestration/dagster_pipeline.py`
 
 ```bash
-python -m orchestration.dagster_pipeline --symbol AAPL
+make orchestrate SYMBOL=AAPL
 ```
 
-## Metrics
+The runner prints step results and a JSON pipeline summary for validation and
+proof logs.
 
-Each step records:
+## Dagster Job
 
-- step name
-- status
-- start timestamp
-- finish timestamp
-- duration in seconds
-- row count when available
-- error message when failed
+Implementation: `orchestration/definitions.py`
 
-The final pipeline summary records the overall status and all executed step
-metrics. The command also prints a JSON metrics payload so the run can be
-copied into proof logs or parsed by a later monitoring layer.
-
-## Structured Logs
-
-The orchestrator configures JSON logs through:
-
-```text
-src/de_lakehouse_pipeline/logging_utils.py
+```bash
+make dagster-dev
 ```
 
-Logs include the pipeline name, symbol, step name, status, row counts when
-available, and exception details on failure.
+Dagster provides explicit step dependencies, UI logs, the
+`stock_lakehouse_job` definition, and a daily `0 8 * * *` schedule definition.
+The schedule is defined locally but is not deployed.
 
 ## Requirements
 
-- Postgres must be running and migrated.
-- The live stock step requires `ALPHA_VANTAGE_API_KEY`.
-- For API-independent validation, use `make -f Makefile smoke-db`.
+- Project dependencies are installed with `make setup`.
+- PostgreSQL is running and migrated.
+- `ALPHA_VANTAGE_API_KEY` is available for live ingestion.
 
-## Known Limitations
+See `docs/RUNBOOK.md` for setup and validation commands. See
+`docs/OPS_METRICS.md` for metrics, logging, and SLA evaluation.
 
-- This is local orchestration, not a scheduled Dagster deployment.
-- The stock pipeline currently returns a raw file path, so the orchestrator does
-  not yet report a loaded-row count for that step.
-- Failure metadata is reported in the run summary but is not yet persisted to a
-  database table.
+## Current Limitations
+
+- Dagster is configured for local development rather than production hosting.
+- Metrics are emitted but not persisted to an observability store.
+- The ingestion step does not report an accurate loaded-row count.
+- The lightweight runner reports failure but does not return a non-zero process
+  exit code.
+- Production alerting and orchestration-level retry policies are not configured.
