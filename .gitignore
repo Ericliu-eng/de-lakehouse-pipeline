@@ -1,45 +1,67 @@
+# Python virtual environments
 .venv/
+venv/
+
+# Python cache and compiled files
 __pycache__/
+*.py[cod]
+*$py.class
+
+# Testing, linting and type checking
 .pytest_cache/
+.pytest_tmp/
 .mypy_cache/
 .ruff_cache/
-archive/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
 
+# Python packaging
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Environment variables and secrets
 .env
-.DS_Store
+.env.*
+!.env.example
 
-data/
-data/raw/
-data/processed/
+# Local data
+data/*
+!data/raw/
+data/raw/*
+!data/raw/.gitkeep
 
+# Runtime state
+.checkpoints/
+.tmp_dagster_home*/
 *.log
 *.tmp
 *.db
 *.sqlite
 
+# Local project artifacts
+archive/
+plan.docx
+
+# Notebooks
 .ipynb_checkpoints/
 
+# Editors and operating systems
+.DS_Store
+Thumbs.db
+.idea/
+# .vscode/ 只有不想共享 VS Code 配置时才忽略
 
-# Python packaging
-*.egg-info/
-.eggs/
-
-data/raw/*
-!data/raw/.gitkeep
-
-.venv/
-venv/
-
-.checkpoints/
-.pytest_tmp/
-.pytest_cache/
-plan.docx
-archive
-
-
+# Terraform
 infra/terraform/.terraform/
 infra/terraform/terraform.tfstate
-infra/terraform/terraform.tfstate.backup
+infra/terraform/terraform.tfstate.*
 infra/terraform/*.tfplan
+infra/terraform/crash.log
+infra/terraform/crash.*.log
 
+# Personal notes
 INTERVIEW_DE.md
