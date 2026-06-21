@@ -65,3 +65,5 @@ infra/terraform/crash.*.log
 
 # Personal notes
 INTERVIEW_DE.md
+
+.checkpoints/
