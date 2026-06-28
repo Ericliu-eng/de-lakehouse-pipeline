@@ -73,7 +73,7 @@ def run_export(output_path: str | Path, symbol: str | None = None) -> Path:
 
 def main():
     output_path = "export/market_bars.csv"
-    exported_path = run_export(output_path=output_path)
+    run_export(output_path=output_path)
 
 
 
