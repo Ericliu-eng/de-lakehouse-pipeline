@@ -54,7 +54,7 @@ def test_run_backfill_skips_completed_dates(tmp_path, monkeypatch):
 
     monkeypatch.setattr(backfill, "CHECKPOINT_PATH", checkpoint_path)
 
-    monkeypatch.setattr(backfill, "load_completed_market_dates", lambda symbol: set())
+    monkeypatch.setattr(backfill, "load_completed_market_dates", lambda symbol: {"2026-01-01"})
 
     backfill.save_checkpoint({"2026-01-01"})
 
@@ -136,3 +136,61 @@ def test_run_backfill_does_not_mark_failed_date_completed(tmp_path, monkeypatch)
     loaded = backfill.load_checkpoint()
 
     assert loaded == {"2026-01-01"}
+
+
+def test_backfill_keeps_stock_progress_separate(tmp_path, monkeypatch):
+    monkeypatch.setattr(backfill, "CHECKPOINT_PATH", tmp_path / "checkpoint.json")
+    completed = {}
+    processed = []
+
+    def process(target_date, symbol):
+        processed.append(symbol)
+        completed.setdefault(symbol, set()).add(target_date.isoformat())
+
+    monkeypatch.setattr(backfill, "run_backfill_for_date", process)
+    monkeypatch.setattr(backfill, "load_completed_market_dates", lambda symbol: completed.get(symbol, set()))
+    target = date(2026, 1, 1)
+    backfill.run_backfill(target, target, symbol="AAPL")
+    backfill.run_backfill(target, target, symbol=" msft ")
+    backfill.run_backfill(target, target, symbol="AAPL")
+
+    assert processed == ["AAPL", "MSFT"]
+    assert backfill.load_checkpoint("AAPL") == {target.isoformat()}
+    assert backfill.load_checkpoint("MSFT") == {target.isoformat()}
+    assert backfill.load_checkpoint("AAPL", source="other") == set()
+
+
+@pytest.mark.parametrize("legacy", [False, True])
+def test_stale_or_legacy_checkpoint_does_not_skip_missing_db_rows(tmp_path, monkeypatch, legacy):
+    path = tmp_path / "checkpoint.json"
+    monkeypatch.setattr(backfill, "CHECKPOINT_PATH", path)
+    if legacy:
+        path.write_text('{"completed_dates": ["2026-01-01"]}', encoding="utf-8")
+        assert backfill.load_checkpoint() == set()
+    else:
+        backfill.save_checkpoint({"2026-01-01"})
+    processed = []
+    monkeypatch.setattr(backfill, "load_completed_market_dates", lambda symbol: set(processed))
+    monkeypatch.setattr(
+        backfill, "run_backfill_for_date",
+        lambda target_date, symbol: processed.append(target_date.isoformat()),
+    )
+    backfill.run_backfill(date(2026, 1, 1), date(2026, 1, 1))
+    assert processed == ["2026-01-01"]
+    assert backfill.load_checkpoint() == {"2026-01-01"}
+
+
+def test_checkpoint_replace_failure_preserves_previous_progress(tmp_path, monkeypatch):
+    path = tmp_path / "checkpoint.json"
+    monkeypatch.setattr(backfill, "CHECKPOINT_PATH", path)
+    backfill.save_checkpoint({"2026-01-01"})
+    previous = path.read_bytes()
+
+    def fail_replace(*args):
+        raise OSError("replace failed")
+
+    monkeypatch.setattr(backfill.os, "replace", fail_replace)
+    with pytest.raises(OSError, match="replace failed"):
+        backfill.save_checkpoint({"2026-01-02"})
+    assert path.read_bytes() == previous
+    assert list(tmp_path.iterdir()) == [path]

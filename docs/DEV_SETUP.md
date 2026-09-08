@@ -44,6 +44,7 @@ Start PostgreSQL, apply migrations, and run the default test suite:
 ```bash
 make db-up
 make db-migrate
+make db-seed
 make test
 ```
 

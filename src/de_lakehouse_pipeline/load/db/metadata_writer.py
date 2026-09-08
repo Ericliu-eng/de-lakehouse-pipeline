@@ -1,4 +1,5 @@
 def insert_load_metadata(conn, payload: dict) -> None:
+    """Write the audit record in the caller's transaction."""
     sql = """
     INSERT INTO load_metadata (
         source,
@@ -21,4 +22,3 @@ def insert_load_metadata(conn, payload: dict) -> None:
                 payload["recorded_at"],
             ),
         )
-    conn.commit()

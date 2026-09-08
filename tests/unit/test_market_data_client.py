@@ -64,3 +64,45 @@ def test_fetch_json_with_retry_raises_after_max_retries():
 
     assert mock_get.call_count == 3
 
+
+def http_response(status):
+    response = requests.Response()
+    response.status_code = status
+    response._content = b'{"ok": true}'
+    return response
+
+
+@pytest.mark.parametrize("status", [429, 500, 502, 503, 504])
+def test_http_transient_failure_retries_then_succeeds(status):
+    with patch(
+        "de_lakehouse_pipeline.ingest.market_data_client.requests.get",
+        side_effect=[http_response(status), http_response(200)],
+    ) as get, patch("de_lakehouse_pipeline.ingest.market_data_client.time.sleep") as sleep:
+        assert fetch_json_with_retry({}) == {"ok": True}
+    assert get.call_count == 2
+    sleep.assert_called_once_with(1)
+
+
+@pytest.mark.parametrize("status", [400, 401, 403, 404])
+def test_http_permanent_failure_does_not_retry(status):
+    with patch(
+        "de_lakehouse_pipeline.ingest.market_data_client.requests.get",
+        return_value=http_response(status),
+    ) as get, patch("de_lakehouse_pipeline.ingest.market_data_client.time.sleep") as sleep:
+        with pytest.raises(requests.HTTPError):
+            fetch_json_with_retry({})
+    assert get.call_count == 1
+    sleep.assert_not_called()
+
+
+@pytest.mark.parametrize("retries", [0, 2])
+def test_http_retries_stop_at_budget(retries):
+    with patch(
+        "de_lakehouse_pipeline.ingest.market_data_client.requests.get",
+        return_value=http_response(429),
+    ) as get, patch("de_lakehouse_pipeline.ingest.market_data_client.time.sleep") as sleep:
+        with pytest.raises(requests.HTTPError):
+            fetch_json_with_retry({}, max_retries=retries)
+    assert get.call_count == retries + 1
+    assert [call.args[0] for call in sleep.call_args_list] == [2 ** i for i in range(retries)]
+

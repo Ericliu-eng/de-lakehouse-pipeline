@@ -37,7 +37,7 @@ make orchestrate SYMBOL=AAPL
 ```
 
 The runner prints step results and a JSON pipeline summary for validation and
-proof logs.
+proof logs. It exits with code 1 after any failed step, and code 0 after success.
 
 ## Dagster Job
 
@@ -65,6 +65,4 @@ See `docs/RUNBOOK.md` for setup and validation commands. See
 - Dagster is configured for local development rather than production hosting.
 - Metrics are emitted but not persisted to an observability store.
 - The ingestion step does not report an accurate loaded-row count.
-- The lightweight runner reports failure but does not return a non-zero process
-  exit code.
 - Production alerting and orchestration-level retry policies are not configured.
