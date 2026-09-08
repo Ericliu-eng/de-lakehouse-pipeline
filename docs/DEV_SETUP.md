@@ -37,6 +37,12 @@ make unit
 make smoke
 ```
 
+Ruff is pinned to `0.15.8` in `requirements.txt`. The explicit project rules in
+`pyproject.toml` are `E4`, `E7`, `E9`, and `F`, matching the baseline used for
+local validation. Import sorting and additional strict rule groups are not
+enabled by this baseline. Upgrade the pinned version and required version
+together, and review rule changes before enabling them in CI.
+
 ## Full Database Validation
 
 Start PostgreSQL, apply migrations, and run the default test suite:
@@ -44,6 +50,7 @@ Start PostgreSQL, apply migrations, and run the default test suite:
 ```bash
 make db-up
 make db-migrate
+make db-seed
 make test
 ```
 

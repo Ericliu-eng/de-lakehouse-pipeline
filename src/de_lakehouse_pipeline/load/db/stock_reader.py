@@ -5,7 +5,7 @@ def load_completed_market_dates(symbol: str) -> set[str]:
     sql = """
         SELECT DISTINCT DATE(ts)
         FROM market_bars
-        WHERE symbol = %s
+        WHERE symbol = %s AND source = 'alpha_vantage'
         ORDER BY 1
     """
 

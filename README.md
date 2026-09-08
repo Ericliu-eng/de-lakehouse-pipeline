@@ -10,7 +10,7 @@ reproducible local development.
 
 ## Architecture
 
-![Market data lakehouse execution flow](docs/project_run_flow.svg)
+![Market Data Lakehouse run flow](docs/project_run_flow.svg)
 
 ```text
 Alpha Vantage
@@ -59,6 +59,7 @@ Start PostgreSQL, apply migrations, and run the complete local validation:
 ```bash
 make db-up
 make db-migrate
+make db-seed
 make test
 ```
 

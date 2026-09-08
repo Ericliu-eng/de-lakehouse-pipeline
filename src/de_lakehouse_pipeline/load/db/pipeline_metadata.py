@@ -22,6 +22,7 @@ def upsert_watermark(
     last_row_count: int,
     status: str
 ):
+    """Write incremental state; the caller owns commit and rollback."""
     sql = """
     INSERT INTO pipeline_metadata (
         source,
@@ -44,5 +45,4 @@ def upsert_watermark(
             sql,
             (source, symbol, last_watermark, last_row_count, status)
         )
-        conn.commit()
     

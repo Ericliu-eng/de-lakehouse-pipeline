@@ -25,6 +25,8 @@ def build_params(symbol: str, api_key: str) -> dict:
     }
 
 def fetch_json_with_retry(params: dict, max_retries: int = 3) -> dict:
+    if max_retries < 0:
+        raise ValueError("max_retries must be non-negative")
     for attempt in range(max_retries + 1):
         try:
             response = requests.get(BASE_URL, params=params, timeout=20)
@@ -40,12 +42,19 @@ def fetch_json_with_retry(params: dict, max_retries: int = 3) -> dict:
 
             return payload
 
+        except requests.HTTPError as exc:
+            if (
+                exc.response is None
+                or not is_retryable_status_code(exc.response.status_code)
+                or attempt == max_retries
+            ):
+                raise
         except (requests.Timeout, requests.ConnectionError, RuntimeError):
             if attempt == max_retries:
                 raise
 
-            sleep_time = 2 ** attempt
-            time.sleep(sleep_time)
+        sleep_time = 2 ** attempt
+        time.sleep(sleep_time)
 
     raise RuntimeError("Failed to fetch stock data")
 

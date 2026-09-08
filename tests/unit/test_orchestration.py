@@ -1,4 +1,6 @@
 from orchestration.dagster_pipeline import run_orchestrated_pipeline, run_step
+from orchestration import dagster_pipeline as runner
+import pytest
 
 
 def test_run_step_records_success() -> None:
@@ -51,3 +53,30 @@ def test_orchestrated_pipeline_stops_after_failed_step(monkeypatch) -> None:
     assert executed_steps == ["run_stock_pipeline"]
     assert len(metric.steps) == 1
     assert metric.steps[0].error_message == "failed for TEST"
+
+
+@pytest.mark.parametrize("failed_step", [0, 1, 2, None])
+def test_cli_exit_status_and_downstream_steps(monkeypatch, capsys, failed_step):
+    executed = []
+
+    def step(index):
+        def execute(*args):
+            executed.append(index)
+            if index == failed_step:
+                raise RuntimeError("injected failure")
+        return execute
+
+    monkeypatch.setattr(runner, "configure_logging", lambda: None)
+    monkeypatch.setattr("sys.argv", ["orchestrate", "--symbol", "AAPL"])
+    for index, name in enumerate(["_run_stock_pipeline", "_run_quality_checks", "_build_marts"]):
+        monkeypatch.setattr(runner, name, step(index))
+    if failed_step is None:
+        runner.main()
+        assert executed == [0, 1, 2]
+        assert "Status: success" in capsys.readouterr().out
+    else:
+        with pytest.raises(SystemExit) as exc:
+            runner.main()
+        assert exc.value.code == 1
+        assert executed == list(range(failed_step + 1))
+        assert "Status: failed" in capsys.readouterr().out

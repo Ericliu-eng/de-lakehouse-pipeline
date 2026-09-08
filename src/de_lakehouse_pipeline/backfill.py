@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 from datetime import date, timedelta
 import json
+import os
+import tempfile
 from pathlib import Path
 from collections.abc import Iterator
 
@@ -11,6 +13,7 @@ from de_lakehouse_pipeline.load.db.stock_reader import load_completed_market_dat
 
 CHECKPOINT_PATH = Path(".checkpoints/backfill_checkpoint.json")
 DEFAULT_SYMBOL = "AAPL"
+DEFAULT_SOURCE = "alpha_vantage"
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run backfill for a date range.")
@@ -41,15 +44,18 @@ def run_backfill_for_date(target_date: date, symbol: str = DEFAULT_SYMBOL) -> No
 
 
 def sync_checkpoint_from_db(symbol: str) -> set[str]:
-    checkpoint_dates = load_checkpoint()
     db_dates = load_completed_market_dates(symbol)
-    #union / 并集 / 合并去重
-    completed_dates = checkpoint_dates | db_dates
-    save_checkpoint(completed_dates)
+    # PostgreSQL is authoritative; stale local dates must not hide missing rows.
+    completed_dates = db_dates
+    save_checkpoint(completed_dates, symbol=symbol)
 
     return completed_dates
     
 def run_backfill(start: date, end: date, symbol: str = DEFAULT_SYMBOL) -> None:
+    validate_date_range(start, end)
+    symbol = symbol.strip().upper()
+    if not symbol:
+        raise ValueError("symbol must not be empty")
     completed_dates = sync_checkpoint_from_db(symbol)
 
     for target_date in iter_dates(start, end):
@@ -61,7 +67,7 @@ def run_backfill(start: date, end: date, symbol: str = DEFAULT_SYMBOL) -> None:
 
         db_dates = load_completed_market_dates(symbol)
         if target_date.isoformat() in db_dates:
-            mark_date_completed(target_date, completed_dates)
+            mark_date_completed(target_date, completed_dates, symbol=symbol)
         else:
             print(
                 f"Not marking {target_date.isoformat()} completed "
@@ -70,32 +76,47 @@ def run_backfill(start: date, end: date, symbol: str = DEFAULT_SYMBOL) -> None:
 
 
 
-def load_checkpoint() -> set[str]:
+def load_checkpoint(symbol: str = DEFAULT_SYMBOL, source: str = DEFAULT_SOURCE) -> set[str]:
     if not CHECKPOINT_PATH.exists():
         return set()
 
     with CHECKPOINT_PATH.open("r", encoding="utf-8") as f:
         data = json.load(f)
 
-    completed_dates = data.get("completed_dates", [])
+    # Legacy unscoped dates cannot safely be attributed to any stock.
+    completed_dates = data.get(source, {}).get(symbol.strip().upper(), [])
     return set(completed_dates)
 
-def save_checkpoint(completed_dates: set[str]) -> None:
+def save_checkpoint(
+    completed_dates: set[str], symbol: str = DEFAULT_SYMBOL, source: str = DEFAULT_SOURCE
+) -> None:
     CHECKPOINT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-    payload = {
-        "completed_dates": sorted(completed_dates)
-    }
-
-    with CHECKPOINT_PATH.open("w", encoding="utf-8") as f:
-        json.dump(payload, f, indent=2)
+    payload = {}
+    if CHECKPOINT_PATH.exists():
+        payload = json.loads(CHECKPOINT_PATH.read_text(encoding="utf-8"))
+    payload.pop("completed_dates", None)
+    payload.setdefault(source, {})[symbol.strip().upper()] = sorted(completed_dates)
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=CHECKPOINT_PATH.parent, delete=False
+        ) as f:
+            temp_path = Path(f.name)
+            json.dump(payload, f, indent=2)
+        os.replace(temp_path, CHECKPOINT_PATH)
+    finally:
+        if temp_path is not None:
+            temp_path.unlink(missing_ok=True)
 
 def is_date_completed(target_date: date, completed_dates: set[str]) -> bool:
     return target_date.isoformat() in completed_dates
 
-def mark_date_completed(target_date: date, completed_dates: set[str]) -> None:
+def mark_date_completed(
+    target_date: date, completed_dates: set[str], symbol: str = DEFAULT_SYMBOL
+) -> None:
     completed_dates.add(target_date.isoformat())
-    save_checkpoint(completed_dates)
+    save_checkpoint(completed_dates, symbol=symbol)
 
 
 

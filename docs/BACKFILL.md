@@ -24,8 +24,8 @@ PostgreSQL must be running and migrated, and live execution requires
 
 For each date in the requested range, the backfill:
 
-1. Combines locally checkpointed dates with dates already present in PostgreSQL
-   for the selected symbol.
+1. Rebuilds checkpoint dates from PostgreSQL for the selected symbol and
+   `alpha_vantage` source. Local-only dates never cause a skip.
 2. Skips dates already marked as completed.
 3. Fetches the Alpha Vantage daily payload and selects the target date.
 4. Upserts matching rows into `market_bars` without the routine watermark
@@ -41,12 +41,16 @@ Progress is stored in `.checkpoints/backfill_checkpoint.json`:
 
 ```json
 {
-  "completed_dates": [
-    "2026-04-16",
-    "2026-04-17"
-  ]
+  "alpha_vantage": {
+    "AAPL": ["2026-04-16", "2026-04-17"],
+    "MSFT": ["2026-04-16"]
+  }
 }
 ```
+
+Symbols are trimmed and uppercased. Legacy `completed_dates` lists are ignored
+because they cannot be attributed to a stock; progress is rebuilt from the
+database on the next run. Writes replace the checkpoint atomically.
 
 If processing raises an exception, the failed date is not checkpointed. A
 later run skips completed dates and retries the first incomplete date.
@@ -75,7 +79,8 @@ Inspect the checkpoint with `Get-Content` in PowerShell or `cat` in Bash.
 
 ## Known Limitations
 
-- The checkpoint stores completed dates globally rather than per symbol.
+- Concurrent checkpoint writers are not serialized; PostgreSQL reconciliation
+  restores progress on the next run if a concurrent file update is lost.
 - Each target date triggers a separate Alpha Vantage request.
 - Historical availability is limited to dates returned by the API payload.
 - Weekend or unavailable dates are not marked complete because no database row

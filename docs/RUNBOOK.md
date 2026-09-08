@@ -20,6 +20,7 @@ Prepare the project and database:
 make setup
 make db-up
 make db-migrate
+make db-seed
 ```
 
 Validate and run the pipeline:
@@ -43,8 +44,8 @@ Open:
 - <http://127.0.0.1:8000/latest-price>
 - <http://127.0.0.1:8000/dashboard>
 
-`make test` includes database-backed integration tests, so PostgreSQL must be
-running and migrated first.
+`make test` includes database smoke and integration tests, so PostgreSQL must be
+running, migrated, and seeded first. CI performs these setup steps automatically.
 
 ## Validation Commands
 

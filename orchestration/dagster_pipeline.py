@@ -159,6 +159,8 @@ def main() -> None:
 
     metric = run_orchestrated_pipeline(symbol=args.symbol)
     _print_summary(metric)
+    if metric.status != "success":
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
