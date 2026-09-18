@@ -1,5 +1,7 @@
 # de-lakehouse-pipeline
 
+[![CI](https://github.com/Ericliu-eng/de-lakehouse-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/Ericliu-eng/de-lakehouse-pipeline/actions/workflows/ci.yml)
+
 A production-style market-data pipeline that moves Alpha Vantage payloads from
 raw JSON to an incremental PostgreSQL warehouse, quality-gated analytical marts,
 and a small FastAPI serving layer.
@@ -131,7 +133,12 @@ requests.
 - Metrics are emitted as JSON and structured logs but are not persisted to an
   observability platform.
 - The S3 object layout, upload adapter, bucket, and least-privilege IAM policy
-  scaffold exist; runtime client and workload identity wiring are incomplete.
+  scaffold exist. The main pipeline does not yet construct and inject an S3
+  client, so `ENABLE_S3_RAW_UPLOAD=true` is not a working end-to-end path.
+- The freshness gate currently evaluates the newest row in `market_bars`
+  globally, not the active `(source, symbol)` partition.
+- A required-field schema validator exists and is tested, but it is not yet
+  called by the production staging/load path.
 - Failure drills document verified safeguards separately from remaining
   engineering gaps.
 
@@ -142,9 +149,11 @@ capabilities.
 
 | Topic | Document |
 | --- | --- |
+| Current status and next actions | [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) |
 | Architecture | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 | Setup and operations | [docs/DEV_SETUP.md](docs/DEV_SETUP.md), [docs/RUNBOOK.md](docs/RUNBOOK.md) |
-| Data model and queries | [docs/DATA_MODEL.md](docs/DATA_MODEL.md), [docs/DEMO_QUERIES.md](docs/DEMO_QUERIES.md) |
+| Data model and queries | [docs/DATA_MODEL.md](docs/DATA_MODEL.md), [docs/DATA_CONTRACT.md](docs/DATA_CONTRACT.md), [docs/DEMO_QUERIES.md](docs/DEMO_QUERIES.md) |
+| Schema changes | [docs/SCHEMA_EVOLUTION.md](docs/SCHEMA_EVOLUTION.md) |
 | Incremental loading and backfill | [docs/INCREMENTAL.md](docs/INCREMENTAL.md), [docs/BACKFILL.md](docs/BACKFILL.md) |
 | Data quality | [docs/DATA_QUALITY.md](docs/DATA_QUALITY.md) |
 | Orchestration and metrics | [docs/ORCHESTRATION.md](docs/ORCHESTRATION.md), [docs/OPS_METRICS.md](docs/OPS_METRICS.md) |

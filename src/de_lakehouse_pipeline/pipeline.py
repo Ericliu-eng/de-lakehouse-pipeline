@@ -27,7 +27,7 @@ def today_time() -> str:
 
 
 
-def run_stock(symbol: str = "AAPL", root: Path | None = None) -> Path:
+def run_stock(symbol: str = "AAPL", root: Path | None = None,s3_client=None,) -> Path:
     logger.info("Starting stock pipeline for symbol=%s", symbol)
 
     try:
@@ -45,10 +45,11 @@ def run_stock(symbol: str = "AAPL", root: Path | None = None) -> Path:
             symbol=symbol,
             run_date=date.today(),
             filename="stock.json",
+            s3_client=s3_client,
         )
 
         if s3_uri is not None:
-            logger.info("Uploaded raw stock data to %s", s3_uri)
+            logger.info("Uploaded raw stock data to %s", s3_uri.uri)
         #4.load local  json in to project
         raw_data = load_raw_stock_json(file_path)
 
@@ -118,7 +119,7 @@ def run_stock(symbol: str = "AAPL", root: Path | None = None) -> Path:
         raise
 
     
-def run_stock_for_date(target_date: date,symbol: str = "AAPL",root: Path | None = None,) -> Path:
+def run_stock_for_date(target_date: date,symbol: str = "AAPL",root: Path | None = None, s3_client=None,) -> Path:
     logger.info("Starting stock pipeline for %s", target_date.isoformat())
     try:
         logger.info("Fetching stock data for symbol=%s", symbol)
@@ -132,9 +133,10 @@ def run_stock_for_date(target_date: date,symbol: str = "AAPL",root: Path | None 
             symbol=symbol,
             run_date=target_date,
             filename="stock.json",
+            s3_client=s3_client,
         )
         if s3_uri is not None:
-            logger.info("Uploaded raw stock data to %s", s3_uri)
+            logger.info("Uploaded raw stock data to %s", s3_uri.uri)
 
         raw_data = load_raw_stock_json(file_path)
         logger.info("Loaded raw stock json from %s", file_path)

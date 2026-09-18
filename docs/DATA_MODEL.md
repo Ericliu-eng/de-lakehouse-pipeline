@@ -12,6 +12,66 @@ pipeline_metadata  -> incremental state
 load_metadata      -> load audit history
 ```
 
+## Entity Relationship Diagram
+
+```mermaid
+erDiagram
+    MARKET_BARS {
+        timestamptz ts PK
+        text symbol PK
+        numeric open
+        numeric high
+        numeric low
+        numeric close
+        bigint volume
+        text source
+    }
+    PIPELINE_METADATA {
+        text source PK
+        text symbol PK
+        timestamptz last_watermark
+        int last_row_count
+        text status
+        timestamptz updated_at
+    }
+    LOAD_METADATA {
+        bigint id PK
+        text source
+        date load_date
+        text version
+        int record_count
+        timestamptz recorded_at
+    }
+    MART_DAILY_SYMBOL_SUMMARY {
+        text symbol PK
+        date trading_date PK
+        numeric avg_close
+        numeric min_close
+        numeric max_close
+        bigint total_volume
+    }
+    MART_SYMBOL_LATEST_PRICE {
+        text symbol PK
+        timestamptz latest_ts
+        numeric close_price
+        bigint volume
+    }
+    MART_SYMBOL_VOLUME_RANK {
+        text symbol PK
+        date trading_date PK
+        bigint total_volume
+        bigint volume_rank
+    }
+
+    MARKET_BARS ||--o{ MART_DAILY_SYMBOL_SUMMARY : aggregates
+    MARKET_BARS ||--o{ MART_SYMBOL_LATEST_PRICE : selects_latest
+    MART_DAILY_SYMBOL_SUMMARY ||--o{ MART_SYMBOL_VOLUME_RANK : ranks
+```
+
+The arrows describe transformation lineage, not database-enforced foreign
+keys. Operational metadata is associated through source/symbol/run context;
+the current schema does not declare foreign keys between these objects.
+
 All marts are physical PostgreSQL tables refreshed with upsert semantics.
 
 ## Model Catalog

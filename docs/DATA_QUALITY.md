@@ -26,6 +26,16 @@ For `market_bars`, the gate verifies:
 - `volume` is non-negative
 - the latest `ts` is no more than 14 days old
 
+### Freshness Scope Limitation
+
+The current query uses `MAX(ts)` across the entire `market_bars` table. It does
+not filter by `source` or `symbol`, so a fresh partition can mask a stale one.
+Per-partition freshness is a release blocker; see `docs/PROJECT_STATUS.md`.
+
+The required-field validator in `quality/schema_validation.py` is also not yet
+invoked by the production staging path. Source conversion currently raises on
+many malformed values, but the dedicated contract check remains test-only.
+
 The reusable foreign-key check is not part of this gate because the current
 market-bar model has no parent dimension table.
 
