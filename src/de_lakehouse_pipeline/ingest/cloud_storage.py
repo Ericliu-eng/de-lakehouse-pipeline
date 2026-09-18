@@ -30,6 +30,7 @@ def _require_non_empty(name, value):
         raise CloudStorageConfigError(f"{name} must be provided")
 
     return clean_value
+
 """1. 用 _require_non_empty 检查 source
 2. 用 _require_non_empty 检查 symbol，然后把 symbol 变成大写
 3. 用 _require_non_empty 检查 filename
@@ -88,12 +89,8 @@ def upload_raw_payload_if_enabled(
         run_date=run_date,
         filename=filename,
     )
-
     if s3_client is None:
-        raise CloudStorageConfigError(
-            "s3_client is required when ENABLE_S3_RAW_UPLOAD=true"
-        )
-    
+        s3_client = create_s3_client()
     try:
         #把payload变成一个稳定、可读、可长期保存的原始 JSON 文件：
         body = json.dumps(payload, indent=2, sort_keys=True).encode("utf-8")
@@ -115,3 +112,9 @@ def upload_raw_payload_if_enabled(
 """print(S3RawLocation.bucket)
 print(S3RawLocation.key)
 print(S3RawLocation.uri)"""
+
+
+def create_s3_client():
+    import boto3
+
+    return boto3.client("s3")

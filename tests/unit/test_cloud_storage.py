@@ -6,6 +6,8 @@ from de_lakehouse_pipeline.ingest.cloud_storage import (
     CloudStorageUploadError,
     )
 
+from de_lakehouse_pipeline.ingest import cloud_storage
+
 import pytest
 
 class FakeS3Client:
@@ -123,20 +125,29 @@ def test_upload_enabled_without_bucket_raises_config_error():
 3. env 里面 S3_RAW_BUCKET = "test-bucket"
 4. 但是不要传 s3_client
 5. 应该 raise CloudStorageConfigError"""
-def test_upload_enabled_without_s3_client_raises_config_error():
-    with pytest.raises(CloudStorageConfigError):
-        upload_raw_payload_if_enabled(
-            payload={"symbol": "AAPL"},
-            source="alpha_vantage",
-            symbol="AAPL",
-            run_date=date(2026, 5, 26),
-            filename="stock.json",
-            s3_client=None,
-            env={
-                "ENABLE_S3_RAW_UPLOAD": "true",
-            },
-        )
+def test_upload_enabled_creates_default_client(monkeypatch):
+    fake_client = FakeS3Client()
 
+    monkeypatch.setattr(
+        cloud_storage,
+        "create_s3_client",
+        lambda: fake_client,
+    )
+
+    result = cloud_storage.upload_raw_payload_if_enabled(
+        payload={"symbol": "AAPL"},
+        source="alpha_vantage",
+        symbol="AAPL",
+        run_date=date(2026, 5, 26),
+        filename="stock.json",
+        env={
+            "ENABLE_S3_RAW_UPLOAD": "true",
+            "S3_RAW_BUCKET": "test-bucket",
+        },
+    )
+
+    assert result is not None
+    assert len(fake_client.objects) == 1
 #edge test 
 def test_upload_flag_is_case_insensitive():
     fake_client = FakeS3Client()

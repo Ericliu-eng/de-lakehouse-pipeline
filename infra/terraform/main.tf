@@ -1,27 +1,67 @@
 terraform {
   required_version = ">= 1.5.0"
-  # 项目需要使用 AWS provider。 需要 AWS provider 来和 AWS 通信。
+
   required_providers {
     aws = {
-      # 使用 HashiCorp 官方维护的 AWS provider。
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
   }
 }
-#配置 AWS provider。要在哪个 AWS region 创建资源。
+
 provider "aws" {
   region = var.aws_region
 }
 
 resource "aws_s3_bucket" "raw" {
   bucket = var.raw_bucket_name
+
+  tags = {
+    Project     = "de-lakehouse-pipeline"
+    Environment = "dev"
+    ManagedBy   = "Terraform"
+  }
 }
-#IAM policy 的作用是：定义某个用户、角色、程序可以做什么，不可以做什么。
+
+resource "aws_s3_bucket_public_access_block" "raw" {
+  bucket = aws_s3_bucket.raw.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_ownership_controls" "raw" {
+  bucket = aws_s3_bucket.raw.id
+
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "raw" {
+  bucket = aws_s3_bucket.raw.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_versioning" "raw" {
+  bucket = aws_s3_bucket.raw.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
 resource "aws_iam_policy" "raw_writer" {
   name        = "${var.raw_bucket_name}-raw-writer"
   description = "Allow the pipeline to upload raw payloads only."
-  #AWS IAM Policy 本质上是 JSON。但是在 Terraform 里写 JSON 很麻烦，所以 Terraform 提供了：
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
