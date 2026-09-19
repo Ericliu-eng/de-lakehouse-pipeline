@@ -5,6 +5,16 @@ from de_lakehouse_pipeline.backfill import parse_iso_date, validate_date_range, 
 from de_lakehouse_pipeline import backfill
 from datetime import date
 
+
+@pytest.fixture(autouse=True)
+def stub_daily_payload(monkeypatch):
+    payload = {
+        "Meta Data": {"2. Symbol": "AAPL", "5. Time Zone": "UTC"},
+        "Time Series (Daily)": {},
+    }
+    monkeypatch.setattr(backfill, "fetch_daily_stock", lambda symbol: payload)
+    return payload
+
 def test_parse_iso_date_returns_date_object():
     result = parse_iso_date("2026-01-01")
     assert result == date(2026, 1, 1)
@@ -60,7 +70,7 @@ def test_run_backfill_skips_completed_dates(tmp_path, monkeypatch):
 
     processed = []
 
-    def fake_run_backfill_for_date(target_date, symbol="AAPL"):
+    def fake_run_backfill_for_date(target_date, symbol="AAPL", payload=None):
         processed.append(target_date.isoformat())
 
     monkeypatch.setattr(backfill, "run_backfill_for_date", fake_run_backfill_for_date)
@@ -76,7 +86,7 @@ def test_run_backfill_marks_successful_dates_completed(tmp_path, monkeypatch):
 
     processed = []
 
-    def fake_run_backfill_for_date(target_date, symbol="AAPL"):
+    def fake_run_backfill_for_date(target_date, symbol="AAPL", payload=None):
         processed.append((target_date.isoformat(), symbol))
 
     def fake_load_completed_market_dates(symbol):
@@ -101,7 +111,7 @@ def test_run_backfill_passes_symbol_to_each_date(tmp_path, monkeypatch):
 
     processed = []
 
-    def fake_run_backfill_for_date(target_date, symbol="AAPL"):
+    def fake_run_backfill_for_date(target_date, symbol="AAPL", payload=None):
         processed.append((target_date.isoformat(), symbol))
 
     monkeypatch.setattr(backfill, "run_backfill_for_date", fake_run_backfill_for_date)
@@ -116,7 +126,7 @@ def test_run_backfill_does_not_mark_failed_date_completed(tmp_path, monkeypatch)
 
     completed_in_db = set()
 
-    def fake_run_backfill_for_date(target_date, symbol="AAPL"):
+    def fake_run_backfill_for_date(target_date, symbol="AAPL", payload=None):
         if target_date.isoformat() == "2026-01-02":
             raise RuntimeError("boom")
 
@@ -143,7 +153,7 @@ def test_backfill_keeps_stock_progress_separate(tmp_path, monkeypatch):
     completed = {}
     processed = []
 
-    def process(target_date, symbol):
+    def process(target_date, symbol, payload=None):
         processed.append(symbol)
         completed.setdefault(symbol, set()).add(target_date.isoformat())
 
@@ -173,7 +183,7 @@ def test_stale_or_legacy_checkpoint_does_not_skip_missing_db_rows(tmp_path, monk
     monkeypatch.setattr(backfill, "load_completed_market_dates", lambda symbol: set(processed))
     monkeypatch.setattr(
         backfill, "run_backfill_for_date",
-        lambda target_date, symbol: processed.append(target_date.isoformat()),
+        lambda target_date, symbol, payload=None: processed.append(target_date.isoformat()),
     )
     backfill.run_backfill(date(2026, 1, 1), date(2026, 1, 1))
     assert processed == ["2026-01-01"]
@@ -194,3 +204,33 @@ def test_checkpoint_replace_failure_preserves_previous_progress(tmp_path, monkey
         backfill.save_checkpoint({"2026-01-02"})
     assert path.read_bytes() == previous
     assert list(tmp_path.iterdir()) == [path]
+
+
+def test_run_backfill_fetches_daily_payload_once(tmp_path, monkeypatch):
+    monkeypatch.setattr(backfill, "CHECKPOINT_PATH", tmp_path / "checkpoint.json")
+    completed = set()
+    fetch_calls = []
+    payload = {
+        "Meta Data": {"2. Symbol": "MSFT", "5. Time Zone": "UTC"},
+        "Time Series (Daily)": {},
+    }
+
+    def fetch(symbol):
+        fetch_calls.append(symbol)
+        return payload
+
+    def process(target_date, symbol, payload=None):
+        assert payload is not None
+        completed.add(target_date.isoformat())
+
+    monkeypatch.setattr(backfill, "fetch_daily_stock", fetch)
+    monkeypatch.setattr(backfill, "run_backfill_for_date", process)
+    monkeypatch.setattr(
+        backfill,
+        "load_completed_market_dates",
+        lambda symbol: set(completed),
+    )
+
+    backfill.run_backfill(date(2026, 1, 1), date(2026, 1, 3), symbol="MSFT")
+
+    assert fetch_calls == ["MSFT"]

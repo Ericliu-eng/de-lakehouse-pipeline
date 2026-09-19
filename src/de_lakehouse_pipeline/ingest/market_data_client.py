@@ -37,6 +37,11 @@ def fetch_json_with_retry(params: dict, max_retries: int = 3) -> dict:
             if "Note" in payload:
                 raise RuntimeError(payload["Note"])
 
+            # Alpha Vantage may report throttling and subscription messages in
+            # an HTTP 200 response under "Information" rather than "Note".
+            if "Information" in payload:
+                raise RuntimeError(payload["Information"])
+
             if "Error Message" in payload:
                 raise ValueError(payload["Error Message"])
 
@@ -61,7 +66,13 @@ def fetch_json_with_retry(params: dict, max_retries: int = 3) -> dict:
 def fetch_daily_stock(symbol: str = "AAPL") -> dict:
     api_key = get_api_key()
     params = build_params(symbol, api_key)
-    return fetch_json_with_retry(params)
+    payload = fetch_json_with_retry(params)
+    required_keys = {"Meta Data", "Time Series (Daily)"}
+    missing_keys = required_keys.difference(payload)
+    if missing_keys:
+        missing = ", ".join(sorted(missing_keys))
+        raise ValueError(f"Alpha Vantage response is missing required keys: {missing}")
+    return payload
 
 def is_retryable_status_code(status_code: int) -> bool:
     """Return True if an HTTP status code should be retried."""
