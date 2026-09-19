@@ -119,11 +119,17 @@ def run_stock(symbol: str = "AAPL", root: Path | None = None,s3_client=None,) ->
         raise
 
     
-def run_stock_for_date(target_date: date,symbol: str = "AAPL",root: Path | None = None, s3_client=None,) -> Path:
+def run_stock_for_date(
+    target_date: date,
+    symbol: str = "AAPL",
+    root: Path | None = None,
+    s3_client=None,
+    payload: dict | None = None,
+) -> Path:
     logger.info("Starting stock pipeline for %s", target_date.isoformat())
     try:
         logger.info("Fetching stock data for symbol=%s", symbol)
-        data = fetch_daily_stock(symbol)
+        data = payload if payload is not None else fetch_daily_stock(symbol)
 
         file_path = save_raw_data(data, "stock", root,target_date)
         logger.info("Saved raw stock data to %s", file_path)

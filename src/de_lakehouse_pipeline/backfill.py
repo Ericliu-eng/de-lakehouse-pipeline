@@ -9,6 +9,7 @@ from pathlib import Path
 from collections.abc import Iterator
 
 from de_lakehouse_pipeline.pipeline import run_stock_for_date
+from de_lakehouse_pipeline.ingest.market_data_client import fetch_daily_stock
 from de_lakehouse_pipeline.load.db.stock_reader import load_completed_market_dates
 
 CHECKPOINT_PATH = Path(".checkpoints/backfill_checkpoint.json")
@@ -38,9 +39,13 @@ def iter_dates(start: date, end: date) -> Iterator[date]:
         yield current
         current += timedelta(days=1)
 
-def run_backfill_for_date(target_date: date, symbol: str = DEFAULT_SYMBOL) -> None:
+def run_backfill_for_date(
+    target_date: date,
+    symbol: str = DEFAULT_SYMBOL,
+    payload: dict | None = None,
+) -> None:
     print(f"Processing {target_date.isoformat()} for symbol={symbol}...")
-    run_stock_for_date(target_date, symbol=symbol)
+    run_stock_for_date(target_date, symbol=symbol, payload=payload)
 
 
 def sync_checkpoint_from_db(symbol: str) -> set[str]:
@@ -58,12 +63,25 @@ def run_backfill(start: date, end: date, symbol: str = DEFAULT_SYMBOL) -> None:
         raise ValueError("symbol must not be empty")
     completed_dates = sync_checkpoint_from_db(symbol)
 
+    pending_dates = [
+        target_date
+        for target_date in iter_dates(start, end)
+        if not is_date_completed(target_date, completed_dates)
+    ]
+    if not pending_dates:
+        print(f"No incomplete dates for symbol={symbol}")
+        return
+
+    # TIME_SERIES_DAILY returns a multi-date payload, so fetch it once and
+    # reuse it for every pending date instead of consuming one API call per day.
+    payload = fetch_daily_stock(symbol)
+
     for target_date in iter_dates(start, end):
         if is_date_completed(target_date, completed_dates):
             print(f"Skipping {target_date.isoformat()} (already completed)")
             continue
 
-        run_backfill_for_date(target_date, symbol=symbol)
+        run_backfill_for_date(target_date, symbol=symbol, payload=payload)
 
         db_dates = load_completed_market_dates(symbol)
         if target_date.isoformat() in db_dates:

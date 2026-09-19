@@ -27,7 +27,8 @@ For each date in the requested range, the backfill:
 1. Rebuilds checkpoint dates from PostgreSQL for the selected symbol and
    `alpha_vantage` source. Local-only dates never cause a skip.
 2. Skips dates already marked as completed.
-3. Fetches the Alpha Vantage daily payload and selects the target date.
+3. Fetches the Alpha Vantage daily payload once per symbol and selects each
+   target date from that shared response.
 4. Upserts matching rows into `market_bars` without the routine watermark
    filter.
 5. Keeps the greater of the existing and backfilled timestamps as the
@@ -81,7 +82,8 @@ Inspect the checkpoint with `Get-Content` in PowerShell or `cat` in Bash.
 
 - Concurrent checkpoint writers are not serialized; PostgreSQL reconciliation
   restores progress on the next run if a concurrent file update is lost.
-- Each target date triggers a separate Alpha Vantage request.
+- A backfill run makes one Alpha Vantage request per symbol. Dates outside the
+  returned API history cannot be loaded.
 - Historical availability is limited to dates returned by the API payload.
 - Weekend or unavailable dates are not marked complete because no database row
   is created.

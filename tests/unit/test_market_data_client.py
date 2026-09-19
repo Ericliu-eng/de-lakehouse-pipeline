@@ -4,7 +4,12 @@ import pytest
 import requests
 
 #把 .env 文件内容变成 Python 可以用的环境变量
-from de_lakehouse_pipeline.ingest.market_data_client import get_api_key,build_params,fetch_json_with_retry
+from de_lakehouse_pipeline.ingest.market_data_client import (
+    build_params,
+    fetch_daily_stock,
+    fetch_json_with_retry,
+    get_api_key,
+)
 load_dotenv()
 #unit test
 def test_get_api_key_when_env_exists() :
@@ -51,6 +56,42 @@ def test_fetch_json_with_retry_raises_value_error_on_api_error():
     with patch("de_lakehouse_pipeline.ingest.market_data_client.requests.get", return_value=mock_response):
         with pytest.raises(ValueError, match="Invalid API call."):
             fetch_json_with_retry({"symbol": "AAPL"})
+
+
+def test_fetch_json_with_retry_retries_information_response():
+    limited = Mock()
+    limited.raise_for_status.return_value = None
+    limited.json.return_value = {"Information": "API rate limit reached"}
+    success = Mock()
+    success.raise_for_status.return_value = None
+    success.json.return_value = {
+        "Meta Data": {"2. Symbol": "AAPL"},
+        "Time Series (Daily)": {},
+    }
+
+    with patch(
+        "de_lakehouse_pipeline.ingest.market_data_client.requests.get",
+        side_effect=[limited, success],
+    ) as mock_get, patch(
+        "de_lakehouse_pipeline.ingest.market_data_client.time.sleep"
+    ) as sleep:
+        result = fetch_json_with_retry({"symbol": "AAPL"})
+
+    assert result == success.json.return_value
+    assert mock_get.call_count == 2
+    sleep.assert_called_once_with(1)
+
+
+def test_fetch_daily_stock_rejects_payload_without_required_keys():
+    with patch(
+        "de_lakehouse_pipeline.ingest.market_data_client.get_api_key",
+        return_value="fake-key",
+    ), patch(
+        "de_lakehouse_pipeline.ingest.market_data_client.fetch_json_with_retry",
+        return_value={"unexpected": "payload"},
+    ):
+        with pytest.raises(ValueError, match="missing required keys"):
+            fetch_daily_stock("AAPL")
 
 #It keeps timing out, exceeding the maximum number of retries.
 def test_fetch_json_with_retry_raises_after_max_retries():
