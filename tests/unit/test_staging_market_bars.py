@@ -85,3 +85,23 @@ def test_staged_rows_to_db_tuples_converts_all_rows() -> None:
     rows = stage_alpha_vantage_daily(SAMPLE_PAYLOAD)
 
     assert staged_rows_to_db_tuples(rows) == [to_db_tuple(rows[0])]
+
+
+def test_stage_alpha_vantage_daily_rejects_missing_volume() -> None:
+    payload = {
+        "Meta Data": {
+            "2. Symbol": "AAPL",
+            "5. Time Zone": "UTC",
+        },
+        "Time Series (Daily)": {
+            "2026-09-18": {
+                "1. open": "100.0",
+                "2. high": "110.0",
+                "3. low": "95.0",
+                "4. close": "105.0",
+            }
+        },
+    }
+
+    with pytest.raises(ValueError, match="volume"):
+        stage_alpha_vantage_daily(payload)

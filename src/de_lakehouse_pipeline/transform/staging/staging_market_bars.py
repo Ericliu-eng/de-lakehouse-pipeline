@@ -3,7 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from zoneinfo import ZoneInfo
-
+from de_lakehouse_pipeline.quality.schema_validation import (
+    validate_stock_row_schema,
+)
 
 @dataclass(frozen=True)
 class StagedMarketBar:
@@ -17,6 +19,15 @@ class StagedMarketBar:
     source: str = "alpha_vantage"
 
 
+ALPHA_VANTAGE_FIELD_MAP = {
+    "open": "1. open",
+    "high": "2. high",
+    "low": "3. low",
+    "close": "4. close",
+    "volume": "5. volume",
+}
+
+
 def stage_alpha_vantage_daily(payload: dict) -> list[StagedMarketBar]:
     # dict.get(key, default)
     meta = payload.get("Meta Data", {})
@@ -26,19 +37,30 @@ def stage_alpha_vantage_daily(payload: dict) -> list[StagedMarketBar]:
     series = payload.get("Time Series (Daily)", {})
 
     rows = []
+
     for dt_str, values in series.items():
-        ts = datetime.strptime(dt_str, "%Y-%m-%d").replace(
-            tzinfo=ZoneInfo(tz_name)
-        )
+        canonical_row = {
+            "ts": datetime.strptime(dt_str, "%Y-%m-%d").replace(
+                tzinfo=ZoneInfo(tz_name)
+            ),
+            "symbol": symbol,
+        }
+
+        for field_name, source_field_name in ALPHA_VANTAGE_FIELD_MAP.items():
+            if source_field_name in values:
+                canonical_row[field_name] = values[source_field_name]
+
+        validate_stock_row_schema(canonical_row)
+
         rows.append(
             StagedMarketBar(
-                ts=ts,
-                symbol=symbol,
-                open=float(values["1. open"]),
-                high=float(values["2. high"]),
-                low=float(values["3. low"]),
-                close=float(values["4. close"]),
-                volume=int(values["5. volume"]),
+                ts=canonical_row["ts"],
+                symbol=canonical_row["symbol"],
+                open=float(canonical_row["open"]),
+                high=float(canonical_row["high"]),
+                low=float(canonical_row["low"]),
+                close=float(canonical_row["close"]),
+                volume=int(canonical_row["volume"]),
             )
         )
 

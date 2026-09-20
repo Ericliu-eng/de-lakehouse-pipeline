@@ -38,12 +38,16 @@ The warehouse business key is `(ts, symbol)`. Loads use upsert semantics, so a
 repeat of the same business key updates the existing row instead of appending a
 duplicate.
 
+## Staging Schema Validation
+
+The production staging path validates the canonical row before constructing a
+`StagedMarketBar`. Missing or null required fields fail before database access.
+
 ## Quality and Publication
 
 Before marts are rebuilt, the orchestrated quality gate checks non-null keys,
-business-key uniqueness, non-negative close and volume, and freshness. The
-current freshness implementation is global to the table; per-source/per-symbol
-scope is a release blocker tracked in `docs/PROJECT_STATUS.md`.
+business-key uniqueness, non-negative close and volume, and freshness for the
+active `(source, symbol)` partition.
 
 ## Compatibility Policy
 
