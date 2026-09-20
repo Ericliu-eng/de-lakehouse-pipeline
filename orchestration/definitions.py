@@ -10,26 +10,28 @@ from de_lakehouse_pipeline.transform.marts.mart_symbol_volume_rank import run_sy
 
 
 #from dagster
-@op(config_schema={"symbol": Field(str, default_value="AAPL")}, out=Out(Nothing))
-def ingest_stock(context):
+@op(config_schema={"symbol": Field(str, default_value="AAPL")}, out=Out(str))
+def ingest_stock(context) -> str:
     symbol = context.op_config["symbol"]
     run_stock(symbol)
+    return symbol
 
-@op(ins={"ingest_done":In(Nothing)}, out=Out(Nothing))
-def run_quality_checks(context):
+@op(ins={"symbol": In(str)}, out=Out(Nothing))
+def run_quality_checks(context, symbol: str):
     cfg = load_db_config()
     wait_for_db(cfg, timeout_s=60)
 
     with connect(cfg) as conn:
-        results= run_stock_quality_checks(conn)
-    failed  = [r for r in results if not r.passed]
-    messages = []
-    if failed :
-        for fail in failed :
-            message = f"{fail.check_name}: {fail.details}"
-            messages.append(message)
-        details = "; ".join(messages)   
+        results = run_stock_quality_checks(conn, symbol=symbol)
+
+    failed = [result for result in results if not result.passed]
+    if failed:
+        details = "; ".join(
+            f"{result.check_name}: {result.details}"
+            for result in failed
+        )
         raise RuntimeError(details)
+
     context.log.info(f"Quality checks passed: {len(results)}")
 
 

@@ -7,9 +7,11 @@ class FakeCursor:
     def __init__(self, rows):
         self.rows = rows
         self.executed_query = ""
+        self.executed_params = None
 
-    def execute(self, query):
+    def execute(self, query, params=None):
         self.executed_query = query
+        self.executed_params = params
 
     def fetchone(self):
         return self.rows.pop(0)
@@ -19,6 +21,7 @@ class FakeCursor:
 
     def __exit__(self, exc_type, exc_value, traceback):
         return False
+    
 
 class FakeConn:
     def __init__(self, rows):
@@ -174,3 +177,20 @@ def test_check_foreign_key_fails_when_child_values_are_missing() -> None:
     assert result.passed is False
     assert result.failed_rows == 2
     assert "missing from customers.id" in result.details
+
+#fail case 
+def test_check_freshness_filters_by_source_and_symbol():
+    conn = FakeConn([(20,)])
+
+    result = check_freshness(
+        conn,
+        table_name="market_bars",
+        timestamp_column="ts",
+        max_age_days=14,
+        source="alpha_vantage",
+        symbol="MSFT",
+    )
+
+    assert result.passed is False
+    assert "WHERE source = %s AND symbol = %s" in conn.cursor_obj.executed_query
+    assert conn.cursor_obj.executed_params == ("alpha_vantage", "MSFT")

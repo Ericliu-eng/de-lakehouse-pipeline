@@ -131,7 +131,24 @@ def check_freshness(
     table_name: str,
     timestamp_column: str,
     max_age_days: int,
+    source: str | None = None,
+    symbol: str | None = None,
 ) -> CheckResult:
+    conditions = []
+    parameters = []
+
+    if source is not None:
+        conditions.append("source = %s")
+        parameters.append(source)
+
+    if symbol is not None:
+        conditions.append("symbol = %s")
+        parameters.append(symbol)
+
+    where_clause = ""
+    if conditions:
+        where_clause = "WHERE " + " AND ".join(conditions)
+
     query = f"""
     SELECT
         CASE
@@ -139,11 +156,22 @@ def check_freshness(
             ELSE CURRENT_DATE - MAX({timestamp_column})::date
         END AS age_days
     FROM {table_name}
+    {where_clause}
     """
 
     with conn.cursor() as cur:
-        cur.execute(query)
+        cur.execute(query, tuple(parameters))
         age_days = cur.fetchone()[0]
+
+    scope = []
+    if source is not None:
+        scope.append(f"source={source}")
+    if symbol is not None:
+        scope.append(f"symbol={symbol}")
+
+    scope_description = ""
+    if scope:
+        scope_description = f" for {', '.join(scope)}"
 
     if age_days is None:
         return CheckResult(
@@ -151,7 +179,10 @@ def check_freshness(
             table_name=table_name,
             passed=False,
             failed_rows=1,
-            details=f"Table {table_name} has no timestamp data in {timestamp_column}.",
+            details=(
+                f"Table {table_name} has no timestamp data in "
+                f"{timestamp_column}{scope_description}."
+            ),
         )
 
     failed_rows = 0 if age_days <= max_age_days else 1
@@ -162,17 +193,30 @@ def check_freshness(
         passed=failed_rows == 0,
         failed_rows=failed_rows,
         details=(
-            f"Latest {timestamp_column} is {age_days} day(s) old; "
-            f"max allowed age is {max_age_days} day(s)."
+            f"Latest {timestamp_column}{scope_description} is "
+            f"{age_days} day(s) old; max allowed age is "
+            f"{max_age_days} day(s)."
         ),
     )
 
-def run_stock_quality_checks(conn: Any) -> list[CheckResult]:
+
+def run_stock_quality_checks(
+    conn: Any,
+    symbol: str,
+    source: str = "alpha_vantage",
+) -> list[CheckResult]:
     return [
         check_not_null(conn, "market_bars", "symbol"),
         check_not_null(conn, "market_bars", "ts"),
         check_unique(conn, "market_bars", "symbol, ts"),
         check_range(conn, "market_bars", "close", min_value=0),
         check_range(conn, "market_bars", "volume", min_value=0),
-        check_freshness(conn, "market_bars", "ts", max_age_days=14)
+        check_freshness(
+        conn,
+        "market_bars",
+        "ts",
+        max_age_days=14,
+        source=source,
+        symbol=symbol,
+    ),
     ]

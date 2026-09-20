@@ -70,7 +70,7 @@ def run_orchestrated_pipeline(symbol: str = "AAPL") -> PipelineMetric:
         pipeline_metric.finish(status="failed")
         return pipeline_metric
 
-    quality_step = run_step("run_quality_checks", _run_quality_checks)
+    quality_step = run_step("run_quality_checks",lambda: _run_quality_checks(symbol))
     pipeline_metric.add_step(quality_step)
     if quality_step.status == "failed":
         pipeline_metric.finish(status="failed")
@@ -99,12 +99,12 @@ def _run_stock_pipeline(symbol: str) -> None:
     run_stock(symbol=symbol)
 
 
-def _run_quality_checks() -> int:
+def _run_quality_checks(symbol: str) -> int:
     cfg = load_db_config()
     wait_for_db(cfg, timeout_s=60)
 
     with connect(cfg) as conn:
-        results = run_stock_quality_checks(conn)
+        results = run_stock_quality_checks(conn, symbol=symbol)
 
     failed_results = [result for result in results if not result.passed]
     if failed_results:
