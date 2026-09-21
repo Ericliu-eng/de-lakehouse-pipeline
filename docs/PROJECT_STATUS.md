@@ -1,104 +1,72 @@
 # Project Status and Completion Plan
 
-Last reviewed: 2026-09-17
+Last reviewed: 2026-09-20 (commit `7cd01e8`)
 
 ## Executive Status
 
-The repository demonstrates a complete local data-engineering path: API
-ingestion, raw retention, typed staging, PostgreSQL loading, incremental state,
-quality gates, analytical marts, orchestration, serving, tests, CI, and an
-infrastructure scaffold. It is a strong portfolio project, but three verified
-production-path gaps should be fixed before calling it resume-ready.
+The local data-engineering path is complete: API ingestion, raw retention,
+schema-validated staging, transactional PostgreSQL loading, incremental state,
+quality gates, analytical marts, orchestration, serving, tests, CI, and an S3
+infrastructure module. The three production-path gaps identified on 2026-09-17
+are closed. Remaining work is evidence, operational metrics, and release
+packaging.
 
-## Verified Today
+## Verified
 
 | Check | Result | Evidence |
 | --- | --- | --- |
-| Unit tests | 94 passed | `.venv/Scripts/python.exe -m pytest tests/unit -q` |
-| Static analysis | Passed | `.venv/Scripts/python.exe -m ruff check .` |
-| CI definition | Present | `.github/workflows/ci.yml` |
-| PostgreSQL integration coverage | Present, not rerun in this review | `tests/integration/` and DB smoke tests |
-| Terraform validation in CI | Configured, not rerun in this review | `make terraform-validate` in CI |
+| Static analysis | Passed | `python -m ruff check .` |
+| Full test suite | 126 passed | Fresh PostgreSQL 16 database, migrations and seed applied |
+| Tests without PostgreSQL | 111 passed | `python -m pytest tests -m "not db"` |
+| GitHub CI on `main` | Success | [CI run](https://github.com/Ericliu-eng/de-lakehouse-pipeline/actions/runs/35535480549) |
 
-Do not interpret this table as proof that the live Alpha Vantage, AWS, or full
-database-backed path ran successfully on this date. New proof belongs under
-`docs/proof/` and should include the exact command, result, date, and relevant
-environment assumptions without including secrets.
+The live Alpha Vantage API and AWS were not called in this review. New proof
+belongs under `docs/proof/` with the exact command, result, date, and relevant
+environment assumptions, without secrets.
 
-## Release Blockers
+## Closed Since 2026-09-17
 
-### P0 - Make enabled S3 upload executable
+| Item | Resolution |
+| --- | --- |
+| S3 upload not executable when enabled | Runtime creates a boto3 client when none is supplied (#78) |
+| Freshness satisfied by unrelated symbols | Freshness is scoped to the active `(source, symbol)` (#80) |
+| Schema validator off the production path | Staging validates required fields before warehouse writes (#81) |
 
-`run_stock()` and `run_stock_for_date()` call
-`upload_raw_payload_if_enabled()` without an `s3_client`. When
-`ENABLE_S3_RAW_UPLOAD=true`, the adapter requires that client and raises
-`CloudStorageConfigError`. Unit tests pass because they inject a fake client
-directly into the adapter; they do not prove the main pipeline path.
+## Open Items
 
-Definition of done:
+### Security
 
-- the runtime creates or receives an S3 client when upload is enabled;
-- disabled upload remains dependency-free and safe by default;
-- one test executes the main pipeline with upload enabled and a fake client;
-- `docs/CLOUD_STORAGE.md` contains the exact runtime configuration and failure
-  behavior.
+- Rotate the Alpha Vantage API key that appears in early commit history, then
+  plan history cleanup and collaborator coordination.
 
-### P0 - Scope freshness to the data being published
+### Evidence
 
-`check_freshness()` currently calculates `MAX(ts)` over all of `market_bars`.
-A fresh AAPL row can therefore hide stale MSFT data. The check should accept
-filters (at minimum `source` and `symbol`) or run grouped checks and fail when
-any required partition is stale.
+- Complete the live S3 upload note with the object key and a read-back.
+- Add result screenshots for the three demo mart queries.
+- Record primary-key hashes before and after an idempotent rerun.
+- Demonstrate a real interrupted backfill resuming without gaps.
+- Add a compatibility test that upgrades a populated older schema.
 
-Definition of done:
+### Engineering
 
-- freshness cannot be satisfied by an unrelated symbol or source;
-- tests cover one fresh and one stale symbol in the same table;
-- orchestration passes the active source/symbol context to the gate;
-- the documented 14-day threshold matches the implemented behavior.
+- Persist a `pipeline_runs` record with status, duration, and accurate loaded
+  row counts; add a failure-rate query and wire SLA helpers to it.
+- Add a force-reprocess option for historical date corrections.
+- Document that the FK quality check does not apply because the stock model has
+  no parent dimension table.
 
-### P0 - Put schema validation on the production path
+### Release
 
-`quality/schema_validation.py` defines and tests required fields, but staging
-does not call it. Connect validation to the boundary where source records are
-converted into typed rows, and add a failure-path test using a malformed source
-record.
-
-Definition of done:
-
-- malformed records fail before a database write;
-- the error identifies the missing or invalid field;
-- the production-path test proves the validator was invoked.
-
-## What To Do Today
-
-Keep today's scope to one reviewable pull request that closes the three P0
-items. Suggested order:
-
-1. Write failing production-path tests for S3 client injection, per-symbol
-   freshness, and malformed source records.
-2. Implement the smallest fixes needed to make those tests pass.
-3. Run `make lint` and `make unit`; then start PostgreSQL, migrate, and run
-   `make test` if Docker is available.
-4. Capture the commands and results in a dated `docs/proof/` note.
-5. Update this file by moving completed items to the verified table and open a
-   pull request with the CI result linked.
-
-Avoid adding Spark, Snowflake, Airflow, or dbt today. Those are useful only
-after this repository's existing execution path is demonstrably correct.
-
-## Next After The P0 Fixes
-
-1. Record one clean-clone setup and a two-to-four-minute demo path.
-2. Add screenshots of the mart queries and serving dashboard.
-3. Tag `v1.0.0` and publish a GitHub release with a short changelog.
-4. Consider a `pipeline_runs` history table and persisted SLA metrics as a
-   post-v1 reliability extension.
+- Run the README quickstart from a clean clone.
+- Record a two-to-four-minute demo: ingest -> quality gate -> marts -> serving.
+- Publish a new release on the verified commit. The existing
+  [v1.0.0](https://github.com/Ericliu-eng/de-lakehouse-pipeline/releases/tag/v1.0.0)
+  predates the September fixes.
 
 ## Resume-Ready Exit Criteria
 
-- all three P0 issues above are closed by tests on the real execution path;
-- local full-suite and GitHub CI results are recorded;
+- the historical API key is rotated;
 - the README quickstart works from a clean clone;
+- local full-suite and GitHub CI results are recorded for the release commit;
 - a short demo shows ingest -> quality gate -> marts -> serving;
-- release `v1.0.0` points to the verified commit.
+- a release points to the verified commit.

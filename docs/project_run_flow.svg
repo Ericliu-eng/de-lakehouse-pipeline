@@ -1,118 +1,174 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
-  <title id="title">Market Data Lakehouse project run flow</title>
-  <desc id="desc">Simplified run flow from local setup through ingestion, storage, quality checks, marts, serving, and operations.</desc>
-
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1336" viewBox="0 0 1440 1336" role="img" aria-labelledby="title desc">
+  <title id="title">Market Data Lakehouse — project run flow</title>
+  <desc id="desc">Set up the environment and PostgreSQL, then run the CLI orchestrator or Dagster job. Ingestion fetches Alpha Vantage prices, saves a daily local JSON file, optionally uploads to S3, validates and types records, and filters by source and symbol watermark. Raw files are overwritten on same-day reruns. S3 upload failures stop ingestion before staging. Market bars, watermark, and load audit commit in one database transaction or roll back together. No new rows means no database writes; orchestration still runs quality checks. After ingestion, quality checks verify non-null and unique keys, non-negative close and volume, and freshness within 14 days for the active source and symbol. Passing checks allow three marts to be rebuilt in a separate transaction. Failed checks stop the rebuild without rolling back committed ingestion. The separately started FastAPI service reads the latest-price mart. Backfill is a separate ingestion command.</desc>
   <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
-    </marker>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10Z" fill="#52657b"/></marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10Z" fill="#8060b3"/></marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10Z" fill="#bf5252"/></marker>
     <style>
-      .bg { fill: #ffffff; }
-      .title { font: 700 30px "Segoe UI", Arial, sans-serif; fill: #111827; }
-      .subtitle { font: 15px "Segoe UI", Arial, sans-serif; fill: #64748b; }
-      .section { fill: #f8fafc; stroke: #d9e2ec; stroke-width: 1.2; rx: 12; }
-      .section-title { font: 700 13px "Segoe UI", Arial, sans-serif; fill: #334155; letter-spacing: .7px; }
-      .box { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.4; rx: 10; }
-      .box-accent { fill: #f0f9ff; stroke: #7dd3fc; }
-      .box-store { fill: #f8fafc; stroke: #94a3b8; }
-      .box-check { fill: #fef2f2; stroke: #fca5a5; }
-      .box-output { fill: #f0fdf4; stroke: #86efac; }
-      .box-title { font: 700 16px "Segoe UI", Arial, sans-serif; fill: #111827; }
-      .box-text { font: 13px "Segoe UI", Arial, sans-serif; fill: #475569; }
-      .mono { font: 12.5px Consolas, "Courier New", monospace; fill: #334155; }
-      .arrow { fill: none; stroke: #475569; stroke-width: 2; marker-end: url(#arrow); }
-      .arrow-soft { fill: none; stroke: #94a3b8; stroke-width: 1.8; stroke-dasharray: 6 6; marker-end: url(#arrow); }
-      .note { font: 13px "Segoe UI", Arial, sans-serif; fill: #64748b; }
+      text { font-family: "Segoe UI", Arial, sans-serif; fill: #213349; }
+      .title { font-size: 36px; font-weight: 700; letter-spacing: -.8px; }
+      .subtitle { font-size: 19px; fill: #596b80; }
+      .lane { fill: #f7f9fc; stroke: #dce4ed; stroke-width: 1.2; }
+      .lane-title { font-size: 17px; font-weight: 700; letter-spacing: 1.3px; }
+      .lane-note { font-size: 17px; fill: #63748a; }
+      .number { font-size: 16px; font-weight: 700; fill: #ffffff; text-anchor: middle; }
+      .card { fill: #ffffff; stroke: #cbd6e3; stroke-width: 1.4; }
+      .card-title { font-size: 22px; font-weight: 650; }
+      .body { font-size: 18px; fill: #475b72; }
+      .small { font-size: 16px; fill: #63748a; }
+      .mono { font-family: Consolas, "Courier New", monospace; font-size: 18px; fill: #2e4964; }
+      .mono-small { font-family: Consolas, "Courier New", monospace; font-size: 16px; fill: #2e4964; }
+      .label { font-size: 14px; font-weight: 700; letter-spacing: 1px; fill: #52657b; }
+      .flow { fill: none; stroke: #52657b; stroke-width: 2; stroke-linejoin: round; marker-end: url(#arrow); }
+      .optional { fill: none; stroke: #8060b3; stroke-width: 1.8; stroke-dasharray: 5 5; stroke-linejoin: round; marker-end: url(#arrow-purple); }
+      .failure { fill: none; stroke: #bf5252; stroke-width: 2; marker-end: url(#arrow-red); }
+      .green { fill: #23785c; }
+      .red { fill: #a84646; }
     </style>
   </defs>
 
-  <rect class="bg" width="1200" height="720"/>
+  <rect width="1440" height="1336" fill="#ffffff"/>
+  <text class="label" x="64" y="39">PROJECT EXECUTION MAP</text>
+  <text class="title" x="64" y="83">Market Data Lakehouse</text>
+  <text class="subtitle" x="64" y="114">From daily market prices to validated analytical tables and a live query service.</text>
 
-  <text class="title" x="56" y="64">Market Data Lakehouse Run Flow</text>
-  <text class="subtitle" x="56" y="92">Local setup, incremental ingestion, quality checks, curated marts, and serving.</text>
+  <!-- One-time prerequisites. -->
+  <rect class="lane" x="40" y="146" width="1360" height="112" rx="16"/>
+  <circle cx="82" cy="180" r="16" fill="#63748a"/>
+  <text class="number" x="82" y="186">1</text>
+  <text class="lane-title" x="112" y="186">SETUP</text>
+  <text class="lane-note" x="64" y="220">Once per environment</text>
+  <rect class="card" x="272" y="166" width="344" height="72" rx="10"/>
+  <text class="mono" x="292" y="194">make setup</text>
+  <text class="body" x="292" y="222">Configure .env + API key</text>
+  <path class="flow" d="M616 202H664"/>
+  <rect class="card" x="664" y="166" width="296" height="72" rx="10"/>
+  <text class="mono" x="684" y="194">make db-up</text>
+  <text class="body" x="684" y="222">Start PostgreSQL 16</text>
+  <path class="flow" d="M960 202H1008"/>
+  <rect class="card" x="1008" y="166" width="368" height="72" rx="10"/>
+  <text class="mono" x="1028" y="194">make db-migrate</text>
+  <text class="body" x="1028" y="222">Apply warehouse + mart schemas</text>
 
-  <rect class="section" x="48" y="124" width="1104" height="122"/>
-  <text class="section-title" x="72" y="156">SETUP</text>
+  <!-- Orchestration owns ingestion, quality, and the mart build. -->
+  <rect x="40" y="282" width="1360" height="112" rx="16" fill="#edf5ff" stroke="#c8ddf4" stroke-width="1.2"/>
+  <circle cx="82" cy="316" r="16" fill="#3975b4"/>
+  <text class="number" x="82" y="322">2</text>
+  <text class="lane-title" x="112" y="322">RUN</text>
+  <text class="lane-note" x="64" y="356">Choose one entry</text>
+  <text class="label" x="272" y="309">FULL WORKFLOW</text>
+  <text class="mono" x="272" y="339" style="font-size:24px;font-weight:700">make orchestrate SYMBOL=AAPL</text>
+  <text class="body" x="272" y="370">Ingest → quality gate → build marts</text>
+  <path d="M866 304V372" stroke="#c8ddf4"/>
+  <text class="label" x="898" y="309">ALTERNATIVE · DAGSTER</text>
+  <text class="mono" x="898" y="339">make dagster-dev</text>
+  <text class="body" x="898" y="369">Launch stock_lakehouse_job; enable schedule if needed.</text>
 
-  <rect class="box box-accent" x="214" y="166" width="200" height="54"/>
-  <text class="box-title" x="236" y="189">Environment</text>
-  <text class="mono" x="236" y="211">make setup</text>
+  <!-- Solid arrows: execution order. Dashed arrows: optional synchronous S3 hook. -->
+  <rect class="lane" x="40" y="418" width="1360" height="420" rx="16"/>
+  <path class="flow" d="M392 394V406H248V534H272"/>
+  <circle cx="82" cy="452" r="16" fill="#3975b4"/>
+  <text class="number" x="82" y="458">3</text>
+  <text class="lane-title" x="112" y="458">INGEST</text>
+  <text class="lane-note" x="64" y="492">Extract, stage, load</text>
+  <text class="mono-small" x="64" y="548">run_stock()</text>
+  <text class="small" x="64" y="577">Standalone ingestion:</text>
+  <text class="mono-small" x="64" y="602">make run SYMBOL=AAPL</text>
+  <text class="label" x="272" y="450">DAILY PRICES · ONE SYMBOL PER RUN</text>
 
-  <rect class="box box-accent" x="500" y="166" width="200" height="54"/>
-  <text class="box-title" x="522" y="189">Database</text>
-  <text class="mono" x="522" y="211">make db-up</text>
+  <rect class="card" x="272" y="478" width="240" height="112" rx="12"/>
+  <text class="card-title" x="292" y="510">Extract</text>
+  <text class="body" x="292" y="539">Alpha Vantage API</text>
+  <text class="small" x="292" y="565">Bounded retries + backoff</text>
+  <path class="flow" d="M512 534H560"/>
+  <rect class="card" x="560" y="478" width="240" height="112" rx="12"/>
+  <text class="card-title" x="580" y="510">Save raw JSON</text>
+  <text class="body" x="580" y="539">Daily local file</text>
+  <text class="small" x="580" y="565">Same-day reruns overwrite</text>
+  <path class="flow" d="M800 534H848"/>
+  <rect class="card" x="848" y="478" width="240" height="112" rx="12"/>
+  <text class="card-title" x="868" y="510">Validate + type</text>
+  <text class="body" x="868" y="539">Required-field checks</text>
+  <text class="small" x="868" y="565">Canonical typed records</text>
+  <path class="flow" d="M1088 534H1136"/>
+  <rect class="card" x="1136" y="478" width="240" height="112" rx="12"/>
+  <text class="card-title" x="1156" y="510">Watermark filter</text>
+  <text class="mono" x="1156" y="539">ts &gt; watermark</text>
+  <text class="small" x="1156" y="565">Per (source, symbol)</text>
 
-  <rect class="box box-store" x="786" y="166" width="200" height="54"/>
-  <text class="box-title" x="808" y="189">Schema</text>
-  <text class="mono" x="808" y="211">make db-migrate</text>
+  <path class="optional" d="M680 590V616"/>
+  <rect x="552" y="616" width="272" height="48" rx="9" fill="#f5f0fc" stroke="#b5a0d5"/>
+  <text x="570" y="636" style="font-size:17px;font-weight:650;fill:#6a4c98">Optional S3 raw copy</text>
+  <text class="small" x="570" y="655">Upload failure stops ingestion</text>
+  <path class="optional" d="M824 640H836V574H848"/>
+  <text class="small" x="868" y="626">No new rows?</text>
+  <text class="small" x="868" y="649">Skip writes; still run quality.</text>
+  <path class="flow" d="M1256 590V684"/>
+  <text class="small" x="1272" y="641">New rows</text>
 
-  <path class="arrow" d="M414 193 H500"/>
-  <path class="arrow" d="M700 193 H786"/>
+  <!-- Fact rows and both metadata writes share a connection transaction. -->
+  <rect x="272" y="684" width="1104" height="120" rx="12" fill="#edf4fa" stroke="#aac3da" stroke-width="1.4"/>
+  <text class="label" x="292" y="710">POSTGRESQL · ONE LOAD TRANSACTION</text>
+  <text class="small" x="1036" y="710">All writes commit or roll back together</text>
+  <rect class="card" x="292" y="726" width="332" height="60" rx="8"/>
+  <text class="mono" x="308" y="750">market_bars</text>
+  <text class="small" x="308" y="772">Upsert on (ts, symbol)</text>
+  <rect class="card" x="648" y="726" width="332" height="60" rx="8"/>
+  <text class="mono" x="664" y="750">pipeline_metadata</text>
+  <text class="small" x="664" y="772">Advance the source / symbol watermark</text>
+  <rect class="card" x="1004" y="726" width="352" height="60" rx="8"/>
+  <text class="mono" x="1020" y="750">load_metadata</text>
+  <text class="small" x="1020" y="772">Persist successful load audit</text>
+  <text class="mono-small" x="580" y="826">Local raw: data/raw/YYYY-MM-DD/SYMBOL/stock.json</text>
 
-  <rect class="section" x="48" y="278" width="1104" height="206"/>
-  <text class="section-title" x="72" y="310">INGESTION</text>
-  <text class="note" x="874" y="310">Entry point: make run SYMBOL=AAPL</text>
+  <!-- Quality runs after the load commits, outside its transaction. -->
+  <rect class="lane" x="40" y="880" width="1360" height="276" rx="16"/>
+  <path class="flow" d="M418 804V934"/>
+  <text class="small" x="436" y="861">After ingestion commits</text>
+  <circle cx="82" cy="914" r="16" fill="#2d896b"/>
+  <text class="number" x="82" y="920">4</text>
+  <text class="lane-title" x="112" y="920">DELIVER</text>
+  <text class="lane-note" x="64" y="954">Check, build, query</text>
+  <text class="small" x="64" y="1008">Quality failure stops</text>
+  <text class="small" x="64" y="1032">downstream processing.</text>
 
-  <rect class="box box-accent" x="84" y="342" width="158" height="70"/>
-  <text class="box-title" x="106" y="368">Run CLI</text>
-  <text class="mono" x="106" y="393">run_stock()</text>
+  <rect x="272" y="934" width="292" height="144" rx="12" fill="#fffbef" stroke="#dfc77e" stroke-width="1.4"/>
+  <text class="card-title" x="292" y="966">Quality gate</text>
+  <text class="body" x="292" y="997">Non-null + unique keys</text>
+  <text class="body" x="292" y="1026">Close / volume ≥ 0</text>
+  <text class="body" x="292" y="1055">Scoped freshness ≤ 14d</text>
+  <path class="flow" d="M564 1006H624"/>
+  <text class="label green" x="574" y="990">PASS</text>
+  <rect x="624" y="934" width="364" height="144" rx="12" fill="#eff9f4" stroke="#9bceb8" stroke-width="1.4"/>
+  <text class="card-title" x="644" y="966">Build 3 marts</text>
+  <text class="mono-small" x="644" y="997">mart_daily_symbol_summary</text>
+  <text class="mono-small" x="644" y="1022">mart_symbol_latest_price</text>
+  <text class="mono-small" x="644" y="1047">mart_symbol_volume_rank</text>
+  <text class="small" x="644" y="1070">Separate transaction · one commit</text>
+  <path class="flow" d="M988 1006H1048"/>
+  <text class="label" x="996" y="990">READ</text>
+  <text class="label" x="1068" y="918">START SEPARATELY</text>
+  <rect x="1048" y="934" width="328" height="144" rx="12" fill="#ffffff" stroke="#9bceb8" stroke-width="1.4"/>
+  <text class="card-title" x="1068" y="966">FastAPI + dashboard</text>
+  <text class="body" x="1068" y="997">Reads the latest-price mart</text>
+  <text class="mono-small" x="1068" y="1026">/latest-price · /dashboard</text>
+  <text class="mono-small" x="1068" y="1055">python -m src.serve.api</text>
 
-  <rect class="box" x="284" y="342" width="158" height="70"/>
-  <text class="box-title" x="306" y="368">Extract</text>
-  <text class="box-text" x="306" y="393">Alpha Vantage</text>
+  <path class="failure" d="M418 1078V1102"/>
+  <rect x="272" y="1102" width="716" height="36" rx="8" fill="#fff1f1" stroke="#e2b0b0"/>
+  <text x="292" y="1126" class="body red"><tspan font-weight="700">FAIL</tspan><tspan dx="12">Stop before marts; committed ingestion is retained.</tspan></text>
+  <text class="small" x="1068" y="1126">Local service · 127.0.0.1:8000</text>
 
-  <rect class="box" x="484" y="342" width="158" height="70"/>
-  <text class="box-title" x="506" y="368">Raw JSON</text>
-  <text class="box-text" x="506" y="393">Immutable copy</text>
-
-  <rect class="box" x="684" y="342" width="158" height="70"/>
-  <text class="box-title" x="706" y="368">Normalize</text>
-  <text class="box-text" x="706" y="393">Typed rows</text>
-
-  <rect class="box" x="884" y="342" width="184" height="70"/>
-  <text class="box-title" x="906" y="368">Incremental Load</text>
-  <text class="box-text" x="906" y="393">Watermark + upsert</text>
-
-  <path class="arrow" d="M242 377 H284"/>
-  <path class="arrow" d="M442 377 H484"/>
-  <path class="arrow" d="M642 377 H684"/>
-  <path class="arrow" d="M842 377 H884"/>
-
-  <rect class="box box-store" x="266" y="436" width="184" height="32"/>
-  <text class="box-text" x="286" y="457">market_bars</text>
-
-  <rect class="box box-store" x="508" y="436" width="184" height="32"/>
-  <text class="box-text" x="528" y="457">pipeline_metadata</text>
-
-  <rect class="box box-store" x="750" y="436" width="184" height="32"/>
-  <text class="box-text" x="770" y="457">load_metadata</text>
-
-  <path class="arrow-soft" d="M976 412 C976 430 842 430 842 436"/>
-  <path class="arrow-soft" d="M976 412 C976 430 600 430 600 436"/>
-  <path class="arrow-soft" d="M976 412 C976 430 358 430 358 436"/>
-
-  <rect class="section" x="48" y="516" width="1104" height="122"/>
-  <text class="section-title" x="72" y="548">DELIVERY</text>
-
-  <rect class="box box-accent" x="172" y="558" width="190" height="54"/>
-  <text class="box-title" x="194" y="581">Orchestrate</text>
-  <text class="mono" x="194" y="603">make orchestrate</text>
-
-  <rect class="box box-check" x="420" y="558" width="190" height="54"/>
-  <text class="box-title" x="442" y="581">Quality Gate</text>
-  <text class="box-text" x="442" y="603">Nulls + uniqueness</text>
-
-  <rect class="box box-output" x="668" y="558" width="190" height="54"/>
-  <text class="box-title" x="690" y="581">Marts</text>
-  <text class="mono" x="690" y="603">make run-marts</text>
-
-  <rect class="box box-output" x="916" y="558" width="190" height="54"/>
-  <text class="box-title" x="938" y="581">Serve</text>
-  <text class="box-text" x="938" y="603">API + dashboard</text>
-
-  <path class="arrow" d="M362 585 H420"/>
-  <path class="arrow" d="M610 585 H668"/>
-  <path class="arrow" d="M858 585 H916"/>
-
-  <text class="note" x="56" y="680">Operational commands: make backfill START=... END=...  |  make lint  |  make test</text>
+  <!-- Side commands clarify which stages they run. -->
+  <rect class="lane" x="40" y="1180" width="1360" height="124" rx="16"/>
+  <text class="lane-title" x="64" y="1215">OTHER COMMANDS</text>
+  <text class="lane-note" x="64" y="1245">Recovery + checks</text>
+  <text class="mono" x="272" y="1214">make backfill START=... END=... SYMBOL=AAPL</text>
+  <text class="body" x="272" y="1243">Resume missing dates in the returned API data; ingestion only.</text>
+  <text class="small" x="272" y="1277">Manual mart rebuild: make run-marts (bypasses the quality gate)</text>
+  <path d="M940 1202V1282" stroke="#dce4ed"/>
+  <text class="mono" x="972" y="1214">make lint · make test</text>
+  <text class="body" x="972" y="1243">Static checks + automated tests</text>
+  <text class="small" x="972" y="1277">make test includes database-backed tests.</text>
 </svg>

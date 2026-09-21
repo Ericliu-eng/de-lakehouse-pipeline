@@ -23,7 +23,33 @@ Bash:
 cp .env.example .env
 ```
 
-Update `.env` if your local PostgreSQL settings differ from the defaults.
+Activate the virtual environment in each new terminal after `make setup`:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+```bash
+source .venv/bin/activate
+```
+
+If PowerShell blocks activation, replace `python` with
+`.\.venv\Scripts\python.exe`. Make targets already select the virtual
+environment.
+
+## Database Connection
+
+The defaults match the PostgreSQL service in `docker-compose.yml`:
+`localhost:5432`, with database, user, and password all set to `lakehouse`.
+
+The ingestion module loads `.env`. Standalone migration, seed, and serving
+commands read `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD`
+from the process environment. If you change the connection, export these
+variables in the shell that runs those commands; editing `.env` alone is not
+sufficient for those entry points.
+
+Keep credentials in your local environment or the ignored `.env` file. Exclude
+them from source code, command URLs, logs, and proof screenshots.
 
 ## Install and Validate
 
@@ -54,7 +80,11 @@ make db-seed
 make test
 ```
 
-Live ingestion also requires `ALPHA_VANTAGE_API_KEY`.
+Fixtures delete selected test-date rows and rebuild marts, so use a disposable
+development database. The seed inserts a small `TEST` fixture; it does not
+populate the serving marts.
+
+Live ingestion also requires `ALPHA_VANTAGE_API_KEY` in `.env`.
 
 ## Shutdown
 
