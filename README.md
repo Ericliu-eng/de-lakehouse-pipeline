@@ -50,6 +50,26 @@ AWS S3 · Terraform · pytest · Ruff · GitHub Actions.
 | Orchestration | CLI runner with failure exit codes; Dagster job with explicit dependencies and a daily schedule definition |
 | Serving | Database-backed price endpoint and HTML dashboard |
 
+## Measured Results
+
+From [the September 25, 2026 benchmark](docs/proof/2026-09-25-benchmark.md)
+(`make benchmark`): saved Alpha Vantage payloads for 10 symbols were replayed
+into a dedicated PostgreSQL 16 database on a local Windows machine.
+
+| Metric | Result |
+| --- | --- |
+| Warehouse size | 1,000 daily bars · 10 symbols · 2026-04-28 to 2026-09-18 |
+| Rerun of identical payloads | 0 new rows, 0 duplicate keys, watermarks unchanged |
+| Incremental run | 50 of 1,000 staged rows loaded (5 new days × 10 symbols) |
+| Rejected audit write | No partial writes across `market_bars`, `pipeline_metadata`, `load_metadata` |
+| Backfill crash after 4 of 9 trading days | Resume loads the other 5; 0 gaps, 0 duplicates, 1 API fetch per run |
+| Quality gate | 2 of 2 injected bad rows caught; marts not rebuilt |
+| API retry | 429 → 503 → 200 succeeds on attempt 3; persistent 429 stops after 4 attempts (1 s, 2 s, 4 s backoff) |
+| End-to-end latency (ingest → quality → marts) | Median 171 ms per symbol; 1.7 s for 10 symbols |
+
+These are local measurements at small scale, not production SLAs. Retry
+results use scripted HTTP responses rather than live throttling.
+
 ## Quickstart
 
 **Prerequisites:** Python 3.10+, Git, GNU Make, and Docker with Compose (port
@@ -221,6 +241,7 @@ resources; it requires Terraform 1.5+ and network access for provider installati
 | `make test` | Default unit, smoke, and integration validation |
 | `make test-all` | Collect and run every test under `tests/` |
 | `make terraform-validate` | Terraform formatting, initialization, and validation |
+| `make benchmark` | Replay saved payloads in a throwaway database and write a results report |
 
 CI runs on pull requests and pushes to `main`. It provisions PostgreSQL 16,
 installs dependencies, migrates and seeds the database, runs Ruff and
