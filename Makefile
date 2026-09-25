@@ -1,7 +1,7 @@
 # Tell make: these names are targets, not files.
 .PHONY: help setup lint clean
 .PHONY: unit smoke smoke-db integration test test-all test-s
-.PHONY: run run-marts backfill dagster-dev orchestrate price-dashboard
+.PHONY: run run-marts backfill dagster-dev orchestrate price-dashboard benchmark
 .PHONY: cloud-storage-test terraform-check terraform-validate tree
 .PHONY: db-up db-down db-migrate migrate db-seed
 .PHONY: db-smoke db-smoke-local db-shell db-visu sql-utils
@@ -33,6 +33,7 @@ help:
 	@echo "  run           Run stock pipeline"
 	@echo "  run-marts     Build analytical marts"
 	@echo "  backfill      Run date-range backfill with START, END, and optional SYMBOL"
+	@echo "  benchmark     Replay saved payloads and write a results report to docs/proof"
 	@echo "  cloud-storage-test Run AWS S3 raw storage unit tests"
 
 setup:
@@ -90,6 +91,9 @@ dagster-dev:
 
 orchestrate:
 	$(PY) -m orchestration.dagster_pipeline --symbol $(SYMBOL)
+
+benchmark:
+	$(PY) -m scripts.benchmark
 
 cloud-storage-test:
 	$(PY) -m pytest tests/unit/test_cloud_storage.py -v
