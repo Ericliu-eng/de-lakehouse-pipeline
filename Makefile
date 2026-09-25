@@ -1,6 +1,6 @@
 # Tell make: these names are targets, not files.
 .PHONY: help setup lint clean
-.PHONY: unit smoke smoke-db integration test test-all test-s
+.PHONY: unit smoke smoke-db integration test test-all test-s coverage
 .PHONY: run run-marts backfill dagster-dev orchestrate price-dashboard benchmark
 .PHONY: cloud-storage-test terraform-check terraform-validate tree
 .PHONY: db-up db-down db-migrate migrate db-seed
@@ -27,6 +27,7 @@ help:
 	@echo "  integration   Run DB-backed integration tests"
 	@echo "  test          Run default local validation"
 	@echo "  test-all      Run the full test suite"
+	@echo "  coverage      Run the full test suite with a line coverage report"
 	@echo "  db-up         Start Postgres"
 	@echo "  migrate       Apply DB migrations"
 	@echo "  db-seed       Seed DB"
@@ -69,6 +70,9 @@ test: unit smoke smoke-db integration
 
 test-all:
 	$(PY) -m pytest tests -v
+
+coverage:
+	$(PY) -m pytest tests -q --cov --cov-report=term-missing
 
 test-s:
 	$(PY) -m pytest tests -s

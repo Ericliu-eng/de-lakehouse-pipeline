@@ -1,4 +1,5 @@
 pytest              # tests
+pytest-cov          # coverage report
 ruff==0.15.8        # lint: keep local and CI checks reproducible
 pandas              # dataframe / SQL read
 psycopg[binary]     # Postgres

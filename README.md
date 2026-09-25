@@ -66,6 +66,7 @@ into a dedicated PostgreSQL 16 database on a local Windows machine.
 | Quality gate | 2 of 2 injected bad rows caught; marts not rebuilt |
 | API retry | 429 → 503 → 200 succeeds on attempt 3; persistent 429 stops after 4 attempts (1 s, 2 s, 4 s backoff) |
 | End-to-end latency (ingest → quality → marts) | Median 171 ms per symbol; 1.7 s for 10 symbols |
+| Test suite | 126 tests; 74% line coverage (85–100% for ingestion, staging, loading, quality, and backfill modules) |
 
 These are local measurements at small scale, not production SLAs. Retry
 results use scripted HTTP responses rather than live throttling.
@@ -240,6 +241,7 @@ resources; it requires Terraform 1.5+ and network access for provider installati
 | `make integration` | Marts, metadata, and transactional rollback tests |
 | `make test` | Default unit, smoke, and integration validation |
 | `make test-all` | Collect and run every test under `tests/` |
+| `make coverage` | Run every test with a line coverage report for `src/` and `orchestration/` |
 | `make terraform-validate` | Terraform formatting, initialization, and validation |
 | `make benchmark` | Replay saved payloads in a throwaway database and write a results report |
 
@@ -254,6 +256,13 @@ Coverage includes retry exhaustion, malformed source records, incremental
 reruns, checkpoint recovery, quality-gate failures, and real PostgreSQL rollback
 after a rejected audit write. It does not constitute a fresh-clone installation
 test or a live AWS/API benchmark.
+
+On September 25, `make coverage` against a freshly migrated and seeded database
+measured **74% line coverage** (730 of 991 statements). Core modules are covered
+at 85–100%: pipeline 93%, staging 100%, quality checks 96%, API client 92%,
+backfill 85%. The main gaps are entry points exercised manually rather than by
+tests: the argparse CLI, Dagster definitions, the CSV export, and `checkdb`,
+plus an unused `transform_stock` module (each 0%).
 
 Historical evidence is available under [docs/proof](docs/proof), including
 [transaction and retry hardening](docs/proof/2026-09-07-reliability-hardening.md)
