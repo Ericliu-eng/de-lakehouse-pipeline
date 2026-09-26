@@ -10,10 +10,10 @@ The project demonstrates API retry handling, schema validation, transactional
 loading, watermarks, resumable backfills, quality gates, and local orchestration.
 Optional S3 uploads preserve raw payloads in cloud storage.
 
-**Validation snapshot — September 20, 2026, commit `7cd01e8`:** 126 tests passed
-against an isolated PostgreSQL 16 database after fresh migrations and seeding;
-Ruff passed. The matching [main CI run](https://github.com/Ericliu-eng/de-lakehouse-pipeline/actions/runs/35535480549)
-also succeeded.
+**Validation snapshot — September 25, 2026 ([v1.1.0](CHANGELOG.md)):** a fresh
+clone passed `make setup`, migrations, seeding, `make lint`, and `make test`
+(157 tests) against PostgreSQL 16. The full suite (159 tests) measures 85% line
+coverage.
 
 ## Architecture
 
@@ -60,24 +60,40 @@ AWS S3 · Terraform · pytest · Ruff · GitHub Actions.
 ## Measured Results
 
 From [the September 25, 2026 benchmark](docs/proof/2026-09-25-benchmark.md)
-(`make benchmark`): saved Alpha Vantage payloads for 10 symbols were replayed
-into a dedicated PostgreSQL 16 database on a local Windows machine.
+(`make benchmark`): saved Alpha Vantage payloads and Tiingo history for 10
+symbols were replayed into a dedicated PostgreSQL 16 database on a local
+Windows machine. No API calls were made.
+
+**At scale — full price history**
 
 | Metric | Result |
 | --- | --- |
-| Warehouse size | 1,000 daily bars · 10 symbols · 2026-04-28 to 2026-09-18 |
+| Warehouse | 98,276 daily bars · 10 symbols · 1970-01-02 to 2026-09-25 |
+| History backfill | 97,276 rows inserted in 7.2 s (about 13,500 rows/s); rerun inserts 0 |
+| Cross-source reconciliation | 1,000 days covered by both sources: 0 closes differ by more than 0.5% (max 0.0%) |
+| Quality checks over the full warehouse | 60/60 passed in 0.4 s |
+| Mart rebuild over the full warehouse | 1.0 s |
+| Daily 10-symbol orchestrated run | 15.3 s median; 91% is rebuilding the marts once per symbol |
+
+**Correctness and recovery — 1,000-row Alpha Vantage replay**
+
+| Metric | Result |
+| --- | --- |
 | Rerun of identical payloads | 0 new rows, 0 duplicate keys, watermarks unchanged |
 | Incremental run | 50 of 1,000 staged rows loaded (5 new days × 10 symbols) |
 | Rejected audit write | No partial writes across `market_bars`, `pipeline_metadata`, `load_metadata` |
 | Backfill crash after 4 of 9 trading days | Resume loads the other 5; 0 gaps, 0 duplicates, 1 API fetch per run |
 | Quality gate | 2 of 2 injected bad rows caught; marts not rebuilt |
 | API retry | 429 → 503 → 200 succeeds on attempt 3; persistent 429 stops after 4 attempts (1 s, 2 s, 4 s backoff) |
-| End-to-end latency (ingest → quality → marts) | Median 171 ms per symbol; 1.7 s for 10 symbols |
-| Tiingo history backfill | 97,057 bars added for 10 symbols (1970–2026) in 20 s; warehouse grew from 1,225 to 98,282 rows |
-| Cross-source reconciliation | 1,219 days covered by both sources: 0 close prices differ by more than 0.5% (max 0.0%) |
+
+**Live run and tests**
+
+| Metric | Result |
+| --- | --- |
+| [Live Tiingo backfill](docs/proof/2026-09-25-tiingo-backfill.md) | 10 API requests, 20 s end to end; development warehouse grew from 1,225 to 98,282 rows; 1,219 overlapping days, 0 beyond 0.5% |
 | Test suite | 159 tests; 85% line coverage (85–100% for ingestion, staging, loading, quality, backfill, CLI, and Dagster job modules) |
 
-These are local measurements at small scale, not production SLAs. Retry
+These are single-machine local measurements, not production SLAs. Retry
 results use scripted HTTP responses rather than live throttling.
 
 ## Quickstart
@@ -177,7 +193,8 @@ FROM pipeline_metadata
 ORDER BY source, symbol;
 ```
 
-See [Demo Queries](docs/DEMO_QUERIES.md) for queries across all three marts.
+See [Demo Queries](docs/DEMO_QUERIES.md) for queries across all three marts, and
+[their results](docs/proof/2026-09-25-mart-queries.md) on the full-history warehouse.
 
 ## Backfill and Dagster
 
@@ -295,6 +312,7 @@ pipeline features.
 | Extraction, raw landing, retries | Done | Retry/throttle paths covered by unit tests |
 | Staging, schema validation, data contract | Done | Validator runs on the production staging path |
 | Warehouse model and migrations 001–008 | Done | Fresh-database migration verified |
+| Historical data | Done | Tiingo backfill: 97,057 bars for 10 symbols, reconciled with Alpha Vantage |
 | Incremental watermark and idempotent upserts | Done | Rerun produces an empty batch and unchanged watermark |
 | Transactional loading and failure drills | Done | Real PostgreSQL rollback test after a rejected audit write |
 | Quality gate | Done | Not-null, unique, range, per-`(source, symbol)` freshness; FK not applicable (no parent dimension) |
@@ -305,7 +323,8 @@ pipeline features.
 | Backfill | Partial | Resumable ranges; no force-reprocess for historical corrections |
 | Operational metrics | Partial | JSON step metrics only; no persisted run history or failure-rate query |
 | Live S3 evidence | Partial | Fake-client tests pass; live-upload note lacks recorded results |
-| Release and demo | Partial | [v1.0.0](https://github.com/Ericliu-eng/de-lakehouse-pipeline/releases/tag/v1.0.0) predates the September fixes; no demo video yet |
+| Release | Done | v1.1.0 verified from a fresh clone; see [CHANGELOG](CHANGELOG.md) |
+| Demo video | Not started | — |
 
 ### Known limits
 
@@ -323,12 +342,16 @@ pipeline features.
 
 ### Next steps
 
-1. Persist a `pipeline_runs` record (status, duration, loaded rows) and add a
+1. Rebuild marts once per batch (or incrementally) instead of once per symbol;
+   at 98k rows that rebuild is 91% of a daily 10-symbol run.
+2. Persist a `pipeline_runs` record (status, duration, loaded rows) and add a
    failure-rate SQL query.
-2. Add a force-reprocess option for historical date ranges.
-3. Record a live S3 upload with the resulting object key and read-back.
-4. Run a clean-clone quickstart, record a 2–4 minute demo, and tag a new release
-   on the verified commit.
+3. Add a force-reprocess option for historical date ranges.
+4. Record a live S3 upload with the resulting object key and read-back.
+5. Record a 2–4 minute demo: ingest -> quality gate -> marts -> serving.
+
+The full list of open items and resume-ready criteria is in
+[Project Status](docs/PROJECT_STATUS.md).
 
 ## Repository Guide
 

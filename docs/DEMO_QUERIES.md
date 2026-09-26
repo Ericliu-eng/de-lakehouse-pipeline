@@ -1,5 +1,8 @@
 # Demo Queries
 
+Sample output on the full-history warehouse (98,276 bars, 10 symbols) is in
+[the 2026-09-25 results](proof/2026-09-25-mart-queries.md).
+
 ## Question 1: Which symbols had the highest trading volume by day?
 
 Use `mart_symbol_volume_rank` to inspect daily volume leaders.
