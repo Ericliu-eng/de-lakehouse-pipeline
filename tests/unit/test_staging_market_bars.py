@@ -6,6 +6,7 @@ import pytest
 from de_lakehouse_pipeline.transform.staging.staging_market_bars import (
     StagedMarketBar,
     stage_alpha_vantage_daily,
+    stage_tiingo_daily,
     staged_rows_to_db_tuples,
     to_db_tuple,
 )
@@ -105,3 +106,48 @@ def test_stage_alpha_vantage_daily_rejects_missing_volume() -> None:
 
     with pytest.raises(ValueError, match="volume"):
         stage_alpha_vantage_daily(payload)
+
+
+TIINGO_BAR = {
+    "date": "2026-05-28T00:00:00.000Z",
+    "open": 198.1,
+    "high": 201.5,
+    "low": 197.25,
+    "close": 200.3,
+    "volume": 1234567,
+    "adjClose": 199.9,
+}
+
+
+def test_stage_tiingo_daily_uses_unadjusted_prices_and_tiingo_source() -> None:
+    rows = stage_tiingo_daily([TIINGO_BAR], " aapl ")
+
+    assert rows == [
+        StagedMarketBar(
+            ts=datetime(2026, 5, 28, tzinfo=ZoneInfo("US/Eastern")),
+            symbol="AAPL",
+            open=198.1,
+            high=201.5,
+            low=197.25,
+            close=200.3,
+            volume=1234567,
+            source="tiingo",
+        )
+    ]
+
+
+def test_tiingo_and_alpha_vantage_bars_share_the_same_timestamp() -> None:
+    tiingo_ts = stage_tiingo_daily([TIINGO_BAR], "AAPL")[0].ts
+    alpha_vantage_ts = stage_alpha_vantage_daily(SAMPLE_PAYLOAD)[0].ts
+
+    # Tiingo labels days as UTC midnight; both must land on the same warehouse key.
+    assert tiingo_ts == alpha_vantage_ts
+
+
+@pytest.mark.parametrize("missing", ["date", "close", "volume"])
+def test_stage_tiingo_daily_rejects_incomplete_bars(missing) -> None:
+    bar = {key: value for key, value in TIINGO_BAR.items() if key != missing}
+    field = "ts" if missing == "date" else missing
+
+    with pytest.raises(ValueError, match=field):
+        stage_tiingo_daily([bar], "AAPL")

@@ -2,8 +2,9 @@
 
 [![CI](https://github.com/Ericliu-eng/de-lakehouse-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/Ericliu-eng/de-lakehouse-pipeline/actions/workflows/ci.yml)
 
-A market-data pipeline that turns Alpha Vantage daily prices into an incremental
-PostgreSQL warehouse, three analytical marts, and a FastAPI dashboard.
+A market-data pipeline that loads daily prices from Alpha Vantage, backfills
+decades of history from Tiingo, and serves an incremental PostgreSQL warehouse,
+three analytical marts, and a FastAPI dashboard.
 
 The project demonstrates API retry handling, schema validation, transactional
 loading, watermarks, resumable backfills, quality gates, and local orchestration.
@@ -19,7 +20,7 @@ also succeeded.
 ![Market data pipeline run flow](docs/project_run_flow.svg)
 
 ```text
-Alpha Vantage daily prices
+Alpha Vantage daily prices          Tiingo price history (one-off backfill)
   -> Raw JSON on local disk (+ optional S3 upload)
   -> Schema validation and typed staging
   -> Watermark filter
@@ -28,6 +29,11 @@ Alpha Vantage daily prices
   -> Three analytical marts
   -> FastAPI / dashboard
 ```
+
+Alpha Vantage is the daily incremental source. Tiingo backfills older dates
+through the same raw landing, staging, and validation path, but inserts only
+bars whose `(ts, symbol)` is not yet in the warehouse, so it never overwrites a
+daily row and each bar keeps an accurate `source`.
 
 The warehouse, watermark, and load-audit writes share one transaction. Quality
 checks run after ingestion commits and before marts are rebuilt. A quality
@@ -46,6 +52,7 @@ AWS S3 · Terraform · pytest · Ruff · GitHub Actions.
 | Idempotent writes | PostgreSQL upserts on the `(ts, symbol)` primary key prevent duplicate business keys |
 | Atomic loading | Fact rows, watermark, and load audit commit or roll back together |
 | Backfill recovery | Inclusive date ranges, one daily-series payload reused across pending dates, and checkpoints reconciled with database rows |
+| Multi-source history | Tiingo backfill is insert-only on `(ts, symbol)`; its UTC-midnight dates are normalized to the warehouse's US/Eastern grain; overlapping days are reconciled against existing closes |
 | Quality gates | Non-null keys, key uniqueness, non-negative close/volume, and freshness scoped to the active `(source, symbol)` |
 | Orchestration | CLI runner with failure exit codes; Dagster job with explicit dependencies and a daily schedule definition |
 | Serving | Database-backed price endpoint and HTML dashboard |
@@ -66,7 +73,9 @@ into a dedicated PostgreSQL 16 database on a local Windows machine.
 | Quality gate | 2 of 2 injected bad rows caught; marts not rebuilt |
 | API retry | 429 → 503 → 200 succeeds on attempt 3; persistent 429 stops after 4 attempts (1 s, 2 s, 4 s backoff) |
 | End-to-end latency (ingest → quality → marts) | Median 171 ms per symbol; 1.7 s for 10 symbols |
-| Test suite | 140 tests; 83% line coverage (85–100% for ingestion, staging, loading, quality, backfill, CLI, and Dagster job modules) |
+| Tiingo history backfill | 97,057 bars added for 10 symbols (1970–2026) in 20 s; warehouse grew from 1,225 to 98,282 rows |
+| Cross-source reconciliation | 1,219 days covered by both sources: 0 close prices differ by more than 0.5% (max 0.0%) |
+| Test suite | 159 tests; 85% line coverage (85–100% for ingestion, staging, loading, quality, backfill, CLI, and Dagster job modules) |
 
 These are local measurements at small scale, not production SLAs. Retry
 results use scripted HTTP responses rather than live throttling.
@@ -75,7 +84,7 @@ results use scripted HTTP responses rather than live throttling.
 
 **Prerequisites:** Python 3.10+, Git, GNU Make, and Docker with Compose (port
 `5432` free). Tests use sample data and mocks; live ingestion also needs an
-Alpha Vantage API key.
+Alpha Vantage API key, and the history backfill needs a free Tiingo API token.
 
 ```bash
 git clone https://github.com/Ericliu-eng/de-lakehouse-pipeline.git
@@ -177,6 +186,7 @@ See [Demo Queries](docs/DEMO_QUERIES.md) for queries across all three marts.
 | `make run SYMBOL=MSFT` | Ingest one symbol; does not run the publication quality gate or rebuild marts |
 | `make run-marts` | Rebuild marts directly from warehouse data; bypasses the quality gate |
 | `make backfill START=2026-09-14 END=2026-09-18 SYMBOL=AAPL` | Load missing dates in an inclusive range |
+| `make tiingo-backfill SYMBOL=AAPL,MSFT` | Load full Tiingo history for each symbol without overwriting existing rows |
 | `make dagster-dev` | Start the local Dagster development UI and daemon |
 | `make db-shell` | Open psql in the Docker database |
 | `make db-down` | Stop the Compose stack while retaining its database volume |
@@ -186,6 +196,10 @@ returned daily payload. The command cannot retrieve dates absent from that
 payload. It skips dates already present in the database and does not provide a
 force-reprocess option for historical corrections. Repeating the command resumes
 missing dates; weekends and other dates without bars are not marked complete.
+
+`make tiingo-backfill` needs `TIINGO_API_TOKEN` in `.env` and makes one request
+per symbol. Rerunning it inserts nothing new. Run `make run-marts` afterwards to
+rebuild the marts over the added history. See [Backfill](docs/BACKFILL.md).
 
 In the Dagster UI, launch `stock_lakehouse_job`. Its default symbol is `AAPL`;
 to change it, use this launch configuration:
@@ -258,9 +272,10 @@ after a rejected audit write. It does not constitute a fresh-clone installation
 test or a live AWS/API benchmark.
 
 On September 25, `make coverage` against a freshly migrated and seeded database
-ran 140 tests and measured **83% line coverage** (812 of 978 statements). Core
-modules are covered at 85–100%: pipeline 93%, staging 100%, quality checks 96%,
-API client 92%, backfill 85%, CLI 96%, and the Dagster job and schedule 100%.
+ran 159 tests and measured **85% line coverage** (946 of 1,112 statements).
+Core modules are covered at 85–100%: pipeline 93%, staging 100%, quality checks
+96%, API client 92%, backfill 85%, Tiingo backfill 98%, CLI 95%, and the Dagster
+job and schedule 100%.
 The remaining gaps are the CSV export and the `checkdb` inspection helper (0%),
 the serving API (71%), and the standalone entry points of the mart modules.
 
@@ -294,6 +309,9 @@ pipeline features.
 
 ### Known limits
 
+- **Unadjusted prices:** both sources load unadjusted OHLCV so the series join
+  cleanly, which means stock splits appear as price jumps (for example AAPL on
+  2020-08-31). Split-adjusted analysis would need an adjusted-price column.
 - **Historical data:** regular loading accepts only timestamps newer than the
   watermark, and backfill skips existing dates. Same-day local raw files are
   overwritten on rerun rather than kept as immutable per-run snapshots.

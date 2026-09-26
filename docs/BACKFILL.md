@@ -88,3 +88,50 @@ Inspect the checkpoint with `Get-Content` in PowerShell or `cat` in Bash.
 - Weekend or unavailable dates are not marked complete because no database row
   is created.
 - Completed dates cannot currently be rerun with a `--force` option.
+
+## Tiingo History Backfill
+
+Alpha Vantage's free daily series returns only about 100 recent trading days.
+Longer history comes from Tiingo, while Alpha Vantage remains the daily
+incremental source.
+
+```bash
+make tiingo-backfill SYMBOL=AAPL,MSFT
+make run-marts
+```
+
+The equivalent CLI command accepts optional `--start` and `--end` dates; by
+default it requests the full history:
+
+```bash
+python -m de_lakehouse_pipeline.cli tiingo_backfill --symbol AAPL,MSFT
+```
+
+Set `TIINGO_API_TOKEN` in `.env`. The token is sent in the `Authorization`
+header, never in the request URL.
+
+For each symbol, the backfill:
+
+1. Fetches the requested range in one request and saves the unchanged response
+   to `data/raw/YYYY-MM-DD/SYMBOL/tiingo.json` (and S3 when enabled).
+2. Stages unadjusted OHLCV and moves Tiingo's UTC-midnight dates to the
+   warehouse's US/Eastern midnight, so a trading day has the same key from
+   either source.
+3. Compares closes with rows already loaded from other sources and reports how
+   many overlapping days differ by more than 0.5%. Differences are reported,
+   not blocked.
+4. Inserts with `ON CONFLICT (ts, symbol) DO NOTHING`: existing bars, including
+   Alpha Vantage daily rows, are never overwritten.
+5. Records the `tiingo` watermark and a load-audit row in the same transaction
+   as the inserts.
+
+Example output:
+
+```text
+AAPL: fetched 11537 bar(s) (1980-12-12 to 2026-09-25), inserted 11359, kept 178 existing; 178 overlapping day(s), 0 beyond 0.5% close difference (max 0.0%)
+```
+
+The Tiingo watermark is informational: the daily Alpha Vantage load, its
+freshness check, and the date-range backfill above all remain scoped to
+`alpha_vantage`.
+

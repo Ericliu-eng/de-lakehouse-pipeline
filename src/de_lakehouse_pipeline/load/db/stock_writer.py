@@ -34,3 +34,21 @@ def upsert_stock_prices(conn, rows, source: str = "unknown"):
 def should_update_watermark_after_load(load_success: bool) -> bool:
     """Watermark should only move forward after a successful load."""
     return load_success
+
+def insert_missing_stock_prices(conn, rows) -> int:
+    """Insert only bars whose (ts, symbol) is absent; existing rows win.
+
+    Returns the number of rows inserted. Used by history backfills that must
+    never overwrite bars already loaded by the daily source.
+    """
+    sql = """
+        INSERT INTO market_bars (
+            ts, symbol, open, high, low, close, volume, source
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT (ts, symbol) DO NOTHING
+    """
+
+    with conn.cursor() as cur:
+        cur.executemany(sql, rows)
+        return cur.rowcount

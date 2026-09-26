@@ -9,8 +9,10 @@ def project_root() -> Path:
 def today_time():
     return date.today()
 
-def save_raw_data(data:dict,name:str, root:Path = None,run_date: date = None):
-    symbol = data["Meta Data"]["2. Symbol"]
+def save_raw_data(data:dict,name:str, root:Path = None,run_date: date = None, symbol: str | None = None):
+    # Alpha Vantage payloads carry their symbol; other sources pass it explicitly.
+    if symbol is None:
+        symbol = data["Meta Data"]["2. Symbol"]
     #symbol = data.symbol
     if root is None:
         root  = project_root()

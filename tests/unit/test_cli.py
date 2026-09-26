@@ -77,6 +77,36 @@ def test_backfill_command_rejects_invalid_ranges(monkeypatch, calls, args, messa
     assert calls == []
 
 
+def test_tiingo_backfill_command_accepts_symbol_list(monkeypatch, calls, capsys):
+    monkeypatch.setattr(
+        cli,
+        "run_tiingo_backfill",
+        lambda symbol, start_date, end_date: calls.append(("tiingo", symbol, start_date, end_date)),
+    )
+    monkeypatch.setattr(cli, "format_result", lambda result: "summary")
+
+    run_cli(monkeypatch, "tiingo_backfill", "--symbol", "AAPL, msft", "--start", "2000-01-03")
+
+    assert calls == [
+        ("tiingo", "AAPL", date(2000, 1, 3), None),
+        ("tiingo", "msft", date(2000, 1, 3), None),
+    ]
+    assert capsys.readouterr().out.splitlines() == ["summary", "summary"]
+
+
+def test_tiingo_backfill_defaults_to_full_history(monkeypatch, calls):
+    monkeypatch.setattr(
+        cli,
+        "run_tiingo_backfill",
+        lambda symbol, start_date, end_date: calls.append((start_date, end_date)),
+    )
+    monkeypatch.setattr(cli, "format_result", lambda result: "")
+
+    run_cli(monkeypatch, "tiingo_backfill")
+
+    assert calls == [(date(1950, 1, 1), None)]
+
+
 def test_unknown_command_exits_with_usage_error(monkeypatch, calls):
     with pytest.raises(SystemExit) as exc_info:
         run_cli(monkeypatch, "drop_tables")
