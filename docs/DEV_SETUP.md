@@ -86,6 +86,15 @@ populate the serving marts.
 
 Live ingestion also requires `ALPHA_VANTAGE_API_KEY` in `.env`.
 
+## Troubleshooting
+
+- **`make setup` fails with `OSError: [Errno 2] No such file or directory` on
+  Windows**, mentioning a long path under `site-packages\dagster`: Dagster
+  installs deeply nested files that exceed Windows' default 260-character path
+  limit when the repository is cloned in a deep directory. Clone to a short
+  path such as `C:\src\de-lakehouse-pipeline`, or enable Windows long-path
+  support.
+
 ## Shutdown
 
 ```bash
