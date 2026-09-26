@@ -24,15 +24,24 @@ def build_params(symbol: str, api_key: str) -> dict:
         "apikey": api_key,
     }
 
-def fetch_json_with_retry(params: dict, max_retries: int = 3) -> dict:
+def fetch_json_with_retry(
+    params: dict,
+    max_retries: int = 3,
+    url: str = BASE_URL,
+    headers: dict | None = None,
+) -> dict | list:
     if max_retries < 0:
         raise ValueError("max_retries must be non-negative")
     for attempt in range(max_retries + 1):
         try:
-            response = requests.get(BASE_URL, params=params, timeout=20)
+            response = requests.get(url, params=params, headers=headers, timeout=20)
             response.raise_for_status()
 
             payload = response.json()
+            # Provider-level error envelopes are JSON objects; list payloads
+            # (for example Tiingo price history) are returned unchanged.
+            if not isinstance(payload, dict):
+                return payload
 
             if "Note" in payload:
                 raise RuntimeError(payload["Note"])

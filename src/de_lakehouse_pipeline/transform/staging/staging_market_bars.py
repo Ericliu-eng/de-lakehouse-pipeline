@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime, time
 from zoneinfo import ZoneInfo
 from de_lakehouse_pipeline.quality.schema_validation import (
     validate_stock_row_schema,
@@ -18,6 +18,8 @@ class StagedMarketBar:
     volume: int
     source: str = "alpha_vantage"
 
+
+MARKET_TIME_ZONE = "US/Eastern"
 
 ALPHA_VANTAGE_FIELD_MAP = {
     "open": "1. open",
@@ -61,6 +63,48 @@ def stage_alpha_vantage_daily(payload: dict) -> list[StagedMarketBar]:
                 low=float(canonical_row["low"]),
                 close=float(canonical_row["close"]),
                 volume=int(canonical_row["volume"]),
+            )
+        )
+
+    return rows
+
+
+TIINGO_PRICE_FIELDS = ("open", "high", "low", "close", "volume")
+
+
+def stage_tiingo_daily(prices: list[dict], symbol: str) -> list[StagedMarketBar]:
+    """Stage unadjusted Tiingo bars on the same grain as Alpha Vantage rows.
+
+    Tiingo labels each trading day as UTC midnight; the warehouse stores daily
+    bars at US/Eastern midnight, so only the calendar date is kept.
+    """
+    symbol = _normalize_symbol(symbol)
+    rows = []
+
+    for bar in prices:
+        canonical_row = {"symbol": symbol}
+        if bar.get("date"):
+            trading_date = date.fromisoformat(str(bar["date"])[:10])
+            canonical_row["ts"] = datetime.combine(
+                trading_date, time(), tzinfo=ZoneInfo(MARKET_TIME_ZONE)
+            )
+
+        for field_name in TIINGO_PRICE_FIELDS:
+            if field_name in bar:
+                canonical_row[field_name] = bar[field_name]
+
+        validate_stock_row_schema(canonical_row)
+
+        rows.append(
+            StagedMarketBar(
+                ts=canonical_row["ts"],
+                symbol=symbol,
+                open=float(canonical_row["open"]),
+                high=float(canonical_row["high"]),
+                low=float(canonical_row["low"]),
+                close=float(canonical_row["close"]),
+                volume=int(canonical_row["volume"]),
+                source="tiingo",
             )
         )
 

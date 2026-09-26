@@ -1,7 +1,7 @@
 # Tell make: these names are targets, not files.
 .PHONY: help setup lint clean
 .PHONY: unit smoke smoke-db integration test test-all test-s coverage
-.PHONY: run run-marts backfill dagster-dev orchestrate price-dashboard benchmark
+.PHONY: run run-marts backfill tiingo-backfill dagster-dev orchestrate price-dashboard benchmark
 .PHONY: cloud-storage-test terraform-check terraform-validate tree
 .PHONY: db-up db-down db-migrate migrate db-seed
 .PHONY: db-smoke db-smoke-local db-shell db-visu sql-utils
@@ -34,6 +34,7 @@ help:
 	@echo "  run           Run stock pipeline"
 	@echo "  run-marts     Build analytical marts"
 	@echo "  backfill      Run date-range backfill with START, END, and optional SYMBOL"
+	@echo "  tiingo-backfill Load full Tiingo history for SYMBOL (comma-separated) without overwriting rows"
 	@echo "  benchmark     Replay saved payloads and write a results report to docs/proof"
 	@echo "  cloud-storage-test Run AWS S3 raw storage unit tests"
 
@@ -89,6 +90,9 @@ run-marts:
 
 backfill:
 	$(PY) -m de_lakehouse_pipeline.cli backfill --start $(START) --end $(END) --symbol $(SYMBOL)
+
+tiingo-backfill:
+	$(PY) -m de_lakehouse_pipeline.cli tiingo_backfill --symbol $(SYMBOL)
 
 dagster-dev:
 	$(PY) -m dagster dev -m orchestration.definitions

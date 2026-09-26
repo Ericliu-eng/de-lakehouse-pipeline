@@ -10,6 +10,8 @@ from de_lakehouse_pipeline.transform.marts.mart_symbol_latest_price import run_l
 from de_lakehouse_pipeline.transform.marts.mart_symbol_volume_rank import run_symbol_volume
 from de_lakehouse_pipeline.backfill import run_backfill, parse_iso_date, validate_date_range
 from de_lakehouse_pipeline.pipeline import run_stock
+from de_lakehouse_pipeline.tiingo_backfill import format_result, run_tiingo_backfill
+from de_lakehouse_pipeline.ingest.tiingo_client import DEFAULT_HISTORY_START
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +39,11 @@ def main() -> None:
     configure_logging()
     #Python 文件可以接收命令行输入的参数。
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=["run_stock", "run_marts", "backfill"])
+    parser.add_argument("command", choices=["run_stock", "run_marts", "backfill", "tiingo_backfill"])
     #backfill
     parser.add_argument("--start")
     parser.add_argument("--end")
+    # tiingo_backfill also accepts a comma-separated list, e.g. AAPL,MSFT
     parser.add_argument("--symbol", default="AAPL")
     args = parser.parse_args()
     logger.info("CLI command received",extra={"command": args.command, "symbol": args.symbol})
@@ -57,6 +60,14 @@ def main() -> None:
         end = parse_iso_date(args.end)
         validate_date_range(start, end)
         run_backfill(start, end, symbol=args.symbol)
+    elif args.command == "tiingo_backfill":
+        start = parse_iso_date(args.start) if args.start else DEFAULT_HISTORY_START
+        end = parse_iso_date(args.end) if args.end else None
+        if end is not None:
+            validate_date_range(start, end)
+        symbols = [symbol.strip() for symbol in args.symbol.split(",") if symbol.strip()]
+        for symbol in symbols:
+            print(format_result(run_tiingo_backfill(symbol, start_date=start, end_date=end)))
 
 
 if __name__ == "__main__":
