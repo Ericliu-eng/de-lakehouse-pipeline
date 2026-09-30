@@ -147,3 +147,41 @@ def test_http_retries_stop_at_budget(retries):
     assert get.call_count == retries + 1
     assert [call.args[0] for call in sleep.call_args_list] == [2 ** i for i in range(retries)]
 
+
+def test_http_error_message_does_not_leak_api_key():
+    response = requests.Response()
+    response.status_code = 401
+    response.url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&apikey=super-secret"
+    response.reason = "Unauthorized"
+
+    with patch("de_lakehouse_pipeline.ingest.market_data_client.requests.get", return_value=response):
+        with pytest.raises(requests.HTTPError) as exc_info:
+            fetch_json_with_retry({"function": "TIME_SERIES_DAILY", "apikey": "super-secret"})
+
+    assert "super-secret" not in str(exc_info.value)
+    assert "apikey=***" in str(exc_info.value)
+    assert exc_info.value.response is response
+    assert exc_info.value.__suppress_context__
+
+
+def test_connection_error_message_does_not_leak_api_key():
+    error = requests.ConnectionError(
+        "Max retries exceeded with url: /query?symbol=AAPL&apikey=super-secret"
+    )
+
+    with patch("de_lakehouse_pipeline.ingest.market_data_client.requests.get", side_effect=error),             patch("de_lakehouse_pipeline.ingest.market_data_client.time.sleep"):
+        with pytest.raises(requests.ConnectionError) as exc_info:
+            fetch_json_with_retry({"symbol": "AAPL", "apikey": "super-secret"}, max_retries=1)
+
+    assert "super-secret" not in str(exc_info.value)
+
+
+def test_errors_without_secrets_are_raised_unchanged():
+    error = requests.ConnectionError("connection reset")
+
+    with patch("de_lakehouse_pipeline.ingest.market_data_client.requests.get", side_effect=error):
+        with pytest.raises(requests.ConnectionError) as exc_info:
+            fetch_json_with_retry({"symbol": "AAPL", "apikey": "super-secret"}, max_retries=0)
+
+    assert exc_info.value is error
+

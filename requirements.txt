@@ -5,6 +5,7 @@ pandas              # dataframe / SQL read
 psycopg[binary]     # Postgres
 requests            # Alpha Vantage API
 boto3               # S3 raw upload
+moto[s3]            # in-memory S3 for upload tests
 python-dotenv       # .env
 streamlit           # price dashboard
 fastapi             # serving API

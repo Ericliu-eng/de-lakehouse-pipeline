@@ -61,7 +61,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.5.7
+          terraform_version: 1.9.8
 
-      - name: Terraform validate
+      - name: Terraform validate and test
         run: make terraform-validate

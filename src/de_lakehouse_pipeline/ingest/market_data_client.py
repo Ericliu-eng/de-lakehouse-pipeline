@@ -11,6 +11,11 @@ BASE_URL = "https://www.alphavantage.co/query"
 
 RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
+# Query parameters whose values are credentials. requests puts the full URL,
+# query string included, into HTTPError and ConnectionError messages, which the
+# pipeline logs on failure.
+SECRET_PARAM_NAMES = {"apikey", "token"}
+
 def get_api_key()  -> str:
     api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
     if not api_key:
@@ -24,6 +29,26 @@ def build_params(symbol: str, api_key: str) -> dict:
         "apikey": api_key,
     }
 
+def redact_secrets(exc: Exception, secrets: list[str]) -> Exception:
+    """Return ``exc``, or a copy of the same type with credential values masked."""
+    message = str(exc)
+    for secret in secrets:
+        message = message.replace(secret, "***")
+    if message == str(exc):
+        return exc
+    if isinstance(exc, requests.RequestException):
+        return type(exc)(message, response=exc.response)
+    return type(exc)(message)
+
+
+def _raise_redacted(exc: Exception, secrets: list[str]):
+    redacted = redact_secrets(exc, secrets)
+    if redacted is exc:
+        raise exc
+    # Drop the original exception from the chain; its message holds the secret.
+    raise redacted from None
+
+
 def fetch_json_with_retry(
     params: dict,
     max_retries: int = 3,
@@ -32,6 +57,7 @@ def fetch_json_with_retry(
 ) -> dict | list:
     if max_retries < 0:
         raise ValueError("max_retries must be non-negative")
+    secrets = [str(v) for k, v in params.items() if k.lower() in SECRET_PARAM_NAMES and v]
     for attempt in range(max_retries + 1):
         try:
             response = requests.get(url, params=params, headers=headers, timeout=20)
@@ -62,10 +88,10 @@ def fetch_json_with_retry(
                 or not is_retryable_status_code(exc.response.status_code)
                 or attempt == max_retries
             ):
-                raise
-        except (requests.Timeout, requests.ConnectionError, RuntimeError):
+                _raise_redacted(exc, secrets)
+        except (requests.Timeout, requests.ConnectionError, RuntimeError) as exc:
             if attempt == max_retries:
-                raise
+                _raise_redacted(exc, secrets)
 
         sleep_time = 2 ** attempt
         time.sleep(sleep_time)

@@ -91,7 +91,7 @@ Windows machine. No API calls were made.
 | Metric | Result |
 | --- | --- |
 | [Live Tiingo backfill](docs/proof/2026-09-25-tiingo-backfill.md) | 10 API requests, 20 s end to end; development warehouse grew from 1,225 to 98,282 rows; 1,219 overlapping days, 0 beyond 0.5% |
-| Test suite | 159 tests; 85% line coverage (85–100% for ingestion, staging, loading, quality, backfill, CLI, and Dagster job modules) |
+| Test suite | 167 tests; 85% line coverage (85–100% for ingestion, staging, loading, quality, backfill, CLI, and Dagster job modules) |
 
 These are single-machine local measurements, not production SLAs. Retry
 results use scripted HTTP responses rather than live throttling.
@@ -234,7 +234,8 @@ See the [saved successful Dagster run](docs/proof/W17/screenshots/06-14/image1.p
 
 ## Optional S3 Raw Storage
 
-Both regular ingestion and date-based backfill call the S3 upload adapter. When
+Regular ingestion, date-based backfill, and the Tiingo history backfill call the
+S3 upload adapter. When
 enabled, the adapter creates a boto3 client using the standard AWS credential
 chain, or uses an explicitly supplied client.
 
@@ -249,17 +250,25 @@ Use a configured AWS profile or role with `s3:PutObject` access to the bucket's
 `raw/*` prefix. The destination bucket must already exist. Uploaded keys follow:
 
 ```text
-raw/alpha_vantage/symbol=AAPL/date=YYYY-MM-DD/stock.json
+raw/{alpha_vantage|tiingo}/symbol=AAPL/date=YYYY-MM-DD/{stock|tiingo}.json
 ```
 
 When upload is enabled, a configuration or upload error fails the ingestion
 before warehouse writes. The local raw file has already been saved at that point.
 
-The [Terraform module](infra/terraform/main.tf) defines the bucket, public-access
-blocking, ownership controls, encryption, versioning, and a raw-write IAM policy.
-Attaching the policy to the identity used by the pipeline remains a deployment
-step. `make terraform-validate` checks configuration and does not provision AWS
-resources; it requires Terraform 1.5+ and network access for provider installation.
+The [Terraform module](infra/terraform/README.md) defines the bucket, public-access
+blocking, ownership controls, encryption, versioning, a lifecycle rule that
+expires overwritten raw versions after 90 days, and an IAM policy limited to
+`s3:PutObject` on `raw/*`. Attaching the policy to the pipeline's identity
+remains a deployment step.
+
+Cloud behavior is tested without AWS credentials: Moto tests run the real boto3
+upload path, including "same payload locally and in S3" and "upload failure
+leaves the warehouse untouched", and `terraform test` checks the bucket and
+policy against a mocked provider. `make terraform-validate` needs Terraform
+1.7+ and network access for provider installation; it does not provision
+anything. Secrets handling and the estimated cost (a few cents per month) are
+in [Secrets and Cost](docs/SECRETS_AND_COST.md).
 
 ## Validation and Evidence
 
@@ -273,7 +282,7 @@ resources; it requires Terraform 1.5+ and network access for provider installati
 | `make test` | Default unit, smoke, and integration validation |
 | `make test-all` | Collect and run every test under `tests/` |
 | `make coverage` | Run every test with a line coverage report for `src/` and `orchestration/` |
-| `make terraform-validate` | Terraform formatting, initialization, and validation |
+| `make terraform-validate` | Terraform formatting, initialization, validation, and offline `terraform test` |
 | `make benchmark` | Replay saved payloads in a throwaway database and write a results report |
 
 CI runs on pull requests and pushes to `main`. It provisions PostgreSQL 16,
@@ -289,7 +298,7 @@ after a rejected audit write. It does not constitute a fresh-clone installation
 test or a live AWS/API benchmark.
 
 On September 25, `make coverage` against a freshly migrated and seeded database
-ran 159 tests and measured **85% line coverage** (946 of 1,112 statements).
+ran 167 tests and measured **85% line coverage** (963 of 1,128 statements).
 Core modules are covered at 85–100%: pipeline 93%, staging 100%, quality checks
 96%, API client 92%, backfill 85%, Tiingo backfill 98%, CLI 95%, and the Dagster
 job and schedule 100%.
@@ -322,7 +331,7 @@ pipeline features.
 | Terraform S3 bucket and IAM | Done | Historical apply/destroy evidence |
 | Backfill | Partial | Resumable ranges; no force-reprocess for historical corrections |
 | Operational metrics | Partial | JSON step metrics only; no persisted run history or failure-rate query |
-| Live S3 evidence | Partial | Fake-client tests pass; live-upload note lacks recorded results |
+| Live S3 evidence | Partial | Moto and `terraform test` cover the upload path and IaC offline; live-upload note lacks recorded results |
 | Release | Done | v1.1.0 verified from a fresh clone; see [CHANGELOG](CHANGELOG.md) |
 | Demo video | Not started | — |
 
@@ -378,6 +387,6 @@ The full list of open items and resume-ready criteria is in
 | Data quality | [docs/DATA_QUALITY.md](docs/DATA_QUALITY.md) |
 | Orchestration and metrics | [docs/ORCHESTRATION.md](docs/ORCHESTRATION.md), [docs/OPS_METRICS.md](docs/OPS_METRICS.md) |
 | Reliability | [docs/FAILURE_DRILLS.md](docs/FAILURE_DRILLS.md) |
-| Cloud storage | [docs/CLOUD_STORAGE.md](docs/CLOUD_STORAGE.md), [infra/terraform/README.md](infra/terraform/README.md) |
+| Cloud storage | [docs/CLOUD_STORAGE.md](docs/CLOUD_STORAGE.md), [infra/terraform/README.md](infra/terraform/README.md), [docs/SECRETS_AND_COST.md](docs/SECRETS_AND_COST.md) |
 | Status and roadmap | [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) |
 | Contribution standards | [docs/STANDARDS.md](docs/STANDARDS.md) |
