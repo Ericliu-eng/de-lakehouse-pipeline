@@ -331,7 +331,7 @@ pipeline features.
 | Terraform S3 bucket and IAM | Done | Historical apply/destroy evidence |
 | Backfill | Partial | Resumable ranges; no force-reprocess for historical corrections |
 | Operational metrics | Partial | JSON step metrics only; no persisted run history or failure-rate query |
-| Live S3 evidence | Partial | Moto and `terraform test` cover the upload path and IaC offline; live-upload note lacks recorded results |
+| Live S3 evidence | Done | [Live upload and read-back](docs/proof/2026-09-30-s3-live-upload.md); Moto and `terraform test` cover it offline in CI |
 | Release | Done | v1.1.0 verified from a fresh clone; see [CHANGELOG](CHANGELOG.md) |
 | Demo video | Not started | — |
 
@@ -356,8 +356,7 @@ pipeline features.
 2. Persist a `pipeline_runs` record (status, duration, loaded rows) and add a
    failure-rate SQL query.
 3. Add a force-reprocess option for historical date ranges.
-4. Record a live S3 upload with the resulting object key and read-back.
-5. Record a 2–4 minute demo: ingest -> quality gate -> marts -> serving.
+4. Record a 2–4 minute demo: ingest -> quality gate -> marts -> serving.
 
 The full list of open items and resume-ready criteria is in
 [Project Status](docs/PROJECT_STATUS.md).

@@ -46,6 +46,7 @@ appears in early commit history, and recording a short demo.
 | Demo query results missing | Recorded as text output rather than screenshots |
 | CI badge, ERD, data contract, schema evolution | Present in README, [DATA_MODEL](DATA_MODEL.md), [DATA_CONTRACT](DATA_CONTRACT.md), [SCHEMA_EVOLUTION](SCHEMA_EVOLUTION.md) |
 | FK check scope undocumented | [DATA_QUALITY](DATA_QUALITY.md) explains why it is not part of the gate |
+| Live S3 upload unproven | [Live upload and read-back](proof/2026-09-30-s3-live-upload.md): payload identical to the local raw file; Moto and `terraform test` in CI |
 | Proof typos | `W10/2026-04-23-run.txy` renamed to `.txt`; W17 screenshot links fixed |
 
 ## Open Items
@@ -77,9 +78,6 @@ appears in early commit history, and recording a short demo.
 
 ### Evidence
 
-- Complete the live S3 upload note with the object key and a read-back; the
-  current note lists commands only. The upload path and the Terraform module
-  are covered offline by Moto tests and `terraform test`.
 - Add a compatibility test that upgrades a populated older schema.
 - Raise coverage for the CSV export and `checkdb` (0%) and the serving API
   (71%).
