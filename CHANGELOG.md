@@ -17,6 +17,8 @@ All notable changes to this project are documented here. The format follows
   and aborts incomplete multipart uploads; `environment` variable and provider
   default tags; bucket-name validation.
 - `docs/SECRETS_AND_COST.md`.
+- Live S3 upload proof with object key and read-back (payload identical to
+  the local raw file).
 
 ### Fixed
 
