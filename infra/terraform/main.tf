@@ -11,16 +11,18 @@ terraform {
 
 provider "aws" {
   region = var.aws_region
+
+  default_tags {
+    tags = {
+      Project     = "de-lakehouse-pipeline"
+      Environment = var.environment
+      ManagedBy   = "Terraform"
+    }
+  }
 }
 
 resource "aws_s3_bucket" "raw" {
   bucket = var.raw_bucket_name
-
-  tags = {
-    Project     = "de-lakehouse-pipeline"
-    Environment = "dev"
-    ManagedBy   = "Terraform"
-  }
 }
 
 resource "aws_s3_bucket_public_access_block" "raw" {
@@ -55,6 +57,31 @@ resource "aws_s3_bucket_versioning" "raw" {
 
   versioning_configuration {
     status = "Enabled"
+  }
+}
+
+# Current raw objects are the source of truth and are kept. Same-day reruns
+# overwrite the same key, so older versions expire after a retention window.
+resource "aws_s3_bucket_lifecycle_configuration" "raw" {
+  bucket = aws_s3_bucket.raw.id
+
+  depends_on = [aws_s3_bucket_versioning.raw]
+
+  rule {
+    id     = "expire-noncurrent-raw-versions"
+    status = "Enabled"
+
+    filter {
+      prefix = "raw/"
+    }
+
+    noncurrent_version_expiration {
+      noncurrent_days = var.noncurrent_version_retention_days
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
   }
 }
 

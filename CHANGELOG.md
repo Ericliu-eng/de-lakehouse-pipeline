@@ -4,6 +4,31 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- Moto integration tests for the real boto3 upload path: object body, content
+  type, encryption, versioning on rerun, the same payload stored locally and in
+  S3, and no warehouse writes after an upload failure.
+- Offline `terraform test` with a mocked AWS provider for public access,
+  encryption, versioning, lifecycle, and the least-privilege policy; runs in CI.
+- S3 lifecycle rule that expires overwritten raw versions (90 days by default)
+  and aborts incomplete multipart uploads; `environment` variable and provider
+  default tags; bucket-name validation.
+- `docs/SECRETS_AND_COST.md`.
+
+### Fixed
+
+- API keys no longer appear in logged error messages: the retry helper masks
+  `apikey` and `token` values in `HTTPError` and `ConnectionError` messages.
+- `docs/CLOUD_STORAGE.md` and `infra/terraform/README.md` described the S3
+  upload as unwired; both now match the implementation.
+
+### Changed
+
+- CI uses Terraform 1.9.8 (mock providers need 1.7+).
+
 ## [1.1.0] — 2026-09-25
 
 Hardens the pipeline's correctness and failure handling, adds decades of price

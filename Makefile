@@ -118,7 +118,7 @@ price-dashboard:
 	$(PY) -m streamlit run scripts/price_dashboard.py
 
 terraform-validate:
-	cd infra/terraform && terraform fmt -check && terraform init -backend=false && terraform validate
+	cd infra/terraform && terraform fmt -check -recursive && terraform init -backend=false && terraform validate && terraform test
 	
 #database ---
 

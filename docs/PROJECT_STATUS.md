@@ -78,7 +78,8 @@ appears in early commit history, and recording a short demo.
 ### Evidence
 
 - Complete the live S3 upload note with the object key and a read-back; the
-  current note lists commands only.
+  current note lists commands only. The upload path and the Terraform module
+  are covered offline by Moto tests and `terraform test`.
 - Add a compatibility test that upgrades a populated older schema.
 - Raise coverage for the CSV export and `checkdb` (0%) and the serving API
   (71%).
