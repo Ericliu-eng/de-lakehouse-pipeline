@@ -10,6 +10,11 @@ market_bars
 
 pipeline_metadata  -> incremental state
 load_metadata      -> load audit history
+
+pipeline_runs
+  |-> pipeline_run_steps
+  |-> quality_check_results
+  `-> incident_analyses
 ```
 
 ## Entity Relationship Diagram
@@ -42,6 +47,41 @@ erDiagram
         int record_count
         timestamptz recorded_at
     }
+    PIPELINE_RUNS {
+        bigint id PK
+        uuid external_run_id UK
+        text pipeline_name
+        text status
+        text quality_status
+        timestamptz started_at
+        timestamptz finished_at
+        bigint duration_ms
+        int rows_processed
+    }
+    PIPELINE_RUN_STEPS {
+        bigint id PK
+        bigint run_id FK
+        text step_name
+        text status
+        bigint duration_ms
+        int row_count
+    }
+    QUALITY_CHECK_RESULTS {
+        bigint id PK
+        bigint run_id FK
+        text check_name
+        text status
+        double metric_value
+        double threshold
+    }
+    INCIDENT_ANALYSES {
+        bigint id PK
+        bigint run_id FK
+        text severity
+        text summary
+        jsonb likely_causes
+        jsonb recommended_steps
+    }
     MART_DAILY_SYMBOL_SUMMARY {
         text symbol PK
         date trading_date PK
@@ -66,6 +106,9 @@ erDiagram
     MARKET_BARS ||--o{ MART_DAILY_SYMBOL_SUMMARY : aggregates
     MARKET_BARS ||--o{ MART_SYMBOL_LATEST_PRICE : selects_latest
     MART_DAILY_SYMBOL_SUMMARY ||--o{ MART_SYMBOL_VOLUME_RANK : ranks
+    PIPELINE_RUNS ||--o{ PIPELINE_RUN_STEPS : contains
+    PIPELINE_RUNS ||--o{ QUALITY_CHECK_RESULTS : evaluates
+    PIPELINE_RUNS ||--o{ INCIDENT_ANALYSES : explains
 ```
 
 The arrows describe transformation lineage, not database-enforced foreign
@@ -81,6 +124,10 @@ All marts are physical PostgreSQL tables refreshed with upsert semantics.
 | `market_bars` | Normalized Alpha Vantage market bars | One row per timestamp and symbol | `(ts, symbol)` |
 | `pipeline_metadata` | Incremental state by source and symbol | One row per source and symbol | `(source, symbol)` |
 | `load_metadata` | Load-level audit history | One row per load event | `id` |
+| `pipeline_runs` | Durable pipeline execution history | One row per pipeline run | `id` |
+| `pipeline_run_steps` | Step-level execution telemetry | One row per step execution | `id` |
+| `quality_check_results` | Quality outcomes linked to a run | One row per check result | `id` |
+| `incident_analyses` | Stored incident summaries and recommendations | One row per analysis | `id` |
 | `mart_daily_symbol_summary` | Daily close-price statistics and volume | One row per symbol and trading date | `(symbol, trading_date)` |
 | `mart_symbol_latest_price` | Latest price snapshot | One row per symbol | `symbol` |
 | `mart_symbol_volume_rank` | Daily symbol ranking by total volume | One row per symbol and trading date | `(symbol, trading_date)` |
@@ -114,6 +161,17 @@ price and volume, and data no more than 14 days old.
 - `version`: source or run version
 - `record_count`: processed record count
 - `recorded_at`: audit insert timestamp
+
+### Observability tables
+
+- `pipeline_runs` stores the durable run identity, terminal status, timing,
+  processed-row count, and top-level error details.
+- `pipeline_run_steps` stores execution details for each orchestrated step.
+- `quality_check_results` stores measured values, thresholds, and outcomes for
+  checks associated with a run.
+- `incident_analyses` stores deterministic or model-assisted explanations and
+  recommended recovery actions. Child rows are deleted automatically when
+  their parent run is removed.
 
 ## Analytical Marts
 
