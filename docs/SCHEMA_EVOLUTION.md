@@ -29,6 +29,7 @@ For each schema change:
 | `006_pipeline_metadata.sql` | Per-source/per-symbol watermark state |
 | `007_drop_legacy_users.sql` | Remove the legacy example table |
 | `008_add_source_to_market_bars.sql` | Add required source with an Alpha Vantage default |
+| `009_observability.sql` | Pipeline runs, step telemetry, quality results, and incident analyses |
 
 ## Safe Change Patterns
 

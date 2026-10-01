@@ -320,7 +320,7 @@ pipeline features.
 | --- | --- | --- |
 | Extraction, raw landing, retries | Done | Retry/throttle paths covered by unit tests |
 | Staging, schema validation, data contract | Done | Validator runs on the production staging path |
-| Warehouse model and migrations 001–008 | Done | Fresh-database migration verified |
+| Warehouse model and migrations 001–009 | Done | Observability migration verified on PostgreSQL |
 | Historical data | Done | Tiingo backfill: 97,057 bars for 10 symbols, reconciled with Alpha Vantage |
 | Incremental watermark and idempotent upserts | Done | Rerun produces an empty batch and unchanged watermark |
 | Transactional loading and failure drills | Done | Real PostgreSQL rollback test after a rejected audit write |
@@ -330,7 +330,7 @@ pipeline features.
 | CI | Done | Lint, unit, smoke, integration, Terraform validate |
 | Terraform S3 bucket and IAM | Done | Historical apply/destroy evidence |
 | Backfill | Partial | Resumable ranges; no force-reprocess for historical corrections |
-| Operational metrics | Partial | JSON step metrics only; no persisted run history or failure-rate query |
+| Operational metrics | Partial | Run-history schema and repository are complete; orchestration wiring and failure-rate query remain |
 | Live S3 evidence | Done | [Live upload and read-back](docs/proof/2026-09-30-s3-live-upload.md); Moto and `terraform test` cover it offline in CI |
 | Release | Done | v1.1.0 verified from a fresh clone; see [CHANGELOG](CHANGELOG.md) |
 | Demo video | Not started | — |
