@@ -1,6 +1,9 @@
 from orchestration.dagster_pipeline import run_orchestrated_pipeline, run_step
 from orchestration import dagster_pipeline as runner
 import pytest
+from uuid import uuid4
+
+from de_lakehouse_pipeline.observability.run_repository import PipelineRunHandle
 
 
 def test_run_step_records_success() -> None:
@@ -23,10 +26,11 @@ def test_run_step_records_failure() -> None:
     assert metric.step_name == "example_failure"
     assert metric.status == "failed"
     assert metric.row_count is None
+    assert metric.error_type == "RuntimeError"
     assert metric.error_message == "boom"
 
 
-def test_orchestrated_pipeline_stops_after_failed_step(monkeypatch) -> None:
+def test_orchestrated_pipeline_stops_after_failed_step(monkeypatch, run_records) -> None:
     executed_steps = []
 
     def fake_run_step(step_name, fn):
@@ -53,10 +57,13 @@ def test_orchestrated_pipeline_stops_after_failed_step(monkeypatch) -> None:
     assert executed_steps == ["run_stock_pipeline"]
     assert len(metric.steps) == 1
     assert metric.steps[0].error_message == "failed for TEST"
+    assert run_records[0] == ("start", "TEST")
+    assert run_records[1][0] == "finish"
+    assert run_records[1][1].status == "failed"
 
 
 @pytest.mark.parametrize("failed_step", [0, 1, 2, None])
-def test_cli_exit_status_and_downstream_steps(monkeypatch, capsys, failed_step):
+def test_cli_exit_status_and_downstream_steps(monkeypatch, capsys, failed_step, run_records):
     executed = []
 
     def step(index):
@@ -80,3 +87,36 @@ def test_cli_exit_status_and_downstream_steps(monkeypatch, capsys, failed_step):
         assert exc.value.code == 1
         assert executed == list(range(failed_step + 1))
         assert "Status: failed" in capsys.readouterr().out
+
+
+@pytest.fixture
+def run_records(monkeypatch):
+    recorded = []
+    handle = PipelineRunHandle(
+        id=73,
+        external_run_id=uuid4(),
+    )
+
+    def start(metric, *, symbol):
+        recorded.append(("start", symbol))
+        return handle
+
+    def finish(received_handle, metric):
+        assert received_handle == handle
+        recorded.append(("finish", metric))
+
+    monkeypatch.setattr(runner, "_start_pipeline_run_record", start)
+    monkeypatch.setattr(runner, "_finish_pipeline_run_record", finish)
+    return recorded
+
+
+def test_successful_pipeline_persists_success(monkeypatch, run_records) -> None:
+    monkeypatch.setattr(runner, "_run_stock_pipeline", lambda symbol: None)
+    monkeypatch.setattr(runner, "_run_quality_checks", lambda symbol: 4)
+    monkeypatch.setattr(runner, "_build_marts", lambda: None)
+
+    metric = run_orchestrated_pipeline(symbol="MSFT")
+
+    assert metric.status == "success"
+    assert run_records[0] == ("start", "MSFT")
+    assert run_records[1] == ("finish", metric)
