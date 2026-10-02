@@ -3,10 +3,16 @@ from __future__ import annotations
 import argparse
 import logging
 from collections.abc import Callable
+from datetime import datetime
 
 from de_lakehouse_pipeline.load.db.connection import connect, load_db_config, wait_for_db
 from de_lakehouse_pipeline.logging_utils import configure_logging
 from de_lakehouse_pipeline.metrics import PipelineMetric, StepMetric, utc_now
+from de_lakehouse_pipeline.observability.run_repository import (
+    PipelineRunHandle,
+    finish_pipeline_run,
+    start_pipeline_run,
+)
 from de_lakehouse_pipeline.pipeline import run_stock
 from de_lakehouse_pipeline.quality.checks import CheckResult, run_stock_quality_checks
 from de_lakehouse_pipeline.transform.marts.mart_daily_symbol_summary import run_daily_summary
@@ -34,6 +40,7 @@ def run_step(step_name: str, fn: Callable[[], int | None]) -> StepMetric:
             started_at=started_at,
             finished_at=utc_now(),
             row_count=row_count,
+            error_type=None,
             error_message=None,
         )
     except Exception as exc:
@@ -48,6 +55,7 @@ def run_step(step_name: str, fn: Callable[[], int | None]) -> StepMetric:
             started_at=started_at,
             finished_at=utc_now(),
             row_count=None,
+            error_type=type(exc).__name__,
             error_message=str(exc),
         )
 
@@ -63,26 +71,24 @@ def run_orchestrated_pipeline(symbol: str = "AAPL") -> PipelineMetric:
         pipeline_name=pipeline_name,
         started_at=utc_now(),
     )
+    run_handle = _start_pipeline_run_record(pipeline_metric, symbol=symbol)
 
     stock_step = run_step("run_stock_pipeline", lambda: _run_stock_pipeline(symbol))
     pipeline_metric.add_step(stock_step)
     if stock_step.status == "failed":
-        pipeline_metric.finish(status="failed")
-        return pipeline_metric
+        return _complete_pipeline_run(run_handle, pipeline_metric, status="failed")
 
     quality_step = run_step("run_quality_checks",lambda: _run_quality_checks(symbol))
     pipeline_metric.add_step(quality_step)
     if quality_step.status == "failed":
-        pipeline_metric.finish(status="failed")
-        return pipeline_metric
+        return _complete_pipeline_run(run_handle, pipeline_metric, status="failed")
 
     marts_step = run_step("build_marts", _build_marts)
     pipeline_metric.add_step(marts_step)
     if marts_step.status == "failed":
-        pipeline_metric.finish(status="failed")
-        return pipeline_metric
+        return _complete_pipeline_run(run_handle, pipeline_metric, status="failed")
 
-    pipeline_metric.finish(status="success")
+    _complete_pipeline_run(run_handle, pipeline_metric, status="success")
     logger.info(
         "Finished orchestrated pipeline",
         extra={
@@ -93,6 +99,75 @@ def run_orchestrated_pipeline(symbol: str = "AAPL") -> PipelineMetric:
     )
 
     return pipeline_metric
+
+
+def _complete_pipeline_run(
+    handle: PipelineRunHandle,
+    metric: PipelineMetric,
+    *,
+    status: str,
+) -> PipelineMetric:
+    metric.finish(status=status)
+    _finish_pipeline_run_record(handle, metric)
+    return metric
+
+
+def _start_pipeline_run_record(
+    metric: PipelineMetric,
+    *,
+    symbol: str,
+) -> PipelineRunHandle:
+    cfg = load_db_config()
+    wait_for_db(cfg, timeout_s=60)
+
+    with connect(cfg) as conn:
+        handle = start_pipeline_run(
+            conn,
+            pipeline_name=metric.pipeline_name,
+            source="alpha_vantage",
+            symbol=symbol,
+            started_at=datetime.fromisoformat(metric.started_at),
+        )
+        conn.commit()
+
+    return handle
+
+
+def _finish_pipeline_run_record(
+    handle: PipelineRunHandle,
+    metric: PipelineMetric,
+) -> None:
+    if metric.finished_at is None:
+        raise ValueError("pipeline metric must be finished before persistence")
+
+    failed_step = next((step for step in metric.steps if step.status == "failed"), None)
+    ingest_step = next(
+        (step for step in metric.steps if step.step_name == "run_stock_pipeline"),
+        None,
+    )
+    quality_step = next(
+        (step for step in metric.steps if step.step_name == "run_quality_checks"),
+        None,
+    )
+    quality_status = "NOT_EVALUATED"
+    if quality_step is not None:
+        quality_status = "PASS" if quality_step.status == "success" else "FAIL"
+
+    cfg = load_db_config()
+    wait_for_db(cfg, timeout_s=60)
+
+    with connect(cfg) as conn:
+        finish_pipeline_run(
+            conn,
+            run_id=handle.id,
+            status=metric.status,
+            quality_status=quality_status,
+            finished_at=datetime.fromisoformat(metric.finished_at),
+            rows_processed=(ingest_step.row_count or 0) if ingest_step else 0,
+            error_type=failed_step.error_type if failed_step else None,
+            error_message=failed_step.error_message if failed_step else None,
+        )
+        conn.commit()
 
 
 def _run_stock_pipeline(symbol: str) -> None:

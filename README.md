@@ -330,7 +330,7 @@ pipeline features.
 | CI | Done | Lint, unit, smoke, integration, Terraform validate |
 | Terraform S3 bucket and IAM | Done | Historical apply/destroy evidence |
 | Backfill | Partial | Resumable ranges; no force-reprocess for historical corrections |
-| Operational metrics | Partial | Run-history schema and repository are complete; orchestration wiring and failure-rate query remain |
+| Operational metrics | Partial | CLI orchestration persists run status, timing, quality status, and errors; step history and failure-rate query remain |
 | Live S3 evidence | Done | [Live upload and read-back](docs/proof/2026-09-30-s3-live-upload.md); Moto and `terraform test` cover it offline in CI |
 | Release | Done | v1.1.0 verified from a fresh clone; see [CHANGELOG](CHANGELOG.md) |
 | Demo video | Not started | — |
@@ -343,9 +343,9 @@ pipeline features.
 - **Historical data:** regular loading accepts only timestamps newer than the
   watermark, and backfill skips existing dates. Same-day local raw files are
   overwritten on rerun rather than kept as immutable per-run snapshots.
-- **Metrics:** the CLI runner emits step status, timing, and JSON metrics, but
-  some step row counts are unavailable and SLA helpers are not wired into live
-  runs.
+- **Metrics:** the CLI runner persists pipeline-level status, timing, quality
+  status, and errors, but step rows and some processed-row counts are not yet
+  persisted and SLA helpers are not wired into live runs.
 - **Deployment:** Dagster and FastAPI run as local development services. The
   API has no authentication; hosting and alerting are not configured.
 
@@ -353,8 +353,8 @@ pipeline features.
 
 1. Rebuild marts once per batch (or incrementally) instead of once per symbol;
    at 98k rows that rebuild is 91% of a daily 10-symbol run.
-2. Persist a `pipeline_runs` record (status, duration, loaded rows) and add a
-   failure-rate SQL query.
+2. Persist step and quality-check details for each `pipeline_runs` record and
+   add a failure-rate SQL query.
 3. Add a force-reprocess option for historical date ranges.
 4. Record a 2–4 minute demo: ingest -> quality gate -> marts -> serving.
 

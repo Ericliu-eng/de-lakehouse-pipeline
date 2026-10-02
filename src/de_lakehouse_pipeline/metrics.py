@@ -16,6 +16,7 @@ class StepMetric:
     started_at: str
     finished_at: str
     row_count: int | None = None
+    error_type: str | None = None
     error_message: str | None = None
 
     def to_dict(self) -> dict:
