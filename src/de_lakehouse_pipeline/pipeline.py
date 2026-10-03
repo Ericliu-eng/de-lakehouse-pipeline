@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from pathlib import Path
 from datetime import date
 
@@ -27,7 +28,33 @@ def today_time() -> str:
 
 
 
-def run_stock(symbol: str = "AAPL", root: Path | None = None,s3_client=None,) -> Path:
+@dataclass(frozen=True)
+class StockLoadResult:
+    """What one ingestion run did, beyond where its raw payload landed.
+
+    ``rows_received`` counts the rows the source returned and staging accepted;
+    ``rows_loaded`` counts the rows that were new past the watermark and were
+    written. They answer different questions. ``rows_loaded`` is about one per
+    trading day and zero on weekends and holidays, so a monitor that alerts on a
+    drop in it would fire every weekend. ``rows_received`` stays near the size of
+    the requested window, and a drop in it means the source sent less than usual.
+    """
+
+    raw_path: Path
+    rows_received: int
+    rows_loaded: int
+
+
+def run_stock(symbol: str = "AAPL", root: Path | None = None, s3_client=None) -> Path:
+    """Run ingestion for one symbol and return the path of its raw payload."""
+    return load_stock(symbol=symbol, root=root, s3_client=s3_client).raw_path
+
+
+def load_stock(
+    symbol: str = "AAPL",
+    root: Path | None = None,
+    s3_client=None,
+) -> StockLoadResult:
     logger.info("Starting stock pipeline for symbol=%s", symbol)
 
     try:
@@ -67,7 +94,7 @@ def run_stock(symbol: str = "AAPL", root: Path | None = None,s3_client=None,) ->
 
         if not rows_to_check:
             logger.info("No rows found in raw stock json")
-            return file_path
+            return StockLoadResult(raw_path=file_path, rows_received=0, rows_loaded=0)
 
         cfg = load_db_config()
         wait_for_db(cfg, timeout_s=60)
@@ -83,7 +110,11 @@ def run_stock(symbol: str = "AAPL", root: Path | None = None,s3_client=None,) ->
 
             if not new_rows:
                 logger.info("No new rows to load for symbol=%s", symbol)
-                return file_path
+                return StockLoadResult(
+                    raw_path=file_path,
+                    rows_received=len(rows_to_check),
+                    rows_loaded=0,
+                )
             #7.insert the lastest stock 
             upsert_stock_prices(conn, new_rows)
             #get the lastest date 
@@ -112,7 +143,11 @@ def run_stock(symbol: str = "AAPL", root: Path | None = None,s3_client=None,) ->
             symbol,
             len(new_rows),
         )
-        return file_path
+        return StockLoadResult(
+            raw_path=file_path,
+            rows_received=len(rows_to_check),
+            rows_loaded=len(new_rows),
+        )
 
     except Exception:
         logger.exception("Stock pipeline failed for symbol=%s", symbol)
