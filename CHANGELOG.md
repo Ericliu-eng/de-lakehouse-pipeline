@@ -8,6 +8,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Each CLI-orchestrated run is reported to [PipeGuard](https://github.com/Ericliu-eng/pipeguard) with its status,
+  timing, row count, error, and quality-check results, including the checks of
+  a run that stopped on bad data. Enabled by `PIPEGUARD_API_URL` and
+  `PIPEGUARD_API_KEY`; best-effort, recorded locally first, never fails a run.
+- `load_stock()` returns rows received and rows loaded alongside the raw path;
+  `run_stock()` keeps returning the path.
 - Moto integration tests for the real boto3 upload path: object body, content
   type, encryption, versioning on rerun, the same payload stored locally and in
   S3, and no warehouse writes after an upload failure.
@@ -22,6 +28,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- `pipeline_runs.rows_processed` was always 0: the ingest step returned no row
+  count. It now records the rows received from the source — not rows newly
+  loaded, which are zero on every weekend and would read as a collapse.
 - API keys no longer appear in logged error messages: the retry helper masks
   `apikey` and `token` values in `HTTPError` and `ConnectionError` messages.
 - `docs/CLOUD_STORAGE.md` and `infra/terraform/README.md` described the S3

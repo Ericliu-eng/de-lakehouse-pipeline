@@ -55,6 +55,7 @@ AWS S3 · Terraform · pytest · Ruff · GitHub Actions.
 | Multi-source history | Tiingo backfill is insert-only on `(ts, symbol)`; its UTC-midnight dates are normalized to the warehouse's US/Eastern grain; overlapping days are reconciled against existing closes |
 | Quality gates | Non-null keys, key uniqueness, non-negative close/volume, and freshness scoped to the active `(source, symbol)` |
 | Orchestration | CLI runner with failure exit codes; Dagster job with explicit dependencies and a daily schedule definition |
+| Run monitoring | Each CLI-orchestrated run is reported to [PipeGuard](https://github.com/Ericliu-eng/pipeguard) with its row count and quality-check results, keyed by the run's UUID so resends are idempotent. PipeGuard adds cross-run row-count anomaly detection, which in-batch checks cannot do. Reporting is best-effort: a monitor that is down or slow never fails a load |
 | Serving | Database-backed price endpoint and HTML dashboard |
 
 ## Measured Results
@@ -145,6 +146,11 @@ Run the complete workflow, including the quality gate:
 ```bash
 make orchestrate SYMBOL=AAPL
 ```
+
+To report each run to PipeGuard, set `PIPEGUARD_API_URL` and `PIPEGUARD_API_KEY`
+(see `.env.example`). The run is recorded in the local `pipeline_runs` table
+first; the report is sent afterwards with a 5-second timeout, and a failed report
+is logged rather than raised. With either variable unset, nothing is sent.
 
 A successful run prints `Status: success`, step results, and a JSON summary.
 Failures return a non-zero exit code and stop later steps. Raw data lands at
@@ -330,7 +336,7 @@ pipeline features.
 | CI | Done | Lint, unit, smoke, integration, Terraform validate |
 | Terraform S3 bucket and IAM | Done | Historical apply/destroy evidence |
 | Backfill | Partial | Resumable ranges; no force-reprocess for historical corrections |
-| Operational metrics | Partial | CLI orchestration persists run status, timing, quality status, and errors; step history and failure-rate query remain |
+| Operational metrics | Partial | CLI orchestration persists run status, timing, quality status, rows received, and errors, and reports each run with its quality-check results to PipeGuard; step history and failure-rate query remain |
 | Live S3 evidence | Done | [Live upload and read-back](docs/proof/2026-09-30-s3-live-upload.md); Moto and `terraform test` cover it offline in CI |
 | Release | Done | v1.1.0 verified from a fresh clone; see [CHANGELOG](CHANGELOG.md) |
 | Demo video | Not started | — |
@@ -344,8 +350,10 @@ pipeline features.
   watermark, and backfill skips existing dates. Same-day local raw files are
   overwritten on rerun rather than kept as immutable per-run snapshots.
 - **Metrics:** the CLI runner persists pipeline-level status, timing, quality
-  status, and errors, but step rows and some processed-row counts are not yet
-  persisted and SLA helpers are not wired into live runs.
+  status, rows received, and errors, but step rows are not yet persisted and
+  SLA helpers are not wired into live runs. The Dagster scheduled job runs its
+  own ops and bypasses run persistence, so only CLI runs are recorded and
+  reported to PipeGuard.
 - **Deployment:** Dagster and FastAPI run as local development services. The
   API has no authentication; hosting and alerting are not configured.
 
@@ -353,10 +361,12 @@ pipeline features.
 
 1. Rebuild marts once per batch (or incrementally) instead of once per symbol;
    at 98k rows that rebuild is 91% of a daily 10-symbol run.
-2. Persist step and quality-check details for each `pipeline_runs` record and
-   add a failure-rate SQL query.
-3. Add a force-reprocess option for historical date ranges.
-4. Record a 2–4 minute demo: ingest -> quality gate -> marts -> serving.
+2. Persist step details for each `pipeline_runs` record (quality-check results
+   are already kept in PipeGuard) and add a failure-rate SQL query.
+3. Route the Dagster scheduled job through the same run recording and
+   reporting as the CLI runner.
+4. Add a force-reprocess option for historical date ranges.
+5. Record a 2–4 minute demo: ingest -> quality gate -> marts -> serving.
 
 The full list of open items and resume-ready criteria is in
 [Project Status](docs/PROJECT_STATUS.md).

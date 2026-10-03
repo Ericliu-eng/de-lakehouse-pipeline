@@ -36,8 +36,9 @@ def test_orchestrated_pipeline_persists_terminal_run(
         assert received_symbol == symbol
         if failure_step == "ingest":
             raise RuntimeError("simulated provider failure")
+        return 100
 
-    def quality(received_symbol):
+    def quality(received_symbol, results=None):
         assert received_symbol == symbol
         if failure_step == "quality":
             raise RuntimeError("simulated quality failure")
@@ -56,7 +57,7 @@ def test_orchestrated_pipeline_persists_terminal_run(
         with connect(cfg) as conn:
             row = conn.execute(
                 """
-                SELECT status, quality_status, error_type, error_message
+                SELECT status, quality_status, error_type, error_message, rows_processed
                 FROM pipeline_runs
                 WHERE pipeline_name = %s AND symbol = %s
                 ORDER BY id DESC
@@ -72,6 +73,10 @@ def test_orchestrated_pipeline_persists_terminal_run(
             assert row[3] is None
         else:
             assert expected_error_fragment in row[3]
+        # Whatever the ingest step counts is what the stored run records. (That
+        # the real ingest step counts rows received is covered by unit tests;
+        # this stub stands in for it.)
+        assert row[4] == (0 if failure_step == "ingest" else 100)
     finally:
         with connect(cfg) as conn:
             conn.execute("DELETE FROM pipeline_runs WHERE symbol = %s", (symbol,))

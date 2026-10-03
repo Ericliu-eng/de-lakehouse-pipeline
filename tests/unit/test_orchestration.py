@@ -1,9 +1,14 @@
+from contextlib import contextmanager
+from pathlib import Path
+
 from orchestration.dagster_pipeline import run_orchestrated_pipeline, run_step
 from orchestration import dagster_pipeline as runner
 import pytest
 from uuid import uuid4
 
 from de_lakehouse_pipeline.observability.run_repository import PipelineRunHandle
+from de_lakehouse_pipeline.pipeline import StockLoadResult
+from de_lakehouse_pipeline.quality.checks import CheckResult
 
 
 def test_run_step_records_success() -> None:
@@ -112,7 +117,7 @@ def run_records(monkeypatch):
 
 def test_successful_pipeline_persists_success(monkeypatch, run_records) -> None:
     monkeypatch.setattr(runner, "_run_stock_pipeline", lambda symbol: None)
-    monkeypatch.setattr(runner, "_run_quality_checks", lambda symbol: 4)
+    monkeypatch.setattr(runner, "_run_quality_checks", lambda symbol, results=None: 4)
     monkeypatch.setattr(runner, "_build_marts", lambda: None)
 
     metric = run_orchestrated_pipeline(symbol="MSFT")
@@ -120,3 +125,113 @@ def test_successful_pipeline_persists_success(monkeypatch, run_records) -> None:
     assert metric.status == "success"
     assert run_records[0] == ("start", "MSFT")
     assert run_records[1] == ("finish", metric)
+
+
+# --- reporting to PipeGuard ----------------------------------------------------
+
+
+@pytest.fixture
+def known_run(monkeypatch):
+    """Record locally against a fixed handle, and capture what gets reported."""
+    handle = PipelineRunHandle(id=91, external_run_id=uuid4())
+    events = {"finished": [], "reports": []}
+
+    monkeypatch.setattr(runner, "_start_pipeline_run_record", lambda metric, *, symbol: handle)
+    monkeypatch.setattr(
+        runner,
+        "_finish_pipeline_run_record",
+        lambda received, metric: events["finished"].append(metric),
+    )
+    monkeypatch.setattr(runner, "report_run", lambda report: events["reports"].append(report))
+    events["handle"] = handle
+    return events
+
+
+def _check(name, passed=True, failed_rows=0):
+    return CheckResult(name, "market_bars", passed, failed_rows, f"{name}: {failed_rows} row(s)")
+
+
+def test_a_finished_run_is_reported_once_with_its_checks(monkeypatch, known_run) -> None:
+    def quality(symbol, results):
+        results.extend([_check("not_null"), _check("unique")])
+        return 2
+
+    monkeypatch.setattr(runner, "_run_stock_pipeline", lambda symbol: 100)
+    monkeypatch.setattr(runner, "_run_quality_checks", quality)
+    monkeypatch.setattr(runner, "_build_marts", lambda: None)
+
+    run_orchestrated_pipeline(symbol="AAPL")
+
+    assert len(known_run["reports"]) == 1
+    report = known_run["reports"][0]
+    # The same UUID as the local record, so PipeGuard treats a resend as a retry.
+    assert report["external_run_id"] == str(known_run["handle"].external_run_id)
+    assert report["status"] == "SUCCESS"
+    assert report["rows_processed"] == 100
+    assert [check["check_name"] for check in report["checks"]] == ["not_null", "unique"]
+
+
+def test_a_run_that_stops_on_bad_data_still_reports_the_failing_checks(
+    monkeypatch, known_run
+) -> None:
+    def quality(symbol, results):
+        results.extend([_check("not_null"), _check("unique", passed=False, failed_rows=3)])
+        raise RuntimeError("Quality checks failed: unique")
+
+    monkeypatch.setattr(runner, "_run_stock_pipeline", lambda symbol: 100)
+    monkeypatch.setattr(runner, "_run_quality_checks", quality)
+
+    metric = run_orchestrated_pipeline(symbol="AAPL")
+
+    assert metric.status == "failed"
+    report = known_run["reports"][0]
+    assert report["status"] == "FAILED"
+    assert report["error_message"] == "Quality checks failed: unique"
+    assert {check["check_name"]: check["status"] for check in report["checks"]} == {
+        "not_null": "PASS",
+        "unique": "FAIL",
+    }
+
+
+def test_a_reporting_failure_never_changes_the_outcome_of_a_run(monkeypatch, known_run) -> None:
+    def broken_report(report):
+        raise RuntimeError("bug in reporting")
+
+    monkeypatch.setattr(runner, "report_run", broken_report)
+    monkeypatch.setattr(runner, "_run_stock_pipeline", lambda symbol: 100)
+    monkeypatch.setattr(runner, "_run_quality_checks", lambda symbol, results: 0)
+    monkeypatch.setattr(runner, "_build_marts", lambda: None)
+
+    metric = run_orchestrated_pipeline(symbol="AAPL")
+
+    assert metric.status == "success"
+    # The local record is written before reporting is even attempted.
+    assert known_run["finished"] == [metric]
+
+
+def test_the_ingest_step_counts_rows_received_not_rows_loaded(monkeypatch) -> None:
+    result = StockLoadResult(raw_path=Path("raw.json"), rows_received=100, rows_loaded=1)
+    monkeypatch.setattr(runner, "load_stock", lambda symbol: result)
+
+    assert runner._run_stock_pipeline("AAPL") == 100
+
+
+def test_quality_results_are_kept_even_when_the_checks_fail(monkeypatch) -> None:
+    @contextmanager
+    def fake_connect(cfg):
+        yield object()
+
+    monkeypatch.setattr(runner, "load_db_config", lambda: object())
+    monkeypatch.setattr(runner, "wait_for_db", lambda cfg, timeout_s: None)
+    monkeypatch.setattr(runner, "connect", fake_connect)
+    monkeypatch.setattr(
+        runner,
+        "run_stock_quality_checks",
+        lambda conn, symbol: [_check("not_null"), _check("unique", passed=False, failed_rows=2)],
+    )
+    collected = []
+
+    with pytest.raises(RuntimeError):
+        runner._run_quality_checks("AAPL", collected)
+
+    assert [check.check_name for check in collected] == ["not_null", "unique"]
