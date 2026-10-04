@@ -19,6 +19,7 @@ from de_lakehouse_pipeline.ingest.cloud_storage import upload_raw_payload_if_ena
 from de_lakehouse_pipeline.ingest.io import save_raw_data
 from de_lakehouse_pipeline.load.db.pipeline_metadata import get_last_watermark, upsert_watermark
 from de_lakehouse_pipeline.transform.incremental import get_max_timestamp, filter_new_rows
+from de_lakehouse_pipeline.symbols import normalize_symbol
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,14 @@ logger = logging.getLogger(__name__)
 def today_time() -> str:
     return date.today().isoformat()
 
+
+def _validate_response_symbol(payload: dict, requested_symbol: str) -> None:
+    actual_symbol = normalize_symbol(payload.get("Meta Data", {}).get("2. Symbol"))
+    if actual_symbol != requested_symbol:
+        raise ValueError(
+            f"Source symbol {actual_symbol!r} does not match requested symbol "
+            f"{requested_symbol!r}."
+        )
 
 
 @dataclass(frozen=True)
@@ -55,14 +64,16 @@ def load_stock(
     root: Path | None = None,
     s3_client=None,
 ) -> StockLoadResult:
+    symbol = normalize_symbol(symbol)
     logger.info("Starting stock pipeline for symbol=%s", symbol)
 
     try:
         logger.info("Fetching stock data for symbol=%s", symbol)
         #1.Use the client to retrieve the stocks you want.
         data = fetch_daily_stock(symbol)
+        _validate_response_symbol(data, symbol)
         #2.save the raw data in local 
-        file_path = save_raw_data(data,"stock", root)
+        file_path = save_raw_data(data, "stock", root, symbol=symbol)
 
         logger.info("Saved raw stock data to %s", file_path)
         #3.Upload to the cloud and return a URI.
@@ -100,7 +111,7 @@ def load_stock(
         wait_for_db(cfg, timeout_s=60)
 
         with connect(cfg) as conn:
-            #6.获取上一次 pipeline 已经处理到哪里了。
+            #6.Read how far the previous run got.
             last_ts = get_last_watermark(conn, "alpha_vantage", symbol)
             # If the stock is up-to-date  insert
             new_rows = filter_new_rows(
@@ -161,12 +172,14 @@ def run_stock_for_date(
     s3_client=None,
     payload: dict | None = None,
 ) -> Path:
+    symbol = normalize_symbol(symbol)
     logger.info("Starting stock pipeline for %s", target_date.isoformat())
     try:
         logger.info("Fetching stock data for symbol=%s", symbol)
         data = payload if payload is not None else fetch_daily_stock(symbol)
+        _validate_response_symbol(data, symbol)
 
-        file_path = save_raw_data(data, "stock", root,target_date)
+        file_path = save_raw_data(data, "stock", root, target_date, symbol=symbol)
         logger.info("Saved raw stock data to %s", file_path)
         s3_uri = upload_raw_payload_if_enabled(
             payload=data,
@@ -209,14 +222,14 @@ def run_stock_for_date(
                 symbol,
             )
 
-            # 回填目标日期，不使用 watermark 过滤
+            # Backfill the target date regardless of the watermark.
             rows_to_upsert = target_rows
 
             upsert_stock_prices(conn, rows_to_upsert)
 
             max_ts = get_max_timestamp(rows_to_upsert)
 
-            # 防止历史回填导致 watermark 倒退
+            # Never move the watermark backwards for a historical date.
             if last_ts is None:
                 watermark_to_save = max_ts
             else:

@@ -4,7 +4,6 @@ import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 
-#metrics  = 指标 / 度量值。
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 

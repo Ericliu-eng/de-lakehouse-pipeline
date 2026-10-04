@@ -37,7 +37,6 @@ def run_marts() -> None:
 
 def main() -> None:
     configure_logging()
-    #Python 文件可以接收命令行输入的参数。
     parser = argparse.ArgumentParser()
     parser.add_argument("command", choices=["run_stock", "run_marts", "backfill", "tiingo_backfill"])
     #backfill

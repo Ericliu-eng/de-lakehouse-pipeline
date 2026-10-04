@@ -10,9 +10,9 @@ The project demonstrates API retry handling, schema validation, transactional
 loading, watermarks, resumable backfills, quality gates, and local orchestration.
 Optional S3 uploads preserve raw payloads in cloud storage.
 
-**Validation snapshot — September 25, 2026 ([v1.1.0](CHANGELOG.md)):** a fresh
-clone passed `make setup`, migrations, seeding, `make lint`, and `make test`
-(157 tests) against PostgreSQL 16. The full suite (159 tests) measures 85% line
+**Validation:** a fresh clone of [v1.1.0](CHANGELOG.md) passed `make setup`,
+migrations, seeding, `make lint`, and `make test` against PostgreSQL 16. As of
+October 4, 2026, the full suite (220 tests) passes and measures 88% line
 coverage.
 
 ## Animated Demo
@@ -106,7 +106,7 @@ Windows machine. No API calls were made.
 | Metric | Result |
 | --- | --- |
 | [Live Tiingo backfill](docs/proof/2026-09-25-tiingo-backfill.md) | 10 API requests, 20 s end to end; development warehouse grew from 1,225 to 98,282 rows; 1,219 overlapping days, 0 beyond 0.5% |
-| Test suite | 167 tests; 85% line coverage (85–100% for ingestion, staging, loading, quality, backfill, CLI, and Dagster job modules) |
+| Test suite | 220 tests; 88% line coverage (86–100% for ingestion, staging, loading, quality, backfill, CLI, and Dagster job modules) |
 
 These are single-machine local measurements, not production SLAs. Retry
 results use scripted HTTP responses rather than live throttling.
@@ -317,13 +317,13 @@ reruns, checkpoint recovery, quality-gate failures, and real PostgreSQL rollback
 after a rejected audit write. It does not constitute a fresh-clone installation
 test or a live AWS/API benchmark.
 
-On September 25, `make coverage` against a freshly migrated and seeded database
-ran 167 tests and measured **85% line coverage** (963 of 1,128 statements).
-Core modules are covered at 85–100%: pipeline 93%, staging 100%, quality checks
-96%, API client 92%, backfill 85%, Tiingo backfill 98%, CLI 95%, and the Dagster
-job and schedule 100%.
+On October 4, `make coverage` against a freshly migrated and seeded database
+ran 220 tests and measured **88% line coverage** (1,133 of 1,293 statements).
+Core modules are covered at 86–100%: pipeline 96%, staging 100%, quality checks
+95%, API client 93%, backfill 86%, Tiingo backfill 98%, CLI 95%, the CLI
+orchestrator 92%, and the Dagster job and schedule 100%.
 The remaining gaps are the CSV export and the `checkdb` inspection helper (0%),
-the serving API (71%), and the standalone entry points of the mart modules.
+the serving API (70%), and the standalone entry points of the mart modules.
 
 Historical evidence is available under [docs/proof](docs/proof), including
 [transaction and retry hardening](docs/proof/2026-09-07-reliability-hardening.md)

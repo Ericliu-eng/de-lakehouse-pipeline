@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
+from de_lakehouse_pipeline.symbols import normalize_symbol
 
 
 @dataclass
@@ -205,6 +206,7 @@ def run_stock_quality_checks(
     symbol: str,
     source: str = "alpha_vantage",
 ) -> list[CheckResult]:
+    symbol = normalize_symbol(symbol)
     return [
         check_not_null(conn, "market_bars", "symbol"),
         check_not_null(conn, "market_bars", "ts"),

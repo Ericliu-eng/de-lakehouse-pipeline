@@ -1,6 +1,7 @@
 from dagster import Definitions, Field, In, Nothing, Out, ScheduleDefinition, job, op
 
 from de_lakehouse_pipeline.pipeline import run_stock
+from de_lakehouse_pipeline.symbols import normalize_symbol
 from de_lakehouse_pipeline.quality.checks import run_stock_quality_checks
 from de_lakehouse_pipeline.load.db.connection import load_db_config, wait_for_db, connect
 from de_lakehouse_pipeline.transform.marts.mart_daily_symbol_summary import run_daily_summary
@@ -12,7 +13,7 @@ from de_lakehouse_pipeline.transform.marts.mart_symbol_volume_rank import run_sy
 #from dagster
 @op(config_schema={"symbol": Field(str, default_value="AAPL")}, out=Out(str))
 def ingest_stock(context) -> str:
-    symbol = context.op_config["symbol"]
+    symbol = normalize_symbol(context.op_config["symbol"])
     run_stock(symbol)
     return symbol
 

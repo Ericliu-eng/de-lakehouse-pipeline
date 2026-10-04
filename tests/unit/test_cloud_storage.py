@@ -13,7 +13,7 @@ import pytest
 class FakeS3Client:
     def __init__(self):
         self.objects = []
-                #接收很多个“带名字的参数”，然后把它们自动打包成一个 dict。
+
     def put_object(self, **kwargs):
         self.objects.append(kwargs)
 
@@ -21,8 +21,6 @@ class FailingS3Client:
     def put_object(self, **kwargs):
         raise RuntimeError("upload failed")
 
-"""输入 aapl
-输出路径里的 symbol 应该是 AAPL"""
 def test_build_raw_object_key():
     key = build_raw_object_key(
         source="alpha_vantage",
@@ -46,15 +44,6 @@ def test_upload_disabled_returns_none():
     )
 
     assert result is None
-
-"""不真的上传到 AWS，只是记录有没有被调用。
-
-这个测试要检查：
-
-1. 返回值不是 None
-2. 返回值 uri 是正确的 s3://...
-3. fake client 里面确实记录了一次 put_object
-4. Bucket / Key / ContentType 是正确的"""
 
 def test_upload_enabled_puts_object():
     fake_client = FakeS3Client()
@@ -91,7 +80,6 @@ def test_upload_enabled_puts_object():
 
 def test_upload_failure_raises_upload_error():
     failingS3Client  = FailingS3Client()
-    #如果出 这个CloudStorageUploadError 就pass
     with pytest.raises(CloudStorageUploadError):
         upload_raw_payload_if_enabled(
         payload={"symbol": "AAPL"},
@@ -120,11 +108,6 @@ def test_upload_enabled_without_bucket_raises_config_error():
         )
 
 
-"""1. 调用 upload_raw_payload_if_enabled
-2. env 里面 ENABLE_S3_RAW_UPLOAD = "true"
-3. env 里面 S3_RAW_BUCKET = "test-bucket"
-4. 但是不要传 s3_client
-5. 应该 raise CloudStorageConfigError"""
 def test_upload_enabled_creates_default_client(monkeypatch):
     fake_client = FakeS3Client()
 

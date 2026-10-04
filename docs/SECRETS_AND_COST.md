@@ -21,9 +21,9 @@ Rules:
 - Tiingo's token is sent in a header, so it never appears in a URL.
 - Proof files record commands and results, never credentials, AWS account IDs,
   or ETags.
-- An Alpha Vantage key appears in early commit history and must be rotated
-  (tracked in [Project Status](PROJECT_STATUS.md)). A rotated key is useless,
-  so rewriting history is optional.
+- An Alpha Vantage key that appeared in early commit history was rotated on
+  2026-10-04. History was not rewritten: GitHub keeps pull-request refs to the
+  old commits, so rotation, not a rewrite, is what retires a leaked key.
 
 `urllib3` logs request URLs at `DEBUG`. The pipeline logs at `INFO`; do not
 enable `DEBUG` logging for `urllib3` with a real key configured.

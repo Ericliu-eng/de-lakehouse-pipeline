@@ -1,6 +1,5 @@
 import os
 import time
-#requests 是 Python 里的一个库，用来发送 HTTP 请求。
 import requests
 #load .env
 from dotenv import load_dotenv

@@ -2,7 +2,7 @@
 .PHONY: help setup lint clean
 .PHONY: unit smoke smoke-db integration test test-all test-s coverage
 .PHONY: run run-marts backfill tiingo-backfill dagster-dev orchestrate price-dashboard benchmark
-.PHONY: cloud-storage-test terraform-check terraform-validate tree
+.PHONY: cloud-storage-test terraform-check terraform-validate
 .PHONY: db-up db-down db-migrate migrate db-seed
 .PHONY: db-smoke db-smoke-local db-shell db-visu sql-utils
 
@@ -106,9 +106,6 @@ benchmark:
 cloud-storage-test:
 	$(PY) -m pytest tests/unit/test_cloud_storage.py -v
 
-tree:
-	$(PY) tree_tool.py
-	
 
 TF_BUCKET ?= eric-lakehouse-raw-dev-20260601
 terraform-check:

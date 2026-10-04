@@ -15,6 +15,7 @@ from de_lakehouse_pipeline.observability.run_repository import (
     start_pipeline_run,
 )
 from de_lakehouse_pipeline.pipeline import load_stock
+from de_lakehouse_pipeline.symbols import normalize_symbol
 from de_lakehouse_pipeline.quality.checks import CheckResult, run_stock_quality_checks
 from de_lakehouse_pipeline.transform.marts.mart_daily_symbol_summary import run_daily_summary
 from de_lakehouse_pipeline.transform.marts.mart_symbol_latest_price import run_latest_price
@@ -62,6 +63,7 @@ def run_step(step_name: str, fn: Callable[[], int | None]) -> StepMetric:
 
 
 def run_orchestrated_pipeline(symbol: str = "AAPL") -> PipelineMetric:
+    symbol = normalize_symbol(symbol)
     pipeline_name = "market_data_lakehouse_pipeline"
     logger.info(
         "Starting orchestrated pipeline",

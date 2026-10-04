@@ -22,6 +22,7 @@ from de_lakehouse_pipeline.load.db.stock_writer import insert_missing_stock_pric
 from de_lakehouse_pipeline.load.metadata import record_load
 from de_lakehouse_pipeline.quality.reconciliation import CloseReconciliation, reconcile_close_prices
 from de_lakehouse_pipeline.transform.incremental import get_max_timestamp
+from de_lakehouse_pipeline.symbols import normalize_symbol
 from de_lakehouse_pipeline.transform.staging.staging_market_bars import (
     stage_tiingo_daily,
     staged_rows_to_db_tuples,
@@ -62,7 +63,7 @@ def run_tiingo_backfill(
     s3_client=None,
     payload: list[dict] | None = None,
 ) -> TiingoBackfillResult:
-    symbol = symbol.strip().upper()
+    symbol = normalize_symbol(symbol)
     logger.info("Starting Tiingo backfill for symbol=%s", symbol)
 
     data = payload if payload is not None else fetch_tiingo_daily(symbol, start_date, end_date)

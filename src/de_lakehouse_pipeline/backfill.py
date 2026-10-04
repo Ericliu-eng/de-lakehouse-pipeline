@@ -11,6 +11,7 @@ from collections.abc import Iterator
 from de_lakehouse_pipeline.pipeline import run_stock_for_date
 from de_lakehouse_pipeline.ingest.market_data_client import fetch_daily_stock
 from de_lakehouse_pipeline.load.db.stock_reader import load_completed_market_dates
+from de_lakehouse_pipeline.symbols import normalize_symbol
 
 CHECKPOINT_PATH = Path(".checkpoints/backfill_checkpoint.json")
 DEFAULT_SYMBOL = "AAPL"
@@ -58,9 +59,7 @@ def sync_checkpoint_from_db(symbol: str) -> set[str]:
     
 def run_backfill(start: date, end: date, symbol: str = DEFAULT_SYMBOL) -> None:
     validate_date_range(start, end)
-    symbol = symbol.strip().upper()
-    if not symbol:
-        raise ValueError("symbol must not be empty")
+    symbol = normalize_symbol(symbol)
     completed_dates = sync_checkpoint_from_db(symbol)
 
     pending_dates = [

@@ -45,6 +45,11 @@ data/raw/*
 # Local project artifacts
 archive/
 plan.docx
+docs/*.docx
+tmp/
+
+# Generated CSV exports
+export/
 
 # Notebooks
 .ipynb_checkpoints/
@@ -53,7 +58,7 @@ plan.docx
 .DS_Store
 Thumbs.db
 .idea/
-# .vscode/ 只有不想共享 VS Code 配置时才忽略
+.vscode/
 
 # Terraform
 infra/terraform/.terraform/
@@ -65,5 +70,3 @@ infra/terraform/crash.*.log
 
 # Personal notes
 INTERVIEW_DE.md
-
-.checkpoints/

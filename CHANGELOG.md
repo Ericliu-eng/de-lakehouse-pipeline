@@ -35,10 +35,16 @@ All notable changes to this project are documented here. The format follows
   `apikey` and `token` values in `HTTPError` and `ConnectionError` messages.
 - `docs/CLOUD_STORAGE.md` and `infra/terraform/README.md` described the S3
   upload as unwired; both now match the implementation.
+- Symbols are normalized to one business key (trimmed, upper case) at every
+  entry point — ingestion, backfills, raw landing, quality checks, and both
+  orchestrators — so `aapl` and `AAPL` no longer split watermarks or raw
+  folders. A source payload for a different symbol than the one requested is
+  rejected before raw landing or any database write.
 
 ### Changed
 
 - CI uses Terraform 1.9.8 (mock providers need 1.7+).
+- Generated CSV exports are no longer tracked; `export/` is ignored.
 
 ## [1.1.0] — 2026-09-25
 

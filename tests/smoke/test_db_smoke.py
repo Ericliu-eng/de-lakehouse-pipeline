@@ -14,9 +14,7 @@ pytestmark = pytest.mark.db
 @pytest.mark.smoke
 def _table_exists(conn: psycopg.Connection, table_name: str) -> bool:
     with conn.cursor() as cur:
-#PostgreSQL comes with (information_schema),The tables view contains information about all the tables.
         cur.execute(
-            #""" 支持换行 要然很难阅读
             """
             SELECT EXISTS (
                 SELECT 1
@@ -25,9 +23,7 @@ def _table_exists(conn: psycopg.Connection, table_name: str) -> bool:
             )
             """,
             (table_name,),
-#  错误写法 cur.execute(f"... table_name = '{table_name}'") ：SQL injection 风险
         )
-        #return (True,) or  (False,) 
         row = cur.fetchone()
         exists = row[0]
         return bool(exists)
