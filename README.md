@@ -15,6 +15,20 @@ clone passed `make setup`, migrations, seeding, `make lint`, and `make test`
 (157 tests) against PostgreSQL 16. The full suite (159 tests) measures 85% line
 coverage.
 
+## Animated Demo
+
+![Animated project data flow: daily ingestion and separate backfills, PostgreSQL tables, quality checks, analytical marts, FastAPI, and optional CLI monitoring](docs/demo/pipeline-flow.gif)
+
+A 21-second walkthrough of the project's data flow. This is an illustrated
+workflow with example prices, not a recording of a live run. Historical
+backfills are separate commands; Volume Rank reads Daily Summary, and only
+Latest Price feeds the serving API.
+
+[Static overview](docs/demo/pipeline-flow.png) ·
+[Animation details and source](docs/demo/README.md).
+For pause and step controls, download the [interactive player](docs/demo/pipeline-flow.html)
+and open it locally in a browser.
+
 ## Architecture
 
 ![Market data pipeline run flow](docs/project_run_flow.svg)
@@ -339,7 +353,8 @@ pipeline features.
 | Operational metrics | Partial | CLI orchestration persists run status, timing, quality status, rows received, and errors, and reports each run with its quality-check results to PipeGuard; step history and failure-rate query remain |
 | Live S3 evidence | Done | [Live upload and read-back](docs/proof/2026-09-30-s3-live-upload.md); Moto and `terraform test` cover it offline in CI |
 | Release | Done | v1.1.0 verified from a fresh clone; see [CHANGELOG](CHANGELOG.md) |
-| Demo video | Not started | — |
+| Animated demo | Done | [21-second project data flow](docs/demo/pipeline-flow.gif), with a static overview and interactive player |
+| Demo video | Not started | Live execution recording remains |
 
 ### Known limits
 
@@ -366,7 +381,8 @@ pipeline features.
 3. Route the Dagster scheduled job through the same run recording and
    reporting as the CLI runner.
 4. Add a force-reprocess option for historical date ranges.
-5. Record a 2–4 minute demo: ingest -> quality gate -> marts -> serving.
+5. Record a 2–4 minute live demo to complement the animation:
+   ingest -> quality gate -> marts -> serving.
 
 The full list of open items and resume-ready criteria is in
 [Project Status](docs/PROJECT_STATUS.md).
