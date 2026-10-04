@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Market data pipeline — flow animation</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#080f1b;color:#eef5ff;font:16px/1.5 'Segoe UI',Arial,sans-serif}
+main{max-width:1240px;margin:20px auto;padding:0 20px}#diagram{background:#0b1423;border-radius:12px;overflow:hidden}svg{display:block;width:100%;height:auto}
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:18px}button{font:inherit;border:1px solid #405a70;border-radius:7px;background:#142336;color:#eef5ff;padding:9px 18px;min-height:44px;cursor:pointer}button:hover{background:#234237}button:disabled{opacity:.4;cursor:default}button:focus-visible{outline:3px solid #65edc2;outline-offset:3px}#play{background:#65edc2;color:#0b1423;min-width:100px}#status{margin-left:auto;color:#b5c6d8}.note{color:#b5c6d8;font-size:14px;margin:15px 0}#small{display:none}#small li{padding:9px 0;color:#b5c6d8}#small li[aria-current=step]{color:#65edc2;font-weight:bold}#small{padding:20px}#small h1{font-size:23px}#small p{overflow-wrap:anywhere}
+@media(max-width:650px){main{padding:0 12px}#visual{display:none}#small{display:block}#status{width:100%;margin:0}}
+</style>
+</head>
+<body><main>
+<div id="diagram"><div id="visual"></div><section id="small"><h1>Market data → dashboard</h1><ol id="route"></ol></section></div>
+<div class="controls" aria-label="Animation controls"><button id="previous" type="button">← Previous</button><button id="play" type="button">Pause</button><button id="next" type="button">Next →</button><span id="status" role="status" aria-live="polite"></span></div>
+<p class="note" id="description"></p>
+<p class="note">Illustrated project flow, not a live run. Backfills are separate commands; rebuild marts afterwards. S3 and PipeGuard are optional. Only CLI orchestration records and reports runs; Dagster uses its own execution path. Quality failure blocks the mart rebuild without undoing committed ingestion. Dashboard values are examples.</p>
+</main>
+<script>
+(() => {
+const scenes=/* SCENES */ [];
+if(!scenes.length)return;
+const visual=document.getElementById('visual'),route=document.getElementById('route'),status=document.getElementById('status'),play=document.getElementById('play'),previous=document.getElementById('previous'),next=document.getElementById('next'),description=document.getElementById('description');
+const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+let index=0,elapsed=0,playing=!reduced.matches,last=performance.now();
+function point(path,t){const lengths=path.slice(1).map((b,i)=>Math.hypot(b[0]-path[i][0],b[1]-path[i][1]));let d=Math.min(1,Math.max(0,t))*lengths.reduce((a,b)=>a+b,0);for(let i=0;i<lengths.length;i++){if(d<=lengths[i]){const r=d/lengths[i];return path[i].map((v,k)=>v+(path[i+1][k]-v)*r)}d-=lengths[i]}return path[path.length-1]}
+function animate(){const group=document.getElementById('packets');if(!group)return;group.replaceChildren();const fraction=elapsed/(scenes[index].seconds*1000);for(const path of scenes[index].paths){for(let j=0;j<3;j++){const t=fraction*1.3-j*.13;if(t<0||t>1)continue;const [x,y]=point(path,t);const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');for(const [key,value] of Object.entries({x:x-8,y:y-4,width:16,height:8,rx:3,fill:(scenes[index].monitoring?['#c4adff','#9d84d7','#746294']:['#65edc2','#42bdab','#318c85'])[j]}))rect.setAttribute(key,value);group.append(rect)}}}
+function render(){visual.innerHTML=scenes[index].svg;route.replaceChildren();const count=scenes.length-1;scenes.slice(0,count).forEach((s,i)=>{const li=document.createElement('li');li.textContent=s.title;if(i===Math.min(index,count-1))li.setAttribute('aria-current','step');route.append(li)});status.textContent=`${Math.min(index+1,count)} / ${count} · ${scenes[index].title}`;description.textContent=scenes[index].description;play.textContent=playing?'Pause':'Play';previous.disabled=index===0;next.disabled=index===scenes.length-1;animate()}
+function step(delta){index=Math.max(0,Math.min(scenes.length-1,index+delta));elapsed=0;playing=false;render()}
+function toggle(){playing=!playing;last=performance.now();render()}
+previous.onclick=()=>step(-1);next.onclick=()=>step(1);play.onclick=toggle;
+document.addEventListener('keydown',event=>{if(event.target.closest('button,input,select,textarea,a'))return;if(event.code==='Space'){event.preventDefault();toggle()}if(event.code==='ArrowLeft'){event.preventDefault();step(-1)}if(event.code==='ArrowRight'){event.preventDefault();step(1)}});
+reduced.addEventListener('change',e=>{if(e.matches){playing=false;render()}});
+function tick(now){if(playing&&!document.hidden){elapsed+=Math.min(now-last,100);if(elapsed>=scenes[index].seconds*1000){elapsed=0;index=(index+1)%scenes.length;render()}animate()}last=now;requestAnimationFrame(tick)}
+render();requestAnimationFrame(tick);
+})();
+</script></body></html>
