@@ -1,6 +1,7 @@
 from pathlib import Path
 from datetime import date
 import json
+from de_lakehouse_pipeline.symbols import normalize_symbol
 
 def project_root() -> Path:
 
@@ -13,7 +14,7 @@ def save_raw_data(data:dict,name:str, root:Path = None,run_date: date = None, sy
     # Alpha Vantage payloads carry their symbol; other sources pass it explicitly.
     if symbol is None:
         symbol = data["Meta Data"]["2. Symbol"]
-    #symbol = data.symbol
+    symbol = normalize_symbol(symbol)
     if root is None:
         root  = project_root()
     partition_date = run_date  or  today_time()
@@ -28,7 +29,6 @@ def save_raw_data(data:dict,name:str, root:Path = None,run_date: date = None, sy
     file_path = raw_dir / f"{name}.json"
 
     with open(file_path, "w") as f:
-        #把 data 写进文件 f 里面。
         json.dump(data, f, indent=2)
 
     return file_path

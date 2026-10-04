@@ -9,7 +9,6 @@ from dataclasses import dataclass
 import psycopg
 
 #auto-generates __init__, __repr__, etc.and frozen = true ,makes it immutable
-#数据库对象，用来统一存：host / port / dbname / user / password
 @dataclass(frozen=True)
 class DBConfig:
     host: str
@@ -23,8 +22,6 @@ class DBConfig:
 
 def load_db_config() -> DBConfig:
     return DBConfig(
-        #如果没有用默认值 ，第二个值
-#os.environ = a dictionary of environment variables for the current Python process
         host=os.environ.get("DB_HOST", "localhost"),
         port=int(os.environ.get("DB_PORT", "5432")),
         dbname=os.environ.get("DB_NAME", "lakehouse"),

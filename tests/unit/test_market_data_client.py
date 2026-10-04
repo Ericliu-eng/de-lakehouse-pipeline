@@ -3,7 +3,6 @@ from unittest.mock import patch,Mock
 import pytest
 import requests
 
-#把 .env 文件内容变成 Python 可以用的环境变量
 from de_lakehouse_pipeline.ingest.market_data_client import (
     build_params,
     fetch_daily_stock,

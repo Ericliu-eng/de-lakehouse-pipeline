@@ -5,7 +5,7 @@ from de_lakehouse_pipeline import pipeline
 class FakeS3Client:
     def __init__(self):
         self.objects = []
-                #接收很多个“带名字的参数”，然后把它们自动打包成一个 dict。
+
     def put_object(self, **kwargs):
         self.objects.append(kwargs)
 
