@@ -8,9 +8,9 @@
 
 A market-data pipeline that loads daily prices from Alpha Vantage and decades of history from Tiingo into an incremental PostgreSQL warehouse. Analytical marts rebuild only after a quality gate passes, and a FastAPI dashboard serves the results.
 
-![Animated flow: a daily AAPL load is throttled and retried, lands as raw JSON, is validated and typed, filtered by the watermark to one new bar, and committed with its watermark and audit row in one transaction; the quality gate passes, the three marts rebuild, FastAPI serves the latest price, and the run is reported to PipeGuard; a Tiingo history backfill then inserts missing bars without overwriting existing ones, and saved benchmark results light up](docs/demo/pipeline-flow.gif)
+![Animated flow: a daily AAPL load is throttled and retried, lands as raw JSON, is validated and typed, filtered by the watermark to one new bar, and committed with its watermark and audit row in one transaction; the quality gate passes, the three marts rebuild, FastAPI serves the latest price, and the run is reported to PipeGuard; a Tiingo history backfill then inserts missing bars without overwriting existing ones, and saved benchmark results light up](docs/demo/lakehouse-flow.gif)
 
-<sub>Illustrated flow, not a recording. Prices are examples. Rendered by [`docs/demo/render_flow.py`](docs/demo/render_flow.py) · [static frame](docs/demo/pipeline-flow.png)</sub>
+<sub>Illustrated flow, not a recording. Prices are examples. Rendered by [`docs/demo/render_flow.py`](docs/demo/render_flow.py) · [static frame](docs/demo/lakehouse-flow.png)</sub>
 
 ## Results
 

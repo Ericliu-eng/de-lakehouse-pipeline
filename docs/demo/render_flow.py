@@ -443,10 +443,10 @@ def main():
         sample.paste(frame, (0, i * H))
     palette = sample.quantize(colors=176, method=Image.Quantize.MEDIANCUT)
     quantized = [frame.quantize(palette=palette, dither=Image.Dither.NONE) for frame in frames]
-    quantized[0].save(ROOT / "pipeline-flow.gif", save_all=True, append_images=quantized[1:],
+    quantized[0].save(ROOT / "lakehouse-flow.gif", save_all=True, append_images=quantized[1:],
                       duration=round(1000 / FPS), loop=0, optimize=True, disposal=1)
-    final.save(ROOT / "pipeline-flow.png", optimize=True)
-    size = (ROOT / "pipeline-flow.gif").stat().st_size / 1024 / 1024
+    final.save(ROOT / "lakehouse-flow.png", optimize=True)
+    size = (ROOT / "lakehouse-flow.gif").stat().st_size / 1024 / 1024
     print(f"{len(frames) / FPS:.1f}s, {len(frames)} frames, {size:.2f} MiB")
 
 
