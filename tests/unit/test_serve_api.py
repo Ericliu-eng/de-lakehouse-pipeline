@@ -22,7 +22,7 @@ def test_latest_price(monkeypatch) -> None:
             "volume": 1000000,
         }
 
-    monkeypatch.setattr(api, "featch_latest_price", mock_latest_price)
+    monkeypatch.setattr(api, "fetch_latest_price", mock_latest_price)
 
     response = client.get("/latest-price")
 
@@ -45,7 +45,7 @@ def test_dashboard_returns_html(monkeypatch) -> None:
             "volume": 1000000,
         }
 
-    monkeypatch.setattr(api, "featch_latest_price", mock_latest_price)
+    monkeypatch.setattr(api, "fetch_latest_price", mock_latest_price)
 
     response = client.get("/dashboard")
 

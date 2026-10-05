@@ -69,14 +69,14 @@ def load_stock(
 
     try:
         logger.info("Fetching stock data for symbol=%s", symbol)
-        #1.Use the client to retrieve the stocks you want.
+        # 1. Fetch the daily series from the API.
         data = fetch_daily_stock(symbol)
         _validate_response_symbol(data, symbol)
-        #2.save the raw data in local 
+        # 2. Save the raw payload locally.
         file_path = save_raw_data(data, "stock", root, symbol=symbol)
 
         logger.info("Saved raw stock data to %s", file_path)
-        #3.Upload to the cloud and return a URI.
+        # 3. Optionally upload the raw payload to S3.
         s3_uri = upload_raw_payload_if_enabled(
             payload=data,
             source="alpha_vantage",
@@ -88,11 +88,11 @@ def load_stock(
 
         if s3_uri is not None:
             logger.info("Uploaded raw stock data to %s", s3_uri.uri)
-        #4.load local  json in to project
+        # 4. Read the saved raw JSON back.
         raw_data = load_raw_stock_json(file_path)
 
         logger.info("Loaded raw stock json from %s", file_path)
-        #5.form dict invert to tuple
+        # 5. Stage typed rows as database tuples.
         staged_rows = stage_alpha_vantage_daily(raw_data)
         db_rows = staged_rows_to_db_tuples(staged_rows)
 
@@ -111,9 +111,9 @@ def load_stock(
         wait_for_db(cfg, timeout_s=60)
 
         with connect(cfg) as conn:
-            #6.Read how far the previous run got.
+            # 6. Read how far the previous run got.
             last_ts = get_last_watermark(conn, "alpha_vantage", symbol)
-            # If the stock is up-to-date  insert
+            # Keep only bars newer than the watermark.
             new_rows = filter_new_rows(
                 rows=rows_to_check,
                 last_watermark=last_ts,
@@ -126,11 +126,11 @@ def load_stock(
                     rows_received=len(rows_to_check),
                     rows_loaded=0,
                 )
-            #7.insert the lastest stock 
+            # 7. Upsert the new bars.
             upsert_stock_prices(conn, new_rows)
-            #get the lastest date 
+            # Latest timestamp in this batch.
             max_ts = get_max_timestamp(new_rows)
-            #inseet into pipeline_metadata table
+            # Insert into the pipeline_metadata table.
             upsert_watermark(
                 conn,
                 "alpha_vantage",
@@ -146,7 +146,7 @@ def load_stock(
                 version=today_time(),
                 record_count=len(new_rows),
             )
-            #8.insert the metadata record into load_metadata
+            # 8. Insert the audit record into load_metadata.
             insert_load_metadata(conn, metadata_payload)
 
         logger.info(

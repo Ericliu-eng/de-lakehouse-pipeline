@@ -45,6 +45,12 @@ All notable changes to this project are documented here. The format follows
 
 - CI uses Terraform 1.9.8 (mock providers need 1.7+).
 - Generated CSV exports are no longer tracked; `export/` is ignored.
+- README slimmed to results, design, and quick start; detailed measurements
+  moved to `docs/BENCHMARKS.md`. The README animation is redrawn as an
+  11-step walkthrough of one daily load and one history backfill
+  (`docs/demo/render_flow.py`), replacing the dark-theme renderer and HTML player.
+- Removed the `make sql-utils` target, which pointed at a test file that no
+  longer exists; renamed `featch_latest_price` to `fetch_latest_price`.
 
 ## [1.1.0] — 2026-09-25
 
