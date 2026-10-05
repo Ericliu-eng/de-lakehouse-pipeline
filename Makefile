@@ -4,7 +4,7 @@
 .PHONY: run run-marts backfill tiingo-backfill dagster-dev orchestrate price-dashboard benchmark
 .PHONY: cloud-storage-test terraform-check terraform-validate
 .PHONY: db-up db-down db-migrate migrate db-seed
-.PHONY: db-smoke db-smoke-local db-shell db-visu sql-utils
+.PHONY: db-smoke db-smoke-local db-shell db-visu
 
 .DEFAULT_GOAL := help
 
@@ -77,9 +77,6 @@ coverage:
 
 test-s:
 	$(PY) -m pytest tests -s
-
-sql-utils:
-	$(PY) -m pytest tests/unit/test_sql_utils.py -v
 
 
 run:

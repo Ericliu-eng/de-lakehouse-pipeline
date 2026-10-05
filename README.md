@@ -1,417 +1,88 @@
 # de-lakehouse-pipeline
 
-[![CI](https://github.com/Ericliu-eng/de-lakehouse-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/Ericliu-eng/de-lakehouse-pipeline/actions/workflows/ci.yml)
+[![CI](https://github.com/Ericliu-eng/de-lakehouse-pipeline/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Ericliu-eng/de-lakehouse-pipeline/actions/workflows/ci.yml)
+![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776ab)
+![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-336791)
+![Dagster](https://img.shields.io/badge/Dagster-4f43dd)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688)
 
-A market-data pipeline that loads daily prices from Alpha Vantage, backfills
-decades of history from Tiingo, and serves an incremental PostgreSQL warehouse,
-three analytical marts, and a FastAPI dashboard.
+A market-data pipeline that loads daily prices from Alpha Vantage and decades of history from Tiingo into an incremental PostgreSQL warehouse. Analytical marts rebuild only after a quality gate passes, and a FastAPI dashboard serves the results.
 
-The project demonstrates API retry handling, schema validation, transactional
-loading, watermarks, resumable backfills, quality gates, and local orchestration.
-Optional S3 uploads preserve raw payloads in cloud storage.
+![Animated flow: a daily AAPL load is throttled and retried, lands as raw JSON, is validated and typed, filtered by the watermark to one new bar, and committed with its watermark and audit row in one transaction; the quality gate passes, the three marts rebuild, FastAPI serves the latest price, and the run is reported to PipeGuard; a Tiingo history backfill then inserts missing bars without overwriting existing ones, and saved benchmark results light up](docs/demo/pipeline-flow.gif)
 
-**Validation:** a fresh clone of [v1.1.0](CHANGELOG.md) passed `make setup`,
-migrations, seeding, `make lint`, and `make test` against PostgreSQL 16. As of
-October 4, 2026, the full suite (220 tests) passes and measures 88% line
-coverage.
+<sub>Illustrated flow, not a recording. Prices are examples. Rendered by [`docs/demo/render_flow.py`](docs/demo/render_flow.py) · [static frame](docs/demo/pipeline-flow.png)</sub>
 
-## Animated Demo
+## Results
 
-![Animated project data flow: daily ingestion and separate backfills, PostgreSQL tables, quality checks, analytical marts, FastAPI, and optional CLI monitoring](docs/demo/pipeline-flow.gif)
+| What | Result | Conditions |
+| --- | --- | --- |
+| History backfill | **97,276 rows in 7.2 s**; rerun inserts 0; **0 of 1,219** overlapping closes off by > 0.5% | 10 symbols, 1970–2026, PostgreSQL 16 · [details](docs/BENCHMARKS.md#full-price-history) |
+| Reruns and failures | **0 duplicate keys** on rerun; **no partial writes** after a rejected audit insert | Real PostgreSQL rollback across three tables · [details](docs/BENCHMARKS.md#correctness-and-recovery-1000-row-alpha-vantage-replay) |
+| Quality gate | **2 / 2 injected bad rows caught**, marts not rebuilt; 60 / 60 checks on 98k rows in 0.4 s | [details](docs/BENCHMARKS.md#correctness-and-recovery-1000-row-alpha-vantage-replay) |
+| Tests | **220 tests, 88% line coverage** | Fresh migrated database · [details](docs/BENCHMARKS.md#tests-and-coverage) |
 
-A 21-second walkthrough of the project's data flow. This is an illustrated
-workflow with example prices, not a recording of a live run. Historical
-backfills are separate commands; Volume Rank reads Daily Summary, and only
-Latest Price feeds the serving API.
+## How it works
 
-[Static overview](docs/demo/pipeline-flow.png) ·
-[Animation details and source](docs/demo/README.md).
-For pause and step controls, download the [interactive player](docs/demo/pipeline-flow.html)
-and open it locally in a browser.
+- **Retries:** HTTP 429/5xx, timeouts, and throttle messages back off 1, 2, then 4 s; API keys are masked in every error.
+- **Raw first, then typed:** each payload is saved as JSON (optional S3 copy) before staging validates and casts every field.
+- **Incremental and atomic:** a watermark per `(source, symbol)` keeps only newer bars; fact rows, watermark, and load audit commit or roll back together.
+- **Quality gate:** not-null and unique keys, non-negative values, and 14-day freshness. A failure stops the run before the marts rebuild.
+- **Insert-only history:** Tiingo fills only missing `(ts, symbol)` keys, never overwriting daily rows, and compares overlapping closes.
+- **Run monitoring:** each CLI run is recorded in `pipeline_runs` and reported to [PipeGuard](https://github.com/Ericliu-eng/pipeguard) for cross-run anomaly checks; reporting never fails a load.
 
-## Architecture
+More in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): components, the data model, and design decisions.
 
-![Market data pipeline run flow](docs/project_run_flow.svg)
+## Quick start
 
-```text
-Alpha Vantage daily prices          Tiingo price history (one-off backfill)
-  -> Raw JSON on local disk (+ optional S3 upload)
-  -> Schema validation and typed staging
-  -> Watermark filter
-  -> PostgreSQL: market_bars + watermark + load audit
-  -> Data quality gate
-  -> Three analytical marts
-  -> FastAPI / dashboard
-```
-
-Alpha Vantage is the daily incremental source. Tiingo backfills older dates
-through the same raw landing, staging, and validation path, but inserts only
-bars whose `(ts, symbol)` is not yet in the warehouse, so it never overwrites a
-daily row and each bar keeps an accurate `source`.
-
-The warehouse, watermark, and load-audit writes share one transaction. Quality
-checks run after ingestion commits and before marts are rebuilt. A quality
-failure stops downstream processing; it does not undo the completed ingestion.
-
-**Stack:** Python · PostgreSQL 16 · SQL · Docker Compose · Dagster · FastAPI ·
-AWS S3 · Terraform · pytest · Ruff · GitHub Actions.
-
-## Engineering Highlights
-
-| Capability | Implemented behavior |
-| --- | --- |
-| Extraction | Bounded retries with exponential backoff for HTTP 429/500/502/503/504, timeouts, connection errors, and provider throttle responses |
-| Schema validation | Required fields are checked during production staging, before warehouse writes; values are converted to canonical types |
-| Incremental loading | Watermark per `(source, symbol)`; only timestamps newer than the watermark enter the regular load |
-| Idempotent writes | PostgreSQL upserts on the `(ts, symbol)` primary key prevent duplicate business keys |
-| Atomic loading | Fact rows, watermark, and load audit commit or roll back together |
-| Backfill recovery | Inclusive date ranges, one daily-series payload reused across pending dates, and checkpoints reconciled with database rows |
-| Multi-source history | Tiingo backfill is insert-only on `(ts, symbol)`; its UTC-midnight dates are normalized to the warehouse's US/Eastern grain; overlapping days are reconciled against existing closes |
-| Quality gates | Non-null keys, key uniqueness, non-negative close/volume, and freshness scoped to the active `(source, symbol)` |
-| Orchestration | CLI runner with failure exit codes; Dagster job with explicit dependencies and a daily schedule definition |
-| Run monitoring | Each CLI-orchestrated run is reported to [PipeGuard](https://github.com/Ericliu-eng/pipeguard) with its row count and quality-check results, keyed by the run's UUID so resends are idempotent. PipeGuard adds cross-run row-count anomaly detection, which in-batch checks cannot do. Reporting is best-effort: a monitor that is down or slow never fails a load |
-| Serving | Database-backed price endpoint and HTML dashboard |
-
-## Measured Results
-
-From [the September 25, 2026 benchmark](docs/proof/2026-09-25-benchmark.md)
-(`make benchmark`): saved Alpha Vantage payloads and Tiingo history for 10
-symbols were replayed into a dedicated PostgreSQL 16 database on a local
-Windows machine. No API calls were made.
-
-**At scale — full price history**
-
-| Metric | Result |
-| --- | --- |
-| Warehouse | 98,276 daily bars · 10 symbols · 1970-01-02 to 2026-09-25 |
-| History backfill | 97,276 rows inserted in 7.2 s (about 13,500 rows/s); rerun inserts 0 |
-| Cross-source reconciliation | 1,000 days covered by both sources: 0 closes differ by more than 0.5% (max 0.0%) |
-| Quality checks over the full warehouse | 60/60 passed in 0.4 s |
-| Mart rebuild over the full warehouse | 1.0 s |
-| Daily 10-symbol orchestrated run | 15.3 s median; 91% is rebuilding the marts once per symbol |
-
-**Correctness and recovery — 1,000-row Alpha Vantage replay**
-
-| Metric | Result |
-| --- | --- |
-| Rerun of identical payloads | 0 new rows, 0 duplicate keys, watermarks unchanged |
-| Incremental run | 50 of 1,000 staged rows loaded (5 new days × 10 symbols) |
-| Rejected audit write | No partial writes across `market_bars`, `pipeline_metadata`, `load_metadata` |
-| Backfill crash after 4 of 9 trading days | Resume loads the other 5; 0 gaps, 0 duplicates, 1 API fetch per run |
-| Quality gate | 2 of 2 injected bad rows caught; marts not rebuilt |
-| API retry | 429 → 503 → 200 succeeds on attempt 3; persistent 429 stops after 4 attempts (1 s, 2 s, 4 s backoff) |
-
-**Live run and tests**
-
-| Metric | Result |
-| --- | --- |
-| [Live Tiingo backfill](docs/proof/2026-09-25-tiingo-backfill.md) | 10 API requests, 20 s end to end; development warehouse grew from 1,225 to 98,282 rows; 1,219 overlapping days, 0 beyond 0.5% |
-| Test suite | 220 tests; 88% line coverage (86–100% for ingestion, staging, loading, quality, backfill, CLI, and Dagster job modules) |
-
-These are single-machine local measurements, not production SLAs. Retry
-results use scripted HTTP responses rather than live throttling.
-
-## Quickstart
-
-**Prerequisites:** Python 3.10+, Git, GNU Make, and Docker with Compose (port
-`5432` free). Tests use sample data and mocks; live ingestion also needs an
-Alpha Vantage API key, and the history backfill needs a free Tiingo API token.
+Needs Python 3.10+, GNU Make, and Docker with Compose (port `5432` free).
 
 ```bash
 git clone https://github.com/Ericliu-eng/de-lakehouse-pipeline.git
 cd de-lakehouse-pipeline
 make setup
-```
-
-Create `.env` and activate the virtual environment:
-
-```powershell
-# PowerShell
-Copy-Item .env.example .env
-.\.venv\Scripts\Activate.ps1
-```
-
-```bash
-# Bash / macOS / Linux
 cp .env.example .env
-source .venv/bin/activate
-```
-
-Start PostgreSQL and run the full validation:
-
-```bash
 make db-up
 make db-migrate
 make db-seed
-make lint
-make test
 ```
 
-`make test` includes database-backed tests; use a disposable development
-database. Without PostgreSQL, run `make unit` and `make smoke`. For live
-ingestion, set `ALPHA_VANTAGE_API_KEY` in `.env`. See
-[Development Setup](docs/DEV_SETUP.md) for database connection variables and
-troubleshooting.
-
-## Run the Pipeline and API
-
-Run the complete workflow, including the quality gate:
+Set `ALPHA_VANTAGE_API_KEY` in `.env` (and `TIINGO_API_TOKEN` for history), then run one symbol end to end and start the API:
 
 ```bash
 make orchestrate SYMBOL=AAPL
-```
-
-To report each run to PipeGuard, set `PIPEGUARD_API_URL` and `PIPEGUARD_API_KEY`
-(see `.env.example`). The run is recorded in the local `pipeline_runs` table
-first; the report is sent afterwards with a 5-second timeout, and a failed report
-is logged rather than raised. With either variable unset, nothing is sent.
-
-A successful run prints `Status: success`, step results, and a JSON summary.
-Failures return a non-zero exit code and stop later steps. Raw data lands at
-`data/raw/YYYY-MM-DD/SYMBOL/stock.json`; database outputs include `market_bars`,
-`pipeline_metadata`, `load_metadata`, and the three marts below.
-
-Start the API from the repository root with the virtual environment active:
-
-```bash
+make tiingo-backfill SYMBOL=AAPL
+make run-marts
+source .venv/bin/activate
 python -m src.serve.api
 ```
 
-In another terminal, query the service:
+Open **http://127.0.0.1:8000/dashboard**. `make dagster-dev` starts the Dagster UI with the same ingest → checks → marts job and a daily schedule.
+
+<details>
+<summary>Windows PowerShell</summary>
+
+Use `Copy-Item .env.example .env` instead of `cp`, and activate the environment with `.\.venv\Scripts\Activate.ps1` instead of `source .venv/bin/activate`. Use `curl.exe` rather than `curl` to query the API.
+</details>
+
+## Tests
 
 ```bash
-curl http://127.0.0.1:8000/health
-curl http://127.0.0.1:8000/latest-price
+make lint
+make unit
+make smoke
 ```
 
-On Windows PowerShell, use `curl.exe` for these commands. The health response is
-`{"status":"ok"}`; it confirms the API process is responding, not database
-readiness. `/latest-price` returns one latest row across the available symbols;
-it returns null price fields when the mart is empty.
-
-- [Dashboard](http://127.0.0.1:8000/dashboard)
-- [Interactive API documentation](http://127.0.0.1:8000/docs)
-- [Saved serving screenshots](docs/proof/W17/2026-06-08-run.md)
-
-### Analytical outputs
-
-| Mart | Grain | Business question |
-| --- | --- | --- |
-| `mart_daily_symbol_summary` | One row per symbol and trading date | What are each symbol's daily close summary and total volume? |
-| `mart_symbol_latest_price` | One row per symbol | What is the latest available close and volume? |
-| `mart_symbol_volume_rank` | One row per symbol and trading date | Which symbols lead daily trading volume? |
-
-Open `make db-shell` and inspect the results:
-
-```sql
-SELECT symbol, latest_ts, close_price, volume
-FROM mart_symbol_latest_price
-ORDER BY symbol;
-
-SELECT source, symbol, last_watermark, last_row_count, status
-FROM pipeline_metadata
-ORDER BY source, symbol;
-```
-
-See [Demo Queries](docs/DEMO_QUERIES.md) for queries across all three marts, and
-[their results](docs/proof/2026-09-25-mart-queries.md) on the full-history warehouse.
-
-## Backfill and Dagster
-
-| Command | Purpose |
-| --- | --- |
-| `make run SYMBOL=MSFT` | Ingest one symbol; does not run the publication quality gate or rebuild marts |
-| `make run-marts` | Rebuild marts directly from warehouse data; bypasses the quality gate |
-| `make backfill START=2026-09-14 END=2026-09-18 SYMBOL=AAPL` | Load missing dates in an inclusive range |
-| `make tiingo-backfill SYMBOL=AAPL,MSFT` | Load full Tiingo history for each symbol without overwriting existing rows |
-| `make dagster-dev` | Start the local Dagster development UI and daemon |
-| `make db-shell` | Open psql in the Docker database |
-| `make db-down` | Stop the Compose stack while retaining its database volume |
-
-For backfills, replace the example range with dates present in the provider's
-returned daily payload. The command cannot retrieve dates absent from that
-payload. It skips dates already present in the database and does not provide a
-force-reprocess option for historical corrections. Repeating the command resumes
-missing dates; weekends and other dates without bars are not marked complete.
-
-`make tiingo-backfill` needs `TIINGO_API_TOKEN` in `.env` and makes one request
-per symbol. Rerunning it inserts nothing new. Run `make run-marts` afterwards to
-rebuild the marts over the added history. See [Backfill](docs/BACKFILL.md).
-
-In the Dagster UI, launch `stock_lakehouse_job`. Its default symbol is `AAPL`;
-to change it, use this launch configuration:
-
-```yaml
-ops:
-  ingest_stock:
-    config:
-      symbol: MSFT
-```
-
-The job runs ingestion -> quality checks -> marts. The schedule definition is
-`0 8 * * *`; enable it in the local UI and keep Dagster running to execute it.
-See the [saved successful Dagster run](docs/proof/W17/screenshots/06-14/image1.png).
-
-## Optional S3 Raw Storage
-
-Regular ingestion, date-based backfill, and the Tiingo history backfill call the
-S3 upload adapter. When
-enabled, the adapter creates a boto3 client using the standard AWS credential
-chain, or uses an explicitly supplied client.
-
-Configure the following in the ingestion environment or local `.env`:
-
-```dotenv
-ENABLE_S3_RAW_UPLOAD=true
-S3_RAW_BUCKET=your-existing-bucket-name
-```
-
-Use a configured AWS profile or role with `s3:PutObject` access to the bucket's
-`raw/*` prefix. The destination bucket must already exist. Uploaded keys follow:
-
-```text
-raw/{alpha_vantage|tiingo}/symbol=AAPL/date=YYYY-MM-DD/{stock|tiingo}.json
-```
-
-When upload is enabled, a configuration or upload error fails the ingestion
-before warehouse writes. The local raw file has already been saved at that point.
-
-The [Terraform module](infra/terraform/README.md) defines the bucket, public-access
-blocking, ownership controls, encryption, versioning, a lifecycle rule that
-expires overwritten raw versions after 90 days, and an IAM policy limited to
-`s3:PutObject` on `raw/*`. Attaching the policy to the pipeline's identity
-remains a deployment step.
-
-Cloud behavior is tested without AWS credentials: Moto tests run the real boto3
-upload path, including "same payload locally and in S3" and "upload failure
-leaves the warehouse untouched", and `terraform test` checks the bucket and
-policy against a mocked provider. `make terraform-validate` needs Terraform
-1.7+ and network access for provider installation; it does not provision
-anything. Secrets handling and the estimated cost (a few cents per month) are
-in [Secrets and Cost](docs/SECRETS_AND_COST.md).
-
-## Validation and Evidence
-
-| Command | Purpose |
-| --- | --- |
-| `make lint` | Ruff static analysis |
-| `make unit` | Unit tests without PostgreSQL |
-| `make smoke` | Smoke tests without PostgreSQL |
-| `make smoke-db` | Database-backed smoke tests |
-| `make integration` | Marts, metadata, and transactional rollback tests |
-| `make test` | Default unit, smoke, and integration validation |
-| `make test-all` | Collect and run every test under `tests/` |
-| `make coverage` | Run every test with a line coverage report for `src/` and `orchestration/` |
-| `make terraform-validate` | Terraform formatting, initialization, validation, and offline `terraform test` |
-| `make benchmark` | Replay saved payloads in a throwaway database and write a results report |
-
-CI runs on pull requests and pushes to `main`. It provisions PostgreSQL 16,
-installs dependencies, migrates and seeds the database, runs Ruff and
-`make test`, and validates Terraform.
-
-The September 20 local validation used
-`python -m pytest tests -q -p no:cacheprovider`
-against a temporary database with no project data volume.
-Coverage includes retry exhaustion, malformed source records, incremental
-reruns, checkpoint recovery, quality-gate failures, and real PostgreSQL rollback
-after a rejected audit write. It does not constitute a fresh-clone installation
-test or a live AWS/API benchmark.
-
-On October 4, `make coverage` against a freshly migrated and seeded database
-ran 220 tests and measured **88% line coverage** (1,133 of 1,293 statements).
-Core modules are covered at 86–100%: pipeline 96%, staging 100%, quality checks
-95%, API client 93%, backfill 86%, Tiingo backfill 98%, CLI 95%, the CLI
-orchestrator 92%, and the Dagster job and schedule 100%.
-The remaining gaps are the CSV export and the `checkdb` inspection helper (0%),
-the serving API (70%), and the standalone entry points of the mart modules.
-
-Historical evidence is available under [docs/proof](docs/proof), including
-[transaction and retry hardening](docs/proof/2026-09-07-reliability-hardening.md)
-and [Terraform bucket/IAM apply and destroy](docs/proof/W16/2026-06-06-run.txt).
-Evidence files describe the version and environment used at the time.
-
-## Project Status
-
-The core pipeline is complete and tested end to end on PostgreSQL. The remaining
-work is evidence, operational metrics, and release packaging rather than new
-pipeline features.
-
-| Area | Status | Notes |
-| --- | --- | --- |
-| Extraction, raw landing, retries | Done | Retry/throttle paths covered by unit tests |
-| Staging, schema validation, data contract | Done | Validator runs on the production staging path |
-| Warehouse model and migrations 001–009 | Done | Observability migration verified on PostgreSQL |
-| Historical data | Done | Tiingo backfill: 97,057 bars for 10 symbols, reconciled with Alpha Vantage |
-| Incremental watermark and idempotent upserts | Done | Rerun produces an empty batch and unchanged watermark |
-| Transactional loading and failure drills | Done | Real PostgreSQL rollback test after a rejected audit write |
-| Quality gate | Done | Not-null, unique, range, per-`(source, symbol)` freshness; FK not applicable (no parent dimension) |
-| Marts and serving API | Done | Three marts, `/health`, `/latest-price`, `/dashboard` |
-| Dagster orchestration | Done | Job + daily schedule; saved UI run evidence |
-| CI | Done | Lint, unit, smoke, integration, Terraform validate |
-| Terraform S3 bucket and IAM | Done | Historical apply/destroy evidence |
-| Backfill | Partial | Resumable ranges; no force-reprocess for historical corrections |
-| Operational metrics | Partial | CLI orchestration persists run status, timing, quality status, rows received, and errors, and reports each run with its quality-check results to PipeGuard; step history and failure-rate query remain |
-| Live S3 evidence | Done | [Live upload and read-back](docs/proof/2026-09-30-s3-live-upload.md); Moto and `terraform test` cover it offline in CI |
-| Release | Done | v1.1.0 verified from a fresh clone; see [CHANGELOG](CHANGELOG.md) |
-| Animated demo | Done | [21-second project data flow](docs/demo/pipeline-flow.gif), with a static overview and interactive player |
-| Demo video | Not started | Live execution recording remains |
-
-### Known limits
-
-- **Unadjusted prices:** both sources load unadjusted OHLCV so the series join
-  cleanly, which means stock splits appear as price jumps (for example AAPL on
-  2020-08-31). Split-adjusted analysis would need an adjusted-price column.
-- **Historical data:** regular loading accepts only timestamps newer than the
-  watermark, and backfill skips existing dates. Same-day local raw files are
-  overwritten on rerun rather than kept as immutable per-run snapshots.
-- **Metrics:** the CLI runner persists pipeline-level status, timing, quality
-  status, rows received, and errors, but step rows are not yet persisted and
-  SLA helpers are not wired into live runs. The Dagster scheduled job runs its
-  own ops and bypasses run persistence, so only CLI runs are recorded and
-  reported to PipeGuard.
-- **Deployment:** Dagster and FastAPI run as local development services. The
-  API has no authentication; hosting and alerting are not configured.
-
-### Next steps
-
-1. Rebuild marts once per batch (or incrementally) instead of once per symbol;
-   at 98k rows that rebuild is 91% of a daily 10-symbol run.
-2. Persist step details for each `pipeline_runs` record (quality-check results
-   are already kept in PipeGuard) and add a failure-rate SQL query.
-3. Route the Dagster scheduled job through the same run recording and
-   reporting as the CLI runner.
-4. Add a force-reprocess option for historical date ranges.
-5. Record a 2–4 minute live demo to complement the animation:
-   ingest -> quality gate -> marts -> serving.
-
-The full list of open items and resume-ready criteria is in
-[Project Status](docs/PROJECT_STATUS.md).
-
-## Repository Guide
-
-| Location | Contents |
-| --- | --- |
-| `src/de_lakehouse_pipeline/` | Ingestion, staging, loading, quality, backfill, and metrics |
-| `src/serve/` | FastAPI endpoints and dashboard template |
-| `orchestration/` | CLI runner and Dagster definitions |
-| `migrations/` | Numbered database schema changes |
-| `sql/marts/` | Analytical transformations |
-| `infra/terraform/` | S3 infrastructure definitions |
-| `tests/` | Unit, smoke, and database integration tests |
-| `docs/proof/` | Dated logs, validation notes, and screenshots |
+These need no database. `make test` adds the PostgreSQL smoke and integration suites; run it against a disposable database, because those tests delete rows. CI runs lint, every suite on PostgreSQL 16, and `terraform test`.
 
 ## Documentation
 
 | Topic | Document |
 | --- | --- |
-| Architecture | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| Architecture and data model | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/DATA_MODEL.md](docs/DATA_MODEL.md), [docs/DEMO_QUERIES.md](docs/DEMO_QUERIES.md) |
+| Benchmarks, tests, and coverage | [docs/BENCHMARKS.md](docs/BENCHMARKS.md) |
 | Setup and operations | [docs/DEV_SETUP.md](docs/DEV_SETUP.md), [docs/RUNBOOK.md](docs/RUNBOOK.md) |
-| Data model and queries | [docs/DATA_MODEL.md](docs/DATA_MODEL.md), [docs/DATA_CONTRACT.md](docs/DATA_CONTRACT.md), [docs/DEMO_QUERIES.md](docs/DEMO_QUERIES.md) |
-| Schema changes | [docs/SCHEMA_EVOLUTION.md](docs/SCHEMA_EVOLUTION.md) |
 | Incremental loading and backfill | [docs/INCREMENTAL.md](docs/INCREMENTAL.md), [docs/BACKFILL.md](docs/BACKFILL.md) |
-| Data quality | [docs/DATA_QUALITY.md](docs/DATA_QUALITY.md) |
-| Orchestration and metrics | [docs/ORCHESTRATION.md](docs/ORCHESTRATION.md), [docs/OPS_METRICS.md](docs/OPS_METRICS.md) |
-| Reliability | [docs/FAILURE_DRILLS.md](docs/FAILURE_DRILLS.md) |
-| Cloud storage | [docs/CLOUD_STORAGE.md](docs/CLOUD_STORAGE.md), [infra/terraform/README.md](infra/terraform/README.md), [docs/SECRETS_AND_COST.md](docs/SECRETS_AND_COST.md) |
-| Status and roadmap | [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) |
-| Contribution standards | [docs/STANDARDS.md](docs/STANDARDS.md) |
+| Data quality and failure drills | [docs/DATA_QUALITY.md](docs/DATA_QUALITY.md), [docs/FAILURE_DRILLS.md](docs/FAILURE_DRILLS.md) |
+| Orchestration and run monitoring | [docs/ORCHESTRATION.md](docs/ORCHESTRATION.md), [docs/OPS_METRICS.md](docs/OPS_METRICS.md) |
+| S3 storage and Terraform | [docs/CLOUD_STORAGE.md](docs/CLOUD_STORAGE.md), [infra/terraform/README.md](infra/terraform/README.md) |
+| Limitations and next steps | [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md#open-items) |

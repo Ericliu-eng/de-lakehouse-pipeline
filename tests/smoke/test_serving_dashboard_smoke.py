@@ -31,7 +31,7 @@ def test_latest_price_endpoint_returns_expected_shape(monkeypatch) -> None:
             "volume": 1000000,
         }
 
-    monkeypatch.setattr(api, "featch_latest_price", mock_latest_price)
+    monkeypatch.setattr(api, "fetch_latest_price", mock_latest_price)
 
     response = client.get("/latest-price")
 
