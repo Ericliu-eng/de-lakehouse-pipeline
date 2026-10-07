@@ -1,6 +1,6 @@
 # Project Status and Completion Plan
 
-Last reviewed: 2026-10-04 (after v1.1.0 and the PipeGuard integration)
+Last reviewed: 2026-10-06 (local verification of resume-readiness fixes)
 
 This file is the single source of truth for project status. It supersedes the
 earlier completion checklist v2, the Improvement Plan, and the 2026-09-17
@@ -14,7 +14,9 @@ Vantage for daily incremental loads and Tiingo for a one-off history backfill
 on 2026-09-17 are closed, measured results are recorded, and the quickstart
 passes from a fresh clone.
 
-The project is resume-ready. The Alpha Vantage key that appeared in early
+The project supports a resume claim of a locally validated PostgreSQL pipeline
+with serial execution. Concurrent loading, automated historical correction,
+and production deployment are not verified guarantees. The Alpha Vantage key that appeared in early
 commit history has been rotated, v1.1.0 is tagged and released, and the README
 carries an animated walkthrough of the data flow. A live screen recording
 remains optional.
@@ -25,9 +27,9 @@ remains optional.
 | --- | --- | --- |
 | Static analysis | Passed | `python -m ruff check .` |
 | Fresh-clone quickstart | `make test`: 157 passed | [Clean clone](proof/2026-09-25-clean-clone.md) |
-| Full suite and coverage | 220 passed; 88% line coverage (2026-10-04) | `make coverage` on a freshly migrated database |
-| GitHub CI on `main` | Success at `1ee070e` | [CI run](https://github.com/Ericliu-eng/de-lakehouse-pipeline/actions/runs/36215319646) |
-| Benchmark | Full-history scale plus correctness and recovery scenarios | [Benchmark](proof/2026-09-25-benchmark.md) |
+| Full suite and coverage | 281 passed; 88% line coverage (2026-10-06), Python 3.13 | [Local validation](proof/2026-10-06-resume-readiness.md) |
+| Historical GitHub CI on `main` | Success at `1ee070e`; new branch matrix not yet run | [Earlier CI run](https://github.com/Ericliu-eng/de-lakehouse-pipeline/actions/runs/36215319646) |
+| Benchmark | Full-history scale plus correctness and recovery scenarios, current working tree | [October 6 replay](proof/2026-10-06-benchmark.md) |
 | Live Tiingo backfill | 97,057 rows added; 1,219 overlapping days, 0 beyond 0.5% | [Tiingo backfill](proof/2026-09-25-tiingo-backfill.md) |
 | Demo mart queries | Results recorded | [Mart queries](proof/2026-09-25-mart-queries.md) |
 
@@ -53,6 +55,10 @@ remains optional.
 
 ## Open Items
 
+The October 6 fixes reject future dates and invalid OHLCV on both source paths,
+gate manual mart builds, restore safe offline benchmarking, and align test
+collection and documentation. See the [audit follow-up](REVIEW_2026-10-06.md).
+
 ### Optional
 
 - Record a two-to-four-minute live demo: ingest -> quality gate -> marts ->
@@ -60,6 +66,10 @@ remains optional.
 
 ### Engineering
 
+- Coordinate concurrent watermark updates and raw-file writes; current runs
+  must be serial, including publication after ingestion.
+- Synchronize mart deletions when source rows are removed; upsert builds alone
+  preserve old mart rows.
 - Rebuild marts once per batch, or incrementally, instead of once per symbol.
   At 98k rows the rebuild is 91% of a 15.3 s daily 10-symbol run.
 - Persist step details for each `pipeline_runs` record, add a failure-rate
@@ -86,7 +96,7 @@ remains optional.
 | --- | --- |
 | Historical API key rotated | Done (2026-10-04) |
 | README quickstart works from a clean clone | Done |
-| Full-suite and CI results recorded for the release commit | Done for `1ee070e` |
+| Full-suite and CI results recorded for the release commit | Done for `1ee070e`; new branch locally verified, CI pending |
 | Measured results in the README | Done |
 | Demo in the README | Done (animated walkthrough); live recording optional |
 | Release points to the verified commit | Done (v1.1.0) |

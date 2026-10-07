@@ -194,3 +194,8 @@ def test_check_freshness_filters_by_source_and_symbol():
     assert result.passed is False
     assert "WHERE source = %s AND symbol = %s" in conn.cursor_obj.executed_query
     assert conn.cursor_obj.executed_params == ("alpha_vantage", "MSFT")
+
+
+def test_check_freshness_rejects_future_dates():
+    result = check_freshness(FakeConn([(-1,)]), "market_bars", "ts", max_age_days=14)
+    assert not result.passed

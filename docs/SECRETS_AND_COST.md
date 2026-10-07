@@ -13,7 +13,7 @@ Rules:
 
 - `.env` and `infra/terraform/terraform.tfstate*` are git-ignored; only
   `.env.example`, with empty values, is committed.
-- **Credentials are masked in errors.** The Alpha Vantage key must travel in
+- **The retry helper masks credentials in HTTP and connection errors.** The Alpha Vantage key must travel in
   the URL, and `requests` includes the full URL in `HTTPError` and
   `ConnectionError` messages, which the pipeline logs on failure. The retry
   helper replaces `apikey` and `token` values with `***` before re-raising and

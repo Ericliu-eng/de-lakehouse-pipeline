@@ -2,8 +2,8 @@
 
 The benchmark replays Alpha Vantage payloads already saved under data/raw (and
 Tiingo history payloads, when present, for the at-scale scenario), so it makes
-no API calls. It creates a dedicated PostgreSQL database (default
-``lakehouse_benchmark``), runs every migration there, and drops it afterwards;
+no API calls or monitoring reports. It creates a uniquely named PostgreSQL
+database, runs every migration there, and drops it afterwards;
 the development database named by DB_NAME is never written to. Raw files and
 backfill checkpoints go to a temporary directory.
 
@@ -27,6 +27,7 @@ from datetime import date, timedelta
 from io import StringIO
 from pathlib import Path
 from unittest import mock
+from uuid import uuid4
 
 import psycopg
 import requests
@@ -108,19 +109,50 @@ def without_latest_days(payload: dict, days: int) -> dict:
     }
 
 
-def recreate_database(name: str) -> None:
+def create_database(name: str) -> None:
+    """Create a new database; an existing name is never replaced."""
+    if not name or len(name.encode("utf-8")) > 63:
+        raise SystemExit("Benchmark database name must be non-empty and at most 63 UTF-8 bytes.")
     cfg = load_db_config()
     if name == cfg.dbname:
         raise SystemExit(f"Refusing to use the configured database {name!r} for benchmarking.")
     wait_for_db(cfg, timeout_s=60)
     with psycopg.connect(make_dsn(cfg), autocommit=True) as conn:
-        conn.execute(sql.SQL("DROP DATABASE IF EXISTS {} WITH (FORCE)").format(sql.Identifier(name)))
+        if conn.execute("SELECT 1 FROM pg_database WHERE datname = %s", (name,)).fetchone():
+            raise SystemExit(f"Refusing to replace existing database {name!r}.")
         conn.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(name)))
 
 
 def drop_database(name: str) -> None:
     with psycopg.connect(make_dsn(load_db_config()), autocommit=True) as conn:
         conn.execute(sql.SQL("DROP DATABASE IF EXISTS {} WITH (FORCE)").format(sql.Identifier(name)))
+
+
+@contextmanager
+def benchmark_database(name: str, *, keep: bool = False):
+    # Cleanup is entered only after CREATE succeeds. A conflicting name, even
+    # one created between the existence check and CREATE, is never dropped.
+    create_database(name)
+    try:
+        with mock.patch.dict(os.environ, {"DB_NAME": name}):
+            yield
+    finally:
+        if not keep:
+            drop_database(name)
+
+
+@contextmanager
+def benchmark_environment():
+    """Disable external side effects even when the user's .env enables them."""
+    with (
+        mock.patch.dict(os.environ, {
+            "ENABLE_S3_RAW_UPLOAD": "false",
+            "PIPEGUARD_API_URL": "",
+            "PIPEGUARD_API_KEY": "",
+        }),
+        mock.patch("orchestration.dagster_pipeline.report_run", return_value=False),
+    ):
+        yield
 
 
 def migrate() -> None:
@@ -170,10 +202,11 @@ def replay(payloads: dict[str, dict], raw_root: Path):
         calls["fetch"] += 1
         return payloads[symbol.strip().upper()]
 
-    def save_to_temp(data, name, root=None, run_date=None):
-        return raw_io.save_raw_data(data, name, raw_root, run_date)
+    def save_to_temp(data, name, root=None, run_date=None, symbol=None):
+        return raw_io.save_raw_data(data, name, raw_root, run_date, symbol=symbol)
 
     with (
+        benchmark_environment(),
         mock.patch.object(pipeline, "fetch_daily_stock", fake_fetch),
         mock.patch.object(backfill, "fetch_daily_stock", fake_fetch),
         mock.patch.object(pipeline, "save_raw_data", save_to_temp),
@@ -787,7 +820,8 @@ def main() -> None:
     parser.add_argument("--repeats", type=int, default=5, help="Latency repetitions")
     parser.add_argument("--scale-repeats", type=int, default=3,
                         help="Daily-run repetitions over the full-history warehouse")
-    parser.add_argument("--db-name", default="lakehouse_benchmark")
+    parser.add_argument("--db-name", default=None,
+                        help="New database name; existing names are refused (default: unique name)")
     parser.add_argument("--keep-db", action="store_true", help="Keep the benchmark database afterwards")
     parser.add_argument("--output", default=None,
                         help="Markdown report path, or '-' for stdout only "
@@ -797,7 +831,8 @@ def main() -> None:
 
     if not args.verbose:
         logging.disable(logging.ERROR)
-    os.environ["ENABLE_S3_RAW_UPLOAD"] = "false"
+    if args.repeats < 1 or args.scale_repeats < 1 or args.backfill_days < 1 or args.holdout < 1:
+        parser.error("repeats, scale-repeats, backfill-days and holdout must be positive")
 
     payloads, skipped = load_latest_payloads(args.raw_dir, args.min_rows)
     if args.symbols:
@@ -818,10 +853,8 @@ def main() -> None:
     if not tiingo_payloads:
         print("No saved Tiingo payloads; skipping the at-scale scenario.")
 
-    admin_db = load_db_config().dbname
-    recreate_database(args.db_name)
-    os.environ["DB_NAME"] = args.db_name
-    try:
+    db_name = args.db_name or f"lakehouse_benchmark_{uuid4().hex[:12]}"
+    with benchmark_environment(), benchmark_database(db_name, keep=args.keep_db):
         migrate()
         with tempfile.TemporaryDirectory(prefix="lakehouse-bench-") as tmp:
             raw_root = Path(tmp)
@@ -840,10 +873,9 @@ def main() -> None:
                 print(f"Running {name}...", flush=True)
                 results.append(fn())
         env = environment()
-    finally:
-        os.environ["DB_NAME"] = admin_db
-        if not args.keep_db:
-            drop_database(args.db_name)
+
+    if args.keep_db:
+        print(f"Benchmark database kept: {db_name}")
 
     inputs = {"symbols": list(payloads), "skipped": skipped, "min_rows": args.min_rows}
     report = render(env, inputs, *results)

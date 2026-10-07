@@ -6,29 +6,29 @@
 ![Dagster](https://img.shields.io/badge/Dagster-4f43dd)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688)
 
-A market-data pipeline that loads daily prices from Alpha Vantage and decades of history from Tiingo into an incremental PostgreSQL warehouse. Analytical marts rebuild only after a quality gate passes, and a FastAPI dashboard serves the results.
+A market-data pipeline that loads daily prices from Alpha Vantage and decades of history from Tiingo into an incremental PostgreSQL warehouse. The manual CLI and orchestrated workflows build analytical marts after a quality gate passes, and a FastAPI dashboard serves the results. Execution is validated locally with serial runs.
 
 ![Animated flow: a daily AAPL load is throttled and retried, lands as raw JSON, is validated and typed, filtered by the watermark to one new bar, and committed with its watermark and audit row in one transaction; the quality gate passes, the three marts rebuild, FastAPI serves the latest price, and the run is reported to PipeGuard; a Tiingo history backfill then inserts missing bars without overwriting existing ones, and saved benchmark results light up](docs/demo/lakehouse-flow.gif)
 
-<sub>Illustrated flow, not a recording. Prices are examples. Rendered by [`docs/demo/render_flow.py`](docs/demo/render_flow.py) · [static frame](docs/demo/lakehouse-flow.png)</sub>
+<sub>Illustrated flow, not a recording. Prices are examples. The illustration shows the earlier six-check gate; the current daily gate has seven checks. Rendered by [`docs/demo/render_flow.py`](docs/demo/render_flow.py) · [static frame](docs/demo/lakehouse-flow.png)</sub>
 
 ## Results
 
 | What | Result | Conditions |
 | --- | --- | --- |
-| History backfill | **97,276 rows in 7.2 s**; rerun inserts 0; **0 of 1,219** overlapping closes off by > 0.5% | 10 symbols, 1970–2026, PostgreSQL 16 · [details](docs/BENCHMARKS.md#full-price-history) |
+| History backfill | **97,302 rows in 6.2 s**; rerun inserts 0; **0 of 974** overlapping closes off by > 0.5% | Saved-data replay, 10 symbols, 1970–2026, PostgreSQL 16, 2026-10-06 · [proof](docs/proof/2026-10-06-benchmark.md) |
 | Reruns and failures | **0 duplicate keys** on rerun; **no partial writes** after a rejected audit insert | Real PostgreSQL rollback across three tables · [details](docs/BENCHMARKS.md#correctness-and-recovery-1000-row-alpha-vantage-replay) |
-| Quality gate | **2 / 2 injected bad rows caught**, marts not rebuilt; 60 / 60 checks on 98k rows in 0.4 s | [details](docs/BENCHMARKS.md#correctness-and-recovery-1000-row-alpha-vantage-replay) |
-| Tests | **220 tests, 88% line coverage** | Fresh migrated database · [details](docs/BENCHMARKS.md#tests-and-coverage) |
+| Quality gate | **2 / 2 injected bad rows caught**, marts not rebuilt; 70 / 70 checks on 98k rows in 0.9 s | Local saved-data replay · [proof](docs/proof/2026-10-06-benchmark.md) |
+| Tests | **281 tests, 88% line coverage** | Python 3.13, disposable PostgreSQL 16 · [proof](docs/proof/2026-10-06-resume-readiness.md) |
 
 ## How it works
 
-- **Retries:** HTTP 429/5xx, timeouts, and throttle messages back off 1, 2, then 4 s; API keys are masked in every error.
+- **Retries:** HTTP 429/500/502/503/504, timeouts, and throttle messages back off 1, 2, then 4 s; the retry helper masks API keys in HTTP and connection errors.
 - **Raw first, then typed:** each payload is saved as JSON (optional S3 copy) before staging validates and casts every field.
 - **Incremental and atomic:** a watermark per `(source, symbol)` keeps only newer bars; fact rows, watermark, and load audit commit or roll back together.
-- **Quality gate:** not-null and unique keys, non-negative values, and 14-day freshness. A failure stops the run before the marts rebuild.
+- **Quality gate:** not-null and unique keys, finite non-negative OHLCV, consistent price ranges, and no future trading dates. Daily orchestration also requires 0–14 day freshness; manual mart builds permit valid historical data.
 - **Insert-only history:** Tiingo fills only missing `(ts, symbol)` keys, never overwriting daily rows, and compares overlapping closes.
-- **Run monitoring:** each CLI run is recorded in `pipeline_runs` and reported to [PipeGuard](https://github.com/Ericliu-eng/pipeguard) for cross-run anomaly checks; reporting never fails a load.
+- **Run monitoring:** each CLI-orchestrated run is recorded in `pipeline_runs` and, when configured, reported to [PipeGuard](https://github.com/Ericliu-eng/pipeguard) for cross-run anomaly checks; reporting never fails a load.
 
 More in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): components, the data model, and design decisions.
 
@@ -72,7 +72,7 @@ make unit
 make smoke
 ```
 
-These need no database. `make test` adds the PostgreSQL smoke and integration suites; run it against a disposable database, because those tests delete rows. CI runs lint, every suite on PostgreSQL 16, and `terraform test`.
+These need no database. `make test-all` runs every test, including PostgreSQL smoke and integration suites; use a disposable database, because those tests delete rows. CI is configured for Python 3.10 and 3.13 with PostgreSQL 16, Ruff, and `terraform test`. Local verification for these fixes used Python 3.13; the updated CI matrix has not yet run.
 
 ## Documentation
 

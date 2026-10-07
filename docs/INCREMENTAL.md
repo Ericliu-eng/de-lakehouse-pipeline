@@ -28,7 +28,9 @@ Fetch API payload
   -> Update watermark and load metadata
 ```
 
-The watermark advances only after the market-bar upsert succeeds. If the same
+Fact rows, watermark, and load audit commit together on the pipeline connection;
+an audit failure rolls back all three. The watermark advances only after the
+market-bar upsert succeeds. If the same
 payload runs again, no rows pass the watermark filter and the fact-table row
 count remains stable.
 
@@ -43,14 +45,16 @@ load metadata record.
 
 ## Backfill and Late Data
 
-Backfills bypass routine watermark filtering so historical rows can be inserted
-or corrected:
+The date-range backfill bypasses routine watermark filtering to insert missing
+historical dates:
 
 ```bash
 make backfill START=2026-04-16 END=2026-04-18 SYMBOL=AAPL
 ```
 
-Rows still use primary-key upserts. The stored watermark becomes the greater of
+Dates already present for the source and symbol are skipped. A force-correction
+mode is not implemented. The per-date writer uses primary-key upserts, but the
+range command does not call it for existing dates. The stored watermark becomes the greater of
 the existing watermark and the maximum backfilled timestamp, preventing state
 from moving backward. Checkpoints support safe resume behavior; see
 `docs/BACKFILL.md`.
@@ -70,8 +74,9 @@ behavior on repeated timestamps.
 ## Known Limitations
 
 - Empty and failed runs are not persisted as pipeline metadata events.
-- Fact rows, watermark state, and load metadata are not yet committed as one
-  atomic transaction.
-- Routine loads cannot detect corrections older than the watermark; use an
-  explicit backfill.
+- Routine loads and the default backfill cannot correct existing historical
+  rows. A future force-reprocess mode needs explicit overwrite semantics.
+- Concurrent runs are not coordinated; run ingestion and mart publication
+  serially. Atomic writes alone do not prevent competing watermark updates or
+  shared raw-file overwrites.
 - One watermark is maintained for each `(source, symbol)` pair.

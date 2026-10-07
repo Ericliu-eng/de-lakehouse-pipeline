@@ -8,6 +8,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Shared validation for both sources: finite non-negative OHLC prices,
+  consistent ranges, integral BIGINT volume, timezone-aware timestamps, and
+  rejection of future trading dates before warehouse access.
+- Warehouse OHLCV integrity checks for existing data, including a manual
+  `run-marts` gate that permits historical datasets without requiring freshness.
+- Regression tests for benchmark isolation, invalid source values, and real
+  PostgreSQL publication failures and market-date freshness.
 - Each CLI-orchestrated run is reported to [PipeGuard](https://github.com/Ericliu-eng/pipeguard) with its status,
   timing, row count, error, and quality-check results, including the checks of
   a run that stopped on bad data. Enabled by `PIPEGUARD_API_URL` and
@@ -28,6 +35,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- Benchmark replay now forwards the symbol argument, creates a unique database,
+  refuses existing/configured database names, and disables real S3 uploads and
+  PipeGuard reports during simulations. Cleanup drops only a database whose
+  creation succeeded.
+- Freshness rejects negative age and uses New York market dates independently
+  of the PostgreSQL session time zone.
+- Tests no longer import Python 3.11-only `datetime.UTC`; two unmarked smoke
+  modules now participate in the default test selection.
 - `pipeline_runs.rows_processed` was always 0: the ingest step returned no row
   count. It now records the rows received from the source — not rows newly
   loaded, which are zero on every weekend and would read as a collapse.
@@ -43,6 +58,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- CI runs all tests on Python 3.10 and 3.13. Local hardening results and a fresh
+  offline benchmark are recorded under `docs/proof/`; older proofs remain dated
+  historical evidence.
+- Data-contract, transaction, S3, monitoring, and historical-correction
+  documentation now describes the implemented behavior and serial-run limits.
 - CI uses Terraform 1.9.8 (mock providers need 1.7+).
 - Generated CSV exports are no longer tracked; `export/` is ignored.
 - README slimmed to results, design, and quick start; detailed measurements

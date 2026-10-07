@@ -38,6 +38,14 @@ make orchestrate SYMBOL=AAPL
 
 The runner prints step results and a JSON pipeline summary for validation and
 proof logs. It exits with code 1 after any failed step, and code 0 after success.
+It records top-level runs in `pipeline_runs` and sends best-effort PipeGuard
+reports when configured. Row counts represent rows received from the source,
+not the number newly loaded. Step details and quality results are emitted and
+included in reports but are not written to the local child telemetry tables.
+
+Manual `make run-marts` checks warehouse integrity in the same transaction as
+the mart builds. Historical publication has no freshness requirement; daily
+orchestration requires 0–14 day freshness for the active source and symbol.
 
 ## Dagster Job
 
@@ -63,6 +71,8 @@ See `docs/RUNBOOK.md` for setup and validation commands. See
 ## Current Limitations
 
 - Dagster is configured for local development rather than production hosting.
-- Metrics are emitted but not persisted to an observability store.
-- The ingestion step does not report an accurate loaded-row count.
+- The Dagster job does not use the CLI runner's local run recording or PipeGuard
+  reporting. Its step row count is not wired to the load result.
+- Local step and quality-result persistence is not implemented.
+- Concurrent ingestion and publication are not coordinated.
 - Production alerting and orchestration-level retry policies are not configured.

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, time
 from zoneinfo import ZoneInfo
 from de_lakehouse_pipeline.quality.schema_validation import (
+    parse_volume,
     validate_stock_row_schema,
 )
 
@@ -62,7 +63,7 @@ def stage_alpha_vantage_daily(payload: dict) -> list[StagedMarketBar]:
                 high=float(canonical_row["high"]),
                 low=float(canonical_row["low"]),
                 close=float(canonical_row["close"]),
-                volume=int(canonical_row["volume"]),
+                volume=parse_volume(canonical_row["volume"]),
             )
         )
 
@@ -103,7 +104,7 @@ def stage_tiingo_daily(prices: list[dict], symbol: str) -> list[StagedMarketBar]
                 high=float(canonical_row["high"]),
                 low=float(canonical_row["low"]),
                 close=float(canonical_row["close"]),
-                volume=int(canonical_row["volume"]),
+                volume=parse_volume(canonical_row["volume"]),
                 source="tiingo",
             )
         )

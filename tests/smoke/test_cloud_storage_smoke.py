@@ -1,6 +1,9 @@
 from datetime import date
+import pytest
 
 from de_lakehouse_pipeline.ingest.cloud_storage import upload_raw_payload_if_enabled
+
+pytestmark = pytest.mark.smoke
 
 
 class FakeS3Client:

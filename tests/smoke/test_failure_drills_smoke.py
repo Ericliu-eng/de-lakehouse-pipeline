@@ -13,7 +13,7 @@ def test_reliability_drill_smoke_path():
 
     valid_row = {
         "symbol": "AAPL",
-        "ts": "2026-06-18T00:00:00",
+        "ts": "2026-06-18T00:00:00+00:00",
         "open": 190.0,
         "high": 195.0,
         "low": 188.0,

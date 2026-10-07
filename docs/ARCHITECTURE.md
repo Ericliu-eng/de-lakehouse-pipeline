@@ -2,8 +2,8 @@
 
 ## Overview
 
-`de-lakehouse-pipeline` is a production-style market-data pipeline that
-preserves raw Alpha Vantage payloads, incrementally loads normalized facts,
+`de-lakehouse-pipeline` is a locally validated market-data pipeline that
+preserves raw Alpha Vantage and Tiingo payloads, incrementally loads normalized facts,
 applies data-quality gates, builds analytical marts, and serves curated data.
 
 ## End-to-End Flow
@@ -20,7 +20,8 @@ Alpha Vantage API
 ```
 
 The orchestrated path stops after a failed step, so marts are not rebuilt after
-a quality failure.
+a quality failure. Manual `make run-marts` also validates warehouse integrity
+before building marts. Run ingestion and publication serially.
 
 ## Component Catalog
 
@@ -65,8 +66,11 @@ See `docs/DATA_MODEL.md` and `docs/INCREMENTAL.md` for details.
 
 ## Quality and Orchestration
 
+Both staging paths reject future dates, non-finite/negative prices,
+inconsistent OHLC ranges, and fractional or overflow volume before DB access.
 The stock quality gate checks required keys, business-key uniqueness,
-non-negative close and volume values, and freshness. A reusable foreign-key
+OHLCV integrity, and scoped 0–14 day freshness. Manual builds apply the same
+integrity checks without requiring fresh historical data. A reusable foreign-key
 check exists but is not part of the current stock gate.
 
 Two local orchestration modes are available:
@@ -87,8 +91,9 @@ stable serving contract.
 ## Cloud Boundary
 
 The repository includes an S3 raw-object layout, upload adapter, and Terraform
-scaffold for an S3 bucket and least-privilege IAM policy. Runtime S3 client
-creation and IAM role attachment are not yet integrated into the main pipeline.
+scaffold for an S3 bucket and least-privilege IAM policy. When enabled, the
+pipeline creates a boto3 client and uploads raw payloads. Policy attachment
+to a deployment role is an operator responsibility.
 See `docs/CLOUD_STORAGE.md`.
 
 ## Design Decisions

@@ -154,7 +154,8 @@ def check_freshness(
     SELECT
         CASE
             WHEN MAX({timestamp_column}) IS NULL THEN NULL
-            ELSE CURRENT_DATE - MAX({timestamp_column})::date
+            ELSE (CURRENT_TIMESTAMP AT TIME ZONE 'America/New_York')::date
+                - (MAX({timestamp_column}) AT TIME ZONE 'America/New_York')::date
         END AS age_days
     FROM {table_name}
     {where_clause}
@@ -186,7 +187,7 @@ def check_freshness(
             ),
         )
 
-    failed_rows = 0 if age_days <= max_age_days else 1
+    failed_rows = 0 if 0 <= age_days <= max_age_days else 1
 
     return CheckResult(
         check_name="freshness",
@@ -201,24 +202,65 @@ def check_freshness(
     )
 
 
-def run_stock_quality_checks(
-    conn: Any,
-    symbol: str,
-    source: str = "alpha_vantage",
-) -> list[CheckResult]:
-    symbol = normalize_symbol(symbol)
+def check_market_bar_values(conn: Any) -> CheckResult:
+    """Catch invalid existing rows, including writes outside the staging path."""
+    conditions = [
+        f"{column} IS NULL OR {column} < 0 "
+        f"OR {column}::text IN ('NaN', 'Infinity', '-Infinity')"
+        for column in ("open", "high", "low", "close")
+    ]
+    conditions.extend([
+        "volume IS NULL OR volume < 0",
+        "low > high OR open < low OR open > high OR close < low OR close > high",
+        "(ts AT TIME ZONE 'America/New_York')::date "
+        "> (CURRENT_TIMESTAMP AT TIME ZONE 'America/New_York')::date",
+    ])
+    with conn.cursor() as cur:
+        cur.execute("SELECT COUNT(*) FROM market_bars WHERE " + " OR ".join(conditions))
+        failed_rows = cur.fetchone()[0]
+    return CheckResult(
+        check_name="market_bar_values",
+        table_name="market_bars",
+        passed=failed_rows == 0,
+        failed_rows=failed_rows,
+        details=f"{failed_rows} row(s) have invalid OHLCV or a future trading date.",
+    )
+
+
+def run_market_bar_quality_checks(conn: Any) -> list[CheckResult]:
+    """Warehouse integrity gate; historical data does not require freshness."""
     return [
         check_not_null(conn, "market_bars", "symbol"),
         check_not_null(conn, "market_bars", "ts"),
         check_unique(conn, "market_bars", "symbol, ts"),
         check_range(conn, "market_bars", "close", min_value=0),
         check_range(conn, "market_bars", "volume", min_value=0),
+        check_market_bar_values(conn),
+    ]
+
+
+def require_quality_pass(checks: list[CheckResult]) -> None:
+    failed = [check for check in checks if not check.passed]
+    if failed:
+        raise RuntimeError("; ".join(
+            f"{check.check_name} on {check.table_name}: {check.details}"
+            for check in failed
+        ))
+
+
+def run_stock_quality_checks(
+    conn: Any,
+    symbol: str,
+    source: str = "alpha_vantage",
+) -> list[CheckResult]:
+    symbol = normalize_symbol(symbol)
+    return run_market_bar_quality_checks(conn) + [
         check_freshness(
-        conn,
-        "market_bars",
-        "ts",
-        max_age_days=14,
-        source=source,
-        symbol=symbol,
-    ),
+            conn,
+            "market_bars",
+            "ts",
+            max_age_days=14,
+            source=source,
+            symbol=symbol,
+        ),
     ]

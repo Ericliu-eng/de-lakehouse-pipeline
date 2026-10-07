@@ -1,4 +1,7 @@
 from de_lakehouse_pipeline.metrics import SlaConfig, build_sla_report
+import pytest
+
+pytestmark = pytest.mark.smoke
 
 
 def test_metrics_sla_smoke_report_can_be_built() -> None:
