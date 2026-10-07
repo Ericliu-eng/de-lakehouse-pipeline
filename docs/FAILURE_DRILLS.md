@@ -8,7 +8,8 @@ failures and distinguish verified safeguards from remaining gaps.
 | Drill | Expected safeguard | Current evidence | Remaining gap |
 | --- | --- | --- | --- |
 | API rate limit or server error | Retry transient failures, fail clearly, and avoid partial writes | Request-path tests cover 429/500/502/503/504 recovery, retry exhaustion, and immediate failure on 400/401/403/404 | Retry-After handling and orchestration-level retries are not implemented |
-| Upstream schema change | Preserve raw data and reject malformed required fields | Raw JSON is saved before transformation; missing-field validation is tested | The dedicated schema validator is not yet called by the main pipeline |
+| Upstream schema change or invalid values | Preserve raw data and reject malformed OHLCV before writes | Both source staging paths call the shared validator; tests reject null/missing fields, non-finite/negative prices, inconsistent OHLC, fractional volume, and future dates before DB access | Historical corrections need an explicit reprocess mode |
+| Invalid existing warehouse rows | Prevent publication through manual and orchestrated commands | Real PostgreSQL tests reject invalid rows before manual mart builds; existing marts remain unchanged | Concurrent writes between validation and publication are not coordinated |
 | Database write failure | Roll back facts, watermark, and load metadata together | `tests/integration/test_pipeline_transactions.py` injects a PostgreSQL constraint failure at audit insertion for both normal loading and backfill, then checks rollback and retry recovery | Requires PostgreSQL; concurrent-run coordination is not covered |
 
 ## Drill Details

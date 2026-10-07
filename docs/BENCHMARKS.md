@@ -3,7 +3,34 @@
 All numbers below are single-machine local measurements, not production SLAs.
 Retry results use scripted HTTP responses rather than live throttling.
 
+## Current hardening verification — October 6, 2026
+
+The fixes on `fix/resume-readiness-fixes` were checked locally on Python 3.13.12
+and disposable PostgreSQL 16.12. [Validation record](proof/2026-10-06-resume-readiness.md):
+281 tests passed with 88% line coverage. The configured Python 3.10/3.13 CI
+matrix has not yet run for this branch.
+
+The [new offline benchmark](proof/2026-10-06-benchmark.md) replays the latest
+saved daily payloads through October 2, alongside saved Tiingo history:
+
+| Metric | Result |
+| --- | --- |
+| Warehouse | 98,302 bars, 10 symbols, 1970-01-02 to 2026-10-02 |
+| History backfill | 97,302 inserted in 6.2 s; rerun inserts 0 |
+| Reconciliation | 974 overlapping days; 0 beyond 0.5% |
+| Quality checks | 70/70 passed in 883 ms |
+| Mart command including integrity gate | 1.0 s |
+| Daily 10-symbol orchestration over full history | 15.9 s median across 3 batches; 30/30 runs succeeded |
+
+The benchmark creates a unique database and refuses an existing or configured
+name. Only a successfully created benchmark database is eligible for automatic
+cleanup. Raw files/checkpoints use temporary storage; S3 and PipeGuard are
+disabled. No live source API requests are made.
+
 ## Replayed benchmark
+
+The following September measurements are retained as historical evidence.
+They used the earlier six-check gate and different saved daily payloads.
 
 From [the September 25, 2026 benchmark](proof/2026-09-25-benchmark.md)
 (`make benchmark`): saved Alpha Vantage payloads and Tiingo history for 10
@@ -44,6 +71,9 @@ written to.
 
 ## Tests and coverage
 
+Current results are in the [October 6 validation record](proof/2026-10-06-resume-readiness.md).
+The figures below describe the earlier October 4 run.
+
 On October 4, 2026, `make coverage` against a freshly migrated and seeded
 database ran 220 tests and measured **88% line coverage** (1,133 of 1,293
 statements). Core modules are covered at 86–100%: pipeline 96%, staging 100%,
@@ -62,9 +92,9 @@ A fresh clone of [v1.1.0](../CHANGELOG.md) passed `make setup`, migrations,
 seeding, `make lint`, and `make test` against PostgreSQL 16
 ([clean-clone record](proof/2026-09-25-clean-clone.md)).
 
-CI runs on pull requests and pushes to `main`. It provisions PostgreSQL 16,
-installs dependencies, migrates and seeds the database, runs Ruff and
-`make test`, and validates Terraform.
+CI is configured to run on pull requests and pushes to `main`, with Python
+3.10 and 3.13. It provisions PostgreSQL 16, installs dependencies, migrates and
+seeds the database, runs Ruff and `make test-all`, and validates Terraform.
 
 | Command | Purpose |
 | --- | --- |

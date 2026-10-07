@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 import pytest
@@ -7,6 +7,8 @@ from de_lakehouse_pipeline.observability.run_repository import (
     finish_pipeline_run,
     start_pipeline_run,
 )
+
+UTC = timezone.utc
 
 
 class FakeCursor:

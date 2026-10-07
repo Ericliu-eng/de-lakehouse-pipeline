@@ -166,7 +166,7 @@
   <text class="lane-note" x="64" y="1245">Recovery + checks</text>
   <text class="mono" x="272" y="1214">make backfill START=... END=... SYMBOL=AAPL</text>
   <text class="body" x="272" y="1243">Resume missing dates in the returned API data; ingestion only.</text>
-  <text class="small" x="272" y="1277">Manual mart rebuild: make run-marts (bypasses the quality gate)</text>
+  <text class="small" x="272" y="1277">Manual mart rebuild: make run-marts (checks integrity; permits historical data)</text>
   <path d="M940 1202V1282" stroke="#dce4ed"/>
   <text class="mono" x="972" y="1214">make lint · make test</text>
   <text class="body" x="972" y="1243">Static checks + automated tests</text>

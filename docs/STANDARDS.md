@@ -2,7 +2,7 @@
 
 ## Branch Naming
 - Use lowercase + hyphen  
-- Example: `Type/d1-repo-skeleton-ci-makefile`
+- Example: `fix/resume-readiness-fixes`
 
 ## Commit Convention
 We follow Conventional Commits:
@@ -32,5 +32,5 @@ All commands must be runnable from a fresh environment:
 `make setup`      
 `make lint`  
 `make test`
-`make check` 
+`make test-all`
 `make help`

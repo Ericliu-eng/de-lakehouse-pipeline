@@ -12,6 +12,7 @@ from de_lakehouse_pipeline.backfill import run_backfill, parse_iso_date, validat
 from de_lakehouse_pipeline.pipeline import run_stock
 from de_lakehouse_pipeline.tiingo_backfill import format_result, run_tiingo_backfill
 from de_lakehouse_pipeline.ingest.tiingo_client import DEFAULT_HISTORY_START
+from de_lakehouse_pipeline.quality.checks import require_quality_pass, run_market_bar_quality_checks
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,7 @@ def run_marts() -> None:
     wait_for_db(cfg, timeout_s=60)
 
     with connect(cfg) as conn:
+        require_quality_pass(run_market_bar_quality_checks(conn))
         run_daily_summary(conn)
         run_latest_price(conn)
         run_symbol_volume(conn)

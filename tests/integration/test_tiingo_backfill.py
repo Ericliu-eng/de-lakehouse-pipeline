@@ -16,13 +16,13 @@ SYMBOL = "BACKFILL"
 ALPHA_VANTAGE_PAYLOAD = {
     "Meta Data": {"2. Symbol": SYMBOL, "5. Time Zone": "US/Eastern"},
     "Time Series (Daily)": {
-        day: {"1. open": "1", "2. high": "1", "3. low": "1", "4. close": close, "5. volume": "10"}
+        day: {"1. open": close, "2. high": close, "3. low": close, "4. close": close, "5. volume": "10"}
         for day, close in [("2026-09-16", "100"), ("2026-09-17", "101"), ("2026-09-18", "102")]
     },
 }
 # Two older days, then three days that Alpha Vantage already loaded; 09-17 disagrees.
 TIINGO_PAYLOAD = [
-    {"date": f"{day}T00:00:00.000Z", "open": 1, "high": 1, "low": 1, "close": close, "volume": 20}
+    {"date": f"{day}T00:00:00.000Z", "open": close, "high": close, "low": close, "close": close, "volume": 20}
     for day, close in [
         ("2026-09-14", 98.0),
         ("2026-09-15", 99.0),

@@ -3,6 +3,7 @@ from datetime import date
 import pytest
 
 from de_lakehouse_pipeline import cli
+from de_lakehouse_pipeline.quality.checks import CheckResult
 
 
 class FakeConnection:
@@ -120,9 +121,30 @@ def test_run_marts_builds_all_marts_in_one_transaction(monkeypatch):
     monkeypatch.setattr(cli, "load_db_config", lambda: "cfg")
     monkeypatch.setattr(cli, "wait_for_db", lambda cfg, timeout_s: events.append("wait"))
     monkeypatch.setattr(cli, "connect", lambda cfg: FakeConnection(events))
+    monkeypatch.setattr(
+        cli, "run_market_bar_quality_checks",
+        lambda conn: events.append("quality") or [],
+    )
     for name in ["run_daily_summary", "run_latest_price", "run_symbol_volume"]:
         monkeypatch.setattr(cli, name, lambda conn, name=name: events.append(name))
 
     cli.run_marts()
 
-    assert events == ["wait", "run_daily_summary", "run_latest_price", "run_symbol_volume", "commit"]
+    assert events == ["wait", "quality", "run_daily_summary", "run_latest_price", "run_symbol_volume", "commit"]
+
+
+def test_run_marts_rejects_bad_warehouse_before_building(monkeypatch):
+    events = []
+    monkeypatch.setattr(cli, "load_db_config", lambda: "cfg")
+    monkeypatch.setattr(cli, "wait_for_db", lambda *args, **kwargs: None)
+    monkeypatch.setattr(cli, "connect", lambda cfg: FakeConnection(events))
+    monkeypatch.setattr(
+        cli, "run_market_bar_quality_checks",
+        lambda conn: [CheckResult("market_bar_values", "market_bars", False, 1, "bad price")],
+    )
+    for name in ["run_daily_summary", "run_latest_price", "run_symbol_volume"]:
+        monkeypatch.setattr(cli, name, lambda conn: events.append("built"))
+
+    with pytest.raises(RuntimeError, match="bad price"):
+        cli.run_marts()
+    assert events == []

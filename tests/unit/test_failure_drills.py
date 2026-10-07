@@ -7,7 +7,7 @@ from de_lakehouse_pipeline.quality.schema_validation import validate_stock_row_s
 def test_valid_stock_row_schema_passes():
     row = {
         "symbol": "AAPL",
-        "ts": "2026-06-16T00:00:00",
+        "ts": "2026-06-16T00:00:00+00:00",
         "open": 0.0,
         "high": 0.0,
         "low": 0.0,
