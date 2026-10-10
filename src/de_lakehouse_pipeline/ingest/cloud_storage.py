@@ -93,10 +93,6 @@ def upload_raw_payload_if_enabled(
         ) from exc
 
     return S3RawLocation(bucket=bucket, key=key)
-    
-"""print(S3RawLocation.bucket)
-print(S3RawLocation.key)
-print(S3RawLocation.uri)"""
 
 
 def create_s3_client():

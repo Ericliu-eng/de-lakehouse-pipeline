@@ -1,5 +1,5 @@
 
---在这里先跑 防止ci 不通过  说table not exist
+-- Create mart tables up front so fresh databases (and CI) never hit "table does not exist"
 CREATE TABLE IF NOT EXISTS mart_daily_symbol_summary (
     symbol VARCHAR(10),
     trading_date DATE,
@@ -12,19 +12,19 @@ CREATE TABLE IF NOT EXISTS mart_daily_symbol_summary (
 );
 
 CREATE TABLE IF NOT EXISTS mart_symbol_latest_price (
-    symbol TEXT PRIMARY KEY,              -- 每个股票只有一行最新数据
-    latest_ts TIMESTAMPTZ,                -- 和源表 ts 保持一致
+    symbol TEXT PRIMARY KEY,              -- one row per symbol: its latest bar
+    latest_ts TIMESTAMPTZ,                -- same type as the source ts column
     close_price NUMERIC(16, 4),
     volume BIGINT,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- . 创建排名表
+-- Daily volume ranking
 CREATE TABLE IF NOT EXISTS mart_symbol_volume_rank (
     symbol TEXT NOT NULL,
     trading_date DATE NOT NULL,
     total_volume BIGINT,
     volume_rank INTEGER,
-    -- 复合主键，确保每天每只股票只有一条排名记录
+    -- one rank row per symbol per trading day
     PRIMARY KEY (symbol, trading_date)
 );

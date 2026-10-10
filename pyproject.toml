@@ -25,4 +25,4 @@ source = ["src", "orchestration"]
 skip_empty = true
 
 [tool.setuptools.packages.find]
-where = ["src"]  # 关键点：告诉工具代码在 src 文件夹里
+where = ["src"]

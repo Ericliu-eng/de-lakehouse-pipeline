@@ -67,7 +67,7 @@ written to.
 | [Live Tiingo backfill](proof/2026-09-25-tiingo-backfill.md) | 10 API requests, 20 s end to end; development warehouse grew from 1,225 to 98,282 rows; 1,219 overlapping days, 0 beyond 0.5% |
 | [Live S3 upload and read-back](proof/2026-09-30-s3-live-upload.md) | Uploaded payload identical to the local raw file |
 | [Terraform apply and destroy](proof/W16/2026-06-06-run.txt) | Bucket and IAM policy created and removed |
-| [Dagster UI run](proof/W17/screenshots/06-14/image1.png) | `stock_lakehouse_job` succeeded |
+| [Dagster UI run](proof/W17/screenshots/06-14/dagster-run.png) | `stock_lakehouse_job` succeeded |
 
 ## Tests and coverage
 

@@ -1,7 +1,7 @@
 # Tell make: these names are targets, not files.
 .PHONY: help setup lint clean
 .PHONY: unit smoke smoke-db integration test test-all test-s coverage
-.PHONY: run run-marts backfill tiingo-backfill dagster-dev orchestrate price-dashboard benchmark
+.PHONY: run run-marts backfill tiingo-backfill dagster-dev orchestrate dashboard price-dashboard benchmark
 .PHONY: cloud-storage-test terraform-check terraform-validate
 .PHONY: db-up db-down db-migrate migrate db-seed
 .PHONY: db-smoke db-smoke-local db-shell db-visu
@@ -33,6 +33,7 @@ help:
 	@echo "  db-seed       Seed DB"
 	@echo "  run           Run stock pipeline"
 	@echo "  run-marts     Build analytical marts"
+	@echo "  dashboard     Start Postgres and the FastAPI dashboard at http://127.0.0.1:8000/dashboard"
 	@echo "  backfill      Run date-range backfill with START, END, and optional SYMBOL"
 	@echo "  tiingo-backfill Load full Tiingo history for SYMBOL (comma-separated) without overwriting rows"
 	@echo "  benchmark     Replay saved payloads and write a results report to docs/proof"
@@ -107,6 +108,11 @@ cloud-storage-test:
 TF_BUCKET ?= eric-lakehouse-raw-dev-20260601
 terraform-check:
 	cd infra/terraform && terraform fmt -check && terraform plan -var="raw_bucket_name=$(TF_BUCKET)"
+
+dashboard:
+	docker compose up -d --wait db
+	@echo "Open http://127.0.0.1:8000/dashboard (Ctrl+C to stop the web server)"
+	$(PY) -m src.serve.api
 
 price-dashboard:
 	$(PY) -m streamlit run scripts/price_dashboard.py
