@@ -6,7 +6,7 @@
 ![Dagster](https://img.shields.io/badge/Dagster-4f43dd)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688)
 
-A market-data pipeline that loads daily prices from Alpha Vantage and decades of history from Tiingo into an incremental PostgreSQL warehouse. The manual CLI and orchestrated workflows build analytical marts after a quality gate passes, and a FastAPI dashboard serves the results. Execution is validated locally with serial runs.
+A market-data pipeline that loads daily prices from Alpha Vantage and decades of history from Tiingo into an incremental PostgreSQL warehouse. The manual CLI and orchestrated workflows build analytical marts after a quality gate passes. A Streamlit dashboard explores price trends and daily changes, while a FastAPI service exposes the latest price from the analytical mart. Execution is validated locally with serial runs.
 
 ![Animated flow: a daily AAPL load is throttled and retried, lands as raw JSON, is validated and typed, filtered by the watermark to one new bar, and committed with its watermark and audit row in one transaction; the quality gate passes, the three marts rebuild, FastAPI serves the latest price, and the run is reported to PipeGuard; a Tiingo history backfill then inserts missing bars without overwriting existing ones, and saved benchmark results light up](docs/demo/lakehouse-flow.gif)
 
@@ -46,23 +46,34 @@ make db-migrate
 make db-seed
 ```
 
-Set `ALPHA_VANTAGE_API_KEY` in `.env` (and `TIINGO_API_TOKEN` for history), then run one symbol end to end and start the API:
+Set `ALPHA_VANTAGE_API_KEY` in `.env` (and `TIINGO_API_TOKEN` for history), then run one symbol end to end and open the stock price dashboard:
 
 ```bash
 make orchestrate SYMBOL=AAPL
 make tiingo-backfill SYMBOL=AAPL
 make run-marts
-source .venv/bin/activate
-python -m src.serve.api
+make price-dashboard
 ```
 
-Open **http://127.0.0.1:8000/dashboard**. `make dagster-dev` starts the Dagster UI with the same ingest → checks → marts job and a daily schedule.
+Open [http://localhost:8501](http://localhost:8501), or the local URL printed by Streamlit. Select a symbol and row count to view its latest close, daily price change, price trend, and history table. This dashboard reads `market_bars`; PostgreSQL must be running (`make db-up` above) before launching it. Press Ctrl+C to stop the dashboard.
+
+`make dagster-dev` starts the Dagster UI with the same ingest → checks → marts job and a daily schedule.
 
 <details>
 <summary>Windows PowerShell</summary>
 
 Use `Copy-Item .env.example .env` instead of `cp`, and activate the environment with `.\.venv\Scripts\Activate.ps1` instead of `source .venv/bin/activate`. Use `curl.exe` rather than `curl` to query the API.
 </details>
+
+## Serving API
+
+After the quick-start pipeline and mart build, start the FastAPI service:
+
+```bash
+make dashboard
+```
+
+This command starts PostgreSQL if needed and serves a minimal [latest-price page](http://127.0.0.1:8000/dashboard). It reads one latest record from `mart_symbol_latest_price` to demonstrate serving curated pipeline outputs. Use [GET /latest-price](http://127.0.0.1:8000/latest-price) for the JSON response and [GET /health](http://127.0.0.1:8000/health) for the service health check. Press Ctrl+C to stop the service.
 
 ## Tests
 
