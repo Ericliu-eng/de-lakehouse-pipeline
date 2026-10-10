@@ -57,7 +57,8 @@ remains optional.
 
 The October 6 fixes reject future dates and invalid OHLCV on both source paths,
 gate manual mart builds, restore safe offline benchmarking, and align test
-collection and documentation. See the [audit follow-up](REVIEW_2026-10-06.md).
+collection and documentation. See the
+[resume-readiness verification](proof/2026-10-06-resume-readiness.md).
 
 ### Optional
 
