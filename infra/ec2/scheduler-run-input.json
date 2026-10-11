@@ -1,0 +1,11 @@
+{
+  "DocumentName": "AWS-RunShellScript",
+  "InstanceIds": ["<INSTANCE_ID>"],
+  "TimeoutSeconds": 300,
+  "Parameters": {
+    "commands": [
+      "sudo -iu ec2-user /home/ec2-user/de-lakehouse-pipeline/scheduled-run.sh"
+    ],
+    "executionTimeout": ["720"]
+  }
+}

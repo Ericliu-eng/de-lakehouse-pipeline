@@ -36,6 +36,14 @@ data/raw/*
 
 # Runtime state
 .checkpoints/
+.daily-run.lock
+.scheduled-run.lock
+/daily-run.sh
+/scheduled-run.sh
+/*.sh.previous
+logs/
+*.pem
+*.dump
 .tmp_dagster_home*/
 *.log
 *.tmp
