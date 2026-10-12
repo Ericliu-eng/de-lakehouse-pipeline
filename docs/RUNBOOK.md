@@ -5,6 +5,8 @@
 Use this runbook to start, validate, operate, inspect, and troubleshoot the
 local market-data pipeline.
 
+For scheduled AWS operations, see [Scheduled EC2 deployment](EC2_DEPLOYMENT.md).
+
 ## Prerequisites
 
 - Python for creating the virtual environment.
